@@ -6,6 +6,10 @@ app.get("/", (req, res) => {
   res.send("Hello");
 });
 
+app.get("/user/login", (req,res) => {
+  res.send("login")
+})
+
 app.listen(port, () => {
   console.log("listening @ " + port);
 });
