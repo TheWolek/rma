@@ -1,5 +1,14 @@
 extends layout
 
 block content
-  h1= title
-  p Welcome to #{title}
+  .container
+    .center
+      h1= title
+      div
+        label(for="login") Login:
+        input#login(type="text", name="login")
+      div
+        label(for="password") Password:
+        input#password(type="password", name="password")
+      input(type="submit", value="Sign In")
+
