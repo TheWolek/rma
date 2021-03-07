@@ -2,8 +2,10 @@ extends layout
 
 block content
   .container
-    .center
+    form(action="/login", method="post").center   
       h1= title
+      if error
+        p.error Login failed
       div
         label(for="login") Login:
         input#login(type="text", name="login")

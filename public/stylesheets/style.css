@@ -35,6 +35,11 @@ a {
   min-height: 40vh;
 }
 
+.center .error {
+  color: rgb(223, 23, 23);
+  font-weight: bold;
+}
+
 .center div {
   display: flex;
   flex-direction: column;
