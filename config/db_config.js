@@ -1,6 +1,6 @@
-module.expors = {
+module.exports = {
     HOST: "localhost",
     USER: "root",
-    PASSWORD: "",
+    PASSWORD: "132",
     DB: "rma"
 }

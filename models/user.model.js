@@ -17,6 +17,7 @@ User.create = function(newUser, result) {
         console.log("created user: ", {id: res.insertId, ...newUser});
         result(null, {id: res.insertId, ...newUser});
     });
+    sql.end();
 };
 
 User.findById = function(userId, result) {
@@ -35,6 +36,7 @@ User.findById = function(userId, result) {
 
         result({kind: "not_found"},null)
     });
+    sql.end();
 };
 
 module.exports = User;
