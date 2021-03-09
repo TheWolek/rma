@@ -18,20 +18,37 @@ router.post('/create', function(req,res) {
     });
   }
 
-  bcrypt.hash(req.body.password, saltRounds, function(err, hash) {
-    const user = new User({
-      name: req.body.name,
-      login: req.body.login,
-      password: hash
+  User.findById(req.body.login, function(err, data) {
+    if(err) {
+      res.status(500).send({
+        message: err.message
+      });
+      return;
+    }
+
+    if(data) {
+      res.status(400).send({
+        message: "user with passed login already exists"
+      });
+      return;
+    }
+
+    bcrypt.hash(req.body.password, saltRounds, function(err, hash) {
+      const user = new User({
+        name: req.body.name,
+        login: req.body.login,
+        password: hash
+      });
+
+      User.create(user, (err, data) => {
+        if(err) {
+          res.status(500).send({
+            message: err.message || "Error occured while creating the User"
+          });
+        } else res.send(data)
+      })
     });
 
-    User.create(user, (err, data) => {
-      if(err) {
-        res.status(500).send({
-          message: err.message || "Error occured while creating the User"
-        });
-      } else res.send(data)
-    })
   });
 });
 
