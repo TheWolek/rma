@@ -10,7 +10,7 @@ router.get('/', function(req, res, next) {
 });
 
 //create new
-router.post('/create', function(req,res,next) {
+router.post('/create', function(req,res) {
   
   if(!req.body) {
     res.status(400).send({
@@ -36,7 +36,7 @@ router.post('/create', function(req,res,next) {
 });
 
 //find one
-router.post('/login', function(req,res,next) {
+router.post('/login', function(req,res) {
   let {login, password} = req.body;
   User.findById(login, (err, data) => {
     if(err) {
@@ -71,6 +71,14 @@ router.post('/login', function(req,res,next) {
   });
 });
 
+router.post("/logout",function(req, res) {
+  if(req.session.user && req.cookies.user_sid) {
+    res.clearCookie('user_sid');
+    res.redirect("/");
+  } else {
+    res.redirect("/");
+  }
+});
 
 
 module.exports = router;

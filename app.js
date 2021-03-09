@@ -24,12 +24,12 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(cors());
 app.use(session({
-  key: "user_uid",
+  key: "user_sid",
   secret: "random",
   resave: false,
   saveUninitialized: false,
   cookie: {
-    expires: 60000
+    expires: 600000
   }
 }));
 
