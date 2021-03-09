@@ -16,7 +16,7 @@ a {
 
 .container {
   width: 100%;
-  height: 100vh;
+  height: calc(100vh - 7vh);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -86,32 +86,88 @@ a {
 
 nav {
   width: 100%;
-  height: 10vh;
+  height: 7vh;
   background: rgb(80, 80, 80);
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: space-between;
   padding: 0 3%;
 }
 
-nav * + * {
+.userActions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.userActions * + * {
   margin-left: 30px;
 }
 
-nav input {
+.userActions input {
   border: none;
   outline: none;
   box-shadow: none;
-  padding: 6px;
+  padding: 0.3em;
   font-size: 16px;
 }
 
-nav input:hover {
+.userActions input:hover {
   cursor: pointer;
+}
+
+.userActions a {
+  text-decoration: none;
+  color: black;
+  display: block;
+  background: rgb(239, 239, 239);
+  padding: 0.3em;
+  font-size: 16px;
+}
+
+.userActions a:visited {
+  color: black;
+  text-decoration: none;
 }
 
 .panel {
   width: 100%;
   display: grid;
-  grid-template-columns: ;
+}
+
+.createUserForm h2 {
+  margin-bottom: 1.2em;
+}
+
+.createUserForm div {
+  display: flex;
+  flex-direction: column;
+  font-size: 17px;
+}
+
+.createUserForm div + * {
+  margin-top: 15px;
+}
+
+.createUserForm input {
+  outline: none;
+  border: none;
+  box-shadow: none;
+  padding: 0.2em;
+  font-size: 17px;
+}
+
+.createUserForm .submitDiv {
+  width: 50%;
+  margin: 1.5em auto;
+}
+
+.createUserForm input[type="submit"] {
+  background: rgb(0, 197, 0);
+  transition: all 0.3s ease-in-out;
+}
+
+.createUserForm input[type="submit"]:hover {
+  background: rgb(3, 219, 3);
+  cursor: pointer;
 }

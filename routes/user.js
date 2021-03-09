@@ -10,6 +10,16 @@ router.get('/', function(req, res, next) {
 });
 
 //create new
+router.get('/create', function(req,res) {
+  if(!req.session.user) {
+    console.log("redirect")
+    res.redirect("/panel");
+    return;
+  }
+
+  res.render("userCreate", {name: req.session.user.name});
+});
+
 router.post('/create', function(req,res) {
   
   if(!req.body) {
@@ -19,13 +29,6 @@ router.post('/create', function(req,res) {
   }
 
   User.findById(req.body.login, function(err, data) {
-    if(err) {
-      res.status(500).send({
-        message: err.message
-      });
-      return;
-    }
-
     if(data) {
       res.status(400).send({
         message: "user with passed login already exists"
@@ -81,7 +84,8 @@ router.post('/login', function(req,res) {
         }
         let id = data.ID;
         let name = data.name;
-        req.session.user = {id, name};
+        let permissions = data.permissions
+        req.session.user = {id, name, permissions};
         res.status(200).redirect("../panel")
       });
     } 

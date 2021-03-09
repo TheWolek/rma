@@ -4,7 +4,6 @@ const bcrypt = require("bcrypt");
 const session = require("express-session");
 
 const sessionChecker = function(req,res,next) {
-  console.log("session Check ", req.session, req.cookies)
   if(req.session.user && req.cookies.user_sid) {
     res.redirect("/panel");
   } else {

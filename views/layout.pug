@@ -6,8 +6,13 @@ html
   body
     if name
       nav
-        h3 #{name}
-        form(action="/users/logout", method="post").logoutForm
-          input(type="submit", value="logout") 
+        .rmaActions 
+
+        .userActions 
+          h3 #{name}
+          if permissions > 4
+            a(href="/users/create") create user 
+          form(action="/users/logout", method="post").logoutForm
+            input(type="submit", value="logout") 
     block content
     script(src="/javascript/main.js") 

@@ -7,8 +7,10 @@ router.get("/", function(req,res,next) {
         return;
     }
 
-    let name = req.session.user.name
-    res.render("panel", {name: name})
+    let name = req.session.user.name;
+    let permissions = req.session.user.permissions;
+    console.log(req.session.user)
+    res.render("panel", {name: name, permissions: permissions})
 });
 
 module.exports = router;
