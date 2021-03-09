@@ -157,7 +157,7 @@ nav {
   font-size: 17px;
 }
 
-.createUserForm .submitDiv {
+.submitDiv {
   width: 50%;
   margin: 1.5em auto;
 }
@@ -170,4 +170,68 @@ nav {
 .createUserForm input[type="submit"]:hover {
   background: rgb(3, 219, 3);
   cursor: pointer;
+}
+
+.rmaActions {
+  display: flex;
+}
+
+.rmaActions a {
+  text-decoration: none;
+  color: black;
+  display: block;
+  background: rgb(239, 239, 239);
+  padding: 0.3em;
+  font-size: 16px;
+}
+
+.rmaActions a:visited {
+  text-decoration: none;
+  color: black;
+}
+
+.rmaActions a + a {
+  margin-left: 15px;
+}
+
+.createRMA {
+  display: flex;
+  flex-direction: column;
+  width: 23vw;
+}
+
+.createRMA div {
+  display: flex;
+  flex-direction: column;
+}
+
+.createRMA input {
+  outline: none;
+  border: none;
+  box-shadow: none;
+  padding: 0.2em;
+  font-size: 17px;
+}
+
+.createRMA input[type="submit"] {
+  background: rgb(0, 197, 0);
+  transition: all 0.3s ease-in-out;
+}
+
+.createRMA input[type="submit"]:hover {
+  background: rgb(3, 219, 3);
+  cursor: pointer;
+}
+
+.createRMA div + div {
+  margin-top: 15px;
+}
+
+.sprzedaz {
+  flex-direction: row !important;
+  align-items: center;
+}
+
+.sprzedaz div {
+  margin-top: 0 !important;
 }

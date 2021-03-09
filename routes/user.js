@@ -17,7 +17,7 @@ router.get('/create', function(req,res) {
     return;
   }
 
-  res.render("userCreate", {name: req.session.user.name});
+  res.render("userCreate", {title: "Tworzenie użytkownika", name: req.session.user.name, permissions: req.session.user.permissions});
 });
 
 router.post('/create', function(req,res) {

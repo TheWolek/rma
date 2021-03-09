@@ -13,7 +13,7 @@ const sessionChecker = function(req,res,next) {
 
 /* GET home page. */
 router.get('/', sessionChecker ,function(req, res) {
-  res.render('index', { title: 'RMA' });
+  res.render('index', { title: 'RMA login' });
 });
 
 module.exports = router;

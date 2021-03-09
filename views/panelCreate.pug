@@ -1,0 +1,27 @@
+extends layout 
+
+block content
+    .container 
+        form(action="/panel/create", method="post").createRMA
+            div
+                label(for="producent") Producent:
+                input#producent(type="text", name="producent")
+            div
+                label(for="model") Model:
+                input#model(type="text", name="model")
+            div
+                label(for="SN") SN:
+                input#SN(type="text", name="SN")
+            div.sprzedaz
+                div
+                    label(for="sprzedaz") Sprzedaż (rrrr-mm-dd):
+                    input#sprzedaz(type="date", name="sprzedaz")
+                div
+                    label(for="fv") nr. faktury:
+                    input#fv(type="text", name="fv")
+            div
+                label(for="opis") Opis zlecenia:
+                textarea#opis(name="opis", cols="30", rows="10") 
+            div.submitDiv
+                input(type="submit", value="Create")
+            
