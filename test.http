@@ -1,8 +1,7 @@
-POST http://localhost:3000/users/create HTTP/1.1
+POST http://localhost:3000/users/login HTTP/1.1
 content-type: application/json
 
 {
-    "name": "Admin",
     "login": "admin",
     "password": "admin123"
 }

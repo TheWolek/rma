@@ -36,20 +36,39 @@ router.post('/create', function(req,res,next) {
 });
 
 //find one
-router.get('/:customerId', function(req,res,next) {
-  User.findById(req.params.customerId, (err, data) => {
+router.post('/login', function(req,res,next) {
+  let {login, password} = req.body;
+  User.findById(login, (err, data) => {
     if(err) {
       if(err.kind === "not_found") {
-        res.status(404).send({
-          message: `Not found User with id ${req.params.customerId}`
+        res.status(404).render("index",{
+          title: "RMA",
+          error: `Login failed, wrong password or login passed`
         });
+        return;
       } else {
-        res.status(500).send({
-          message: "Error retrieving user data with id " + req.params.customerId
+        res.status(500).render("index", {
+          title: "RMA",
+          error: "Error retrieving user data with login " + login
         });
+        return;
       }
-    } else res.send(data)
+    } else {
+      bcrypt.compare(password, data.password, function(err,result) {
+        if(err || !result) {
+          res.status(401).render("index", {
+            title: "RMA",
+            error: "Login failed, wrong password or login passed"
+          });
+          return;
+        }
+
+        res.send(data);
+      });
+    } 
   });
 });
+
+
 
 module.exports = router;

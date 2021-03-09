@@ -17,11 +17,10 @@ User.create = function(newUser, result) {
         console.log("created user: ", {id: res.insertId, ...newUser});
         result(null, {id: res.insertId, ...newUser});
     });
-    sql.end();
 };
 
-User.findById = function(userId, result) {
-    sql.query(`SELECT * FROM USERS WHERE id= ${userId}`, function(err, res) {
+User.findById = function(login, result) {
+    sql.query(`SELECT * FROM USERS WHERE login = '${login}'`, function(err, res) {
         if(err) {
             console.log("error: ", err);
             result(err, null);
@@ -29,14 +28,13 @@ User.findById = function(userId, result) {
         }
 
         if(res.length) {
-            console.log("found customer: ",res[0]);
+            console.log("found user: ",res[0]);
             result(null, res[0])
             return;
         }
 
         result({kind: "not_found"},null)
     });
-    sql.end();
 };
 
 module.exports = User;
