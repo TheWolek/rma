@@ -62,8 +62,10 @@ router.post('/login', function(req,res,next) {
           });
           return;
         }
-
-        res.send(data);
+        let id = data.ID;
+        let name = data.name;
+        req.session.user = {id, name};
+        res.status(200).redirect("../panel")
       });
     } 
   });
