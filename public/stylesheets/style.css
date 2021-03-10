@@ -209,18 +209,28 @@ nav {
   outline: none;
   border: none;
   box-shadow: none;
-  padding: 0.2em;
-  font-size: 17px;
+  padding: 0.4em;
+  font-size: 16px;
 }
 
 .createRMA input[type="submit"] {
   background: rgb(0, 197, 0);
   transition: all 0.3s ease-in-out;
+  font-weight: bold;
+  border-radius: 3px;
 }
 
 .createRMA input[type="submit"]:hover {
-  background: rgb(3, 219, 3);
+  background: rgb(4, 224, 4);
   cursor: pointer;
+}
+
+.createRMA input[type="date"] {
+  padding: 0.07em;
+}
+
+.sprzedaz div {
+  width: 45%;
 }
 
 .createRMA div + div {
@@ -230,8 +240,26 @@ nav {
 .sprzedaz {
   flex-direction: row !important;
   align-items: center;
+  justify-content: space-between;
 }
 
 .sprzedaz div {
   margin-top: 0 !important;
+}
+
+label + input,
+label + textarea {
+  margin-top: 0.2em;
+}
+
+textarea {
+  border: none;
+  outline: none;
+  resize: none;
+  padding: 0.7em 0.5em;
+}
+
+textarea:active,
+textarea:focus {
+  outline: none;
 }
