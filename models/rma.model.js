@@ -59,8 +59,8 @@ RMA.genUniqueCode = function (result) {
                     console.log("trying ", c);
                     CheckIfUnique(c);
                 } else {
-                    console.log(`rma ${code} is unique, return true`)
-                    result(true);
+                    console.log(`rma ${code} is unique`)
+                    result(code);
                 }   
             }
         });
@@ -69,24 +69,6 @@ RMA.genUniqueCode = function (result) {
     let b = genRandomRMA();
     console.log("trying ", b);
     CheckIfUnique(b);
-};
-
-RMA.getLast = function(result) {
-    sql.query(`SELECT id, rma FROM ZLECENIA ORDER BY id DESC LIMIT 1`, function(err, res) {
-        if(err) {
-            console.log("error: ",err);
-            result(err,null);
-            return;
-        }
-
-        if(res.length) {
-            console.log("found last: ", res[0]);
-            result(null, res[0]);
-            return;
-        }
-
-        result({kind: "not_found"},null);
-    });
 };
 
 module.exports = RMA;

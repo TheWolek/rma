@@ -40,61 +40,21 @@ router.post("/create", function(req,res) {
         opis: req.body.opis
     })
 
-    RMA.genUniqueCode(function (bool) {
-        res.send(bool)
-    })
+    RMA.genUniqueCode(function (code) {
+        rma.rma = code;
 
-    // RMA.getLast(function (err, data) {
-    //     if (err) {
-    //         if (err.kind === "not_found") {
-    //             console.log("not found")
-                
-    //             let date = new Date();
-    //             date = date.getFullYear();
-    //             date = "" + date;
-    //             date = date.substring(2, 4);
-                
-    //             let code = "RMA/1/" + date;
-    //             console.log("new code: ", code);
-                
-    //             rma.rma = code;
-
-    //             RMA.create(rma, (err,data) => {
-    //                 if(err) {
-    //                     res.status(500).send({
-    //                         message: err.message || "Error occured while creating the RMA"
-    //                     });
-    //                 } else res.send(data);
-    //             });
-    //         } else {
-    //             res.status(500).send({
-    //                 message: err.message || "Error occured while creating the RMA (code)"
-    //             });
-    //             return true;
-    //         }
-    //     } else {
-    //         let code = parseInt(data.rma.substring(4, data.length)) + 1;
-
-    //         console.log(code)
-    //         let date = new Date();
-    //         date = date.getFullYear();
-    //         date = "" + date;
-    //         date = date.substring(2, 4);
-                
-    //         code = "RMA/" + code + "/" + date;
-    //         console.log("code: ", code);
-                
-    //         rma.rma = code;
-
-    //         RMA.create(rma, (err,data) => {
-    //             if(err) {
-    //                 res.status(500).send({
-    //                     message: err.message || "Error occured while creating the RMA"
-    //                 });
-    //             } else res.send(data);
-    //         });
-    //     }
-    // });
+        RMA.create(rma, function (err, data) {
+            if (err) {
+                res.status(500).send({
+                    message: err.message || "Error occured while creating the RMA"
+                });
+            } else {
+                let name = req.session.user.name;
+                let permissions = req.session.user.permissions;
+                res.render("rmaView", { title: "rma view", name: name, permissions: permissions, rma: data });
+            }
+        });
+    });
 });
 
 module.exports = router;

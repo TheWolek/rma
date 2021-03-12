@@ -2,3 +2,8 @@ extends layout
 
 block content 
     .panel 
+        form(action="/panel/find", method="post").search
+            label(for="rma")
+            input#rma(type="text", name="rma")
+            input(type="submit", value="search") 
+        block rmaView
