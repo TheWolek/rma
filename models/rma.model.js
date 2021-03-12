@@ -41,6 +41,36 @@ RMA.findByCode = function(code, result) {
     });
 };
 
+RMA.genUniqueCode = function (result) {
+    function genRandomRMA() {
+        let date = new Date();
+        date = date.getFullYear().toString().substring(2, 4);
+        return "RMA/" + Math.round(Math.random() * 1000).toString() + "/" + date;
+    }
+
+    function CheckIfUnique(code) {
+        sql.query(`SELECT * from ZLECENIA WHERE rma = '${code}'`, function (err, res) {
+            if (err) {
+                throw err;
+            } else {
+                if (res.length) {
+                    console.log("found the same, generating new...");
+                    let c = genRandomRMA();
+                    console.log("trying ", c);
+                    CheckIfUnique(c);
+                } else {
+                    console.log(`rma ${code} is unique, return true`)
+                    result(true);
+                }   
+            }
+        });
+    }
+
+    let b = genRandomRMA();
+    console.log("trying ", b);
+    CheckIfUnique(b);
+};
+
 RMA.getLast = function(result) {
     sql.query(`SELECT id, rma FROM ZLECENIA ORDER BY id DESC LIMIT 1`, function(err, res) {
         if(err) {
