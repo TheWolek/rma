@@ -23,8 +23,8 @@ RMA.create = function(newRMA, result) {
     });
 };
 
-RMA.findByCode = function(code, result) {
-    sql.query(`SELECT * FROM ZLECENIA WHERE rma = '${code}'`, function(err, res) {
+RMA.findByCode = function (columns, code, result) {
+    sql.query(`SELECT ${columns} FROM ZLECENIA WHERE rma like '${code}%'`, function(err, res) {
         if(err) {
             console.log("error: ", err);
             result(err,null);
@@ -32,12 +32,12 @@ RMA.findByCode = function(code, result) {
         }
 
         if(res.length) {
-            console.log("found rma: ", res[0]);
-            result(null, res[0]);
+            console.log("found rma: ", res);
+            result(null, res);
             return;
         }
         
-        result({kind: "not_found"}, null);
+        result({kind: "not_found"}, []);
     });
 };
 

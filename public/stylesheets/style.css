@@ -133,6 +133,12 @@ nav {
 .panel {
   width: 100%;
   display: grid;
+  grid-template-columns: [start] 20vw [two] 65vw [three] auto [end];
+  grid-template-rows: [start] 4vh [tableStart] 60vh [filterStart] auto [end];
+  grid-template-areas:
+    ". . search"
+    "table table table"
+    "filer filer2 .";
 }
 
 .createUserForm h2 {
@@ -262,4 +268,27 @@ textarea {
 textarea:active,
 textarea:focus {
   outline: none;
+}
+
+#container {
+  width: 95%;
+  grid-area: table;
+  justify-self: center;
+  margin: 0 0.5em;
+}
+
+#content {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+#content td,
+#content th {
+  border: 1px solid #000;
+  text-align: center;
+}
+
+#search {
+  grid-area: search;
+  align-self: center;
 }

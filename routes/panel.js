@@ -57,4 +57,26 @@ router.post("/create", function(req,res) {
     });
 });
 
+router.post("/find", function (req, res) {
+    let searchText = req.body.rma;
+    console.log(req.body)
+    let columns = "rma, producent, model, sn, sprzedaz, fv, opis";
+
+    RMA.findByCode(columns, searchText, function (err, data) {
+        if (err) {
+            if (err.kind === "not_found") {
+                res.json(data)
+                return;
+            } else {
+                res.status(500).json({
+                    message: "error while searching for rma"
+                });
+                return;
+            }
+        }
+        
+        res.json(data);
+    });
+});
+
 module.exports = router;
