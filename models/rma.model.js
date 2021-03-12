@@ -41,6 +41,24 @@ RMA.findByCode = function (columns, code, result) {
     });
 };
 
+RMA.findById = function (id, result) {
+    sql.query(`SELECT * FROM ZLECENIA WHERE id=${id}`, function (err, res) {
+        if (err) {
+            console.log("err: ", err);
+            result(err, null);
+            return;
+        }
+        
+        if(res.length) {
+            console.log("found rma: ", res[0]);
+            result(null, res);
+            return;
+        }
+        
+        result({kind: "not_found"}, null);
+    });
+};
+
 RMA.genUniqueCode = function (result) {
     function genRandomRMA() {
         let date = new Date();

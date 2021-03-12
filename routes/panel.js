@@ -79,4 +79,28 @@ router.post("/find", function (req, res) {
     });
 });
 
+router.get("/find/:id", function (req, res) {
+    if(!req.session.user) {
+        res.status(401).redirect("/")
+        return;
+    }
+    let id = req.params.id;
+
+    RMA.findById(id, function (err, data) {
+        if (err) {
+            if (err.kind == "not_found") {
+                res.send("not found");
+            } else {
+                res.status(500).send({
+                    message: "error while searching for rma"
+                });
+            }
+        }
+
+        let name = req.session.user.name;
+        let permissions = req.session.user.permissions;
+        res.render("rmaView", { title: "RMA view", name: name, permissions: permissions, rma: data });
+    })
+});
+
 module.exports = router;
