@@ -1,6 +1,8 @@
 $(function () {
     const tableHolder = $("#container")
     tableHolder.html(showTableHeader())
+    fetchContent("")
+
     function showTableHeader() {
         let table = document.createElement("table")
         table.id = "content"
@@ -38,18 +40,21 @@ $(function () {
         tableHolder.html(t)
     }
 
-    $("#search").submit(function (e) {
-        let rma = $("#rma").val()
+    function fetchContent(searchText) {
         fetch('http://localhost:3000/panel/find', {
             method: 'post',
             headers: {
                 'Accept': 'application/json, text/plain, */*',
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({rma: rma})
+            body: JSON.stringify({rma: searchText})
             }).then(res => res.json())
-            .then(res => { console.log(res); showContent(res)});
-        
+            .then(res => { showContent(res)});        
+    }
+
+    $("#search").submit(function (e) {
+        let rma = $("#rma").val()
+        fetchContent(rma);
         return false;
     })
 })

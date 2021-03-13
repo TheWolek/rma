@@ -24,7 +24,7 @@ RMA.create = function(newRMA, result) {
 };
 
 RMA.findByCode = function (columns, code, result) {
-    sql.query(`SELECT ${columns} FROM ZLECENIA WHERE rma like '${code}%'`, function(err, res) {
+    sql.query(`SELECT ${columns} FROM ZLECENIA WHERE rma like '${code}%' limit 15 offset 0`, function(err, res) {
         if(err) {
             console.log("error: ", err);
             result(err,null);
