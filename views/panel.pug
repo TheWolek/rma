@@ -3,8 +3,8 @@ extends layout
 block content 
     .panel 
         form(action="", method="post")#search
-            label(for="rma")
-            input#rma(type="text", name="rma")
+            label(for="rma") RMA:
+            input#rma(type="text", name="rma", autocomplete="off")
             input(type="submit", value="search") 
         block rmaView
         #container 

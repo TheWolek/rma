@@ -8,7 +8,7 @@ $(function () {
         table.id = "content"
         let headers = document.createElement("thead")
         let tr = document.createElement("tr")
-        let columns = ["nr zlecenia", "producent", "model", "SN"]
+        let columns = ["nr zlecenia", "typ", "status", "status realizacji", "producent", "model", "SN"]
 
         columns.forEach(col => {
             let th = document.createElement("th")
@@ -26,14 +26,63 @@ $(function () {
         let t = showTableHeader()
         data.forEach(item => {
             let row = document.createElement("tr")
+            let id = item.id
+            let tag = document.createElement("div")
             Object.keys(item).forEach(key => {
-                if (!["ID","sprzedaz","fv","opis"].includes(key)) {
+                if (!["id","sprzedaz","fv","opis","status","priorytet"].includes(key)) {
                     let cell = document.createElement("td")
                     let txt = document.createTextNode(item[key])
                     cell.appendChild(txt)
+                    if (key == "rma") {
+                        tag.id = "tag" + id
+                        tag.className = "tag"
+                        cell.appendChild(tag)
+                    }
                     row.appendChild(cell)
                 }
+
+                if (key == "status") {
+                    let cell = document.createElement("td")
+                    let txt 
+                    switch (item[key]) {
+                        case 1:
+                            txt = document.createTextNode("Otwarte")
+                            break
+                    
+                        case 2:
+                            txt = document.createTextNode("Zakończone")
+                            break
+                    }
+                    cell.appendChild(txt)
+                    row.appendChild(cell)
+                }
+
+                if (key == "priorytet") {
+                    let color
+                    console.log(item[key])
+
+                    switch (item[key]) {
+                        case "ponowna reklamacja":
+                            color = "cyan"
+                            break;
+                        case "szkoda transportowa":
+                            color = "pink"
+                            break;
+                        case "decyzja":
+                            color = "orange"
+                            break;
+                        case "naprawa płatna":
+                            color = "lightblue"
+                            break;
+                        default:
+                            color = "transparent"
+                            break;
+                    }
+                    tag.style.background = color
+                }
             })
+
+            row.id = id
             t.appendChild(row)
         })
         
@@ -49,12 +98,18 @@ $(function () {
             },
             body: JSON.stringify({rma: searchText})
             }).then(res => res.json())
-            .then(res => { showContent(res)});        
+            .then(res => { console.log(res); showContent(res)});
     }
 
     $("#search").submit(function (e) {
         let rma = $("#rma").val()
         fetchContent(rma);
         return false;
+    })
+
+    $("#rma").change(function (e) {
+        window.setTimeout(function () {
+            fetchContent($("#rma").val());
+        },800)
     })
 })
