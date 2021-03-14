@@ -36,11 +36,16 @@ $(function () {
                     if (!["id","sprzedaz","fv","opis","status","priorytet"].includes(key)) {
                         let cell = document.createElement("td")
                         let txt = document.createTextNode(item[key])
-                        cell.appendChild(txt)
                         if (key == "rma") {
                             tag.id = "tag" + id
                             tag.className = "tag"
                             cell.appendChild(tag)
+                            let a = document.createElement("a")
+                            a.appendChild(txt)
+                            a.href = "/panel/find/" + id
+                            cell.appendChild(a)
+                        } else {
+                            cell.appendChild(txt)
                         }
                         row.appendChild(cell)
                     }
