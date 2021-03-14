@@ -53,7 +53,7 @@ router.post("/create", function (req, res) {
 
     if (rma.producent == "" || rma.model == "" || rma.sn == "" || rma.sprzedaz == "" || rma.fv == "" || rma.opis == "" || rma.typ == "" || rma.priorytet == "") {
         let msg = "Uzupełnij pola"
-        res.render("panelCreate", {title: "Tworzenie zlecenia RMA", name: name, permissions: permissions, err: msg})
+        res.render("panelCreate", {title: "Tworzenie zlecenia RMA", name: name, permissions: permissions, err: msg, rma: rma})
         return;
     }
 

@@ -6,34 +6,67 @@ block content
             .deviceInfo
                 div
                     label(for="producent") Producent:
-                    input#producent(type="text", name="producent")
+                    if rma
+                        if rma.producent == "" 
+                            input#producent.bad(type="text", name="producent")
+                        else
+                            input#producent(type="text", name="producent", value=`${rma.producent}`)
+                    else
+                        input#producent(type="text", name="producent")
                 div
                     label(for="model") Model:
-                    input#model(type="text", name="model")
+                    if rma
+                        if rma.model == ""
+                            input#model.bad(type="text", name="model", value=`${rma.model}`)
+                        else
+                            input#model(type="text", name="model", value=`${rma.model}`)
+                    else 
+                        input#model(type="text", name="model")
                 div
                     label(for="SN") SN:
-                    input#SN(type="text", name="SN")
+                    if rma
+                        if rma.sn == ""
+                            input#SN.bad(type="text", name="SN", value=`${rma.sn}`)
+                        else
+                            input#SN(type="text", name="SN", value=`${rma.sn}`)
+                    else 
+                        input#SN(type="text", name="SN")
             .sprzedaz
                 div
                     label(for="sprzedaz") Sprzedaż (rrrr-mm-dd):
-                    input#sprzedaz(type="date", name="sprzedaz")
+                    if rma 
+                        if rma.sprzedaz == ""
+                            input#sprzedaz.bad(type="date", name="sprzedaz", value=`${rma.sprzedaz}`)
+                        else
+                            input#sprzedaz(type="date", name="sprzedaz", value=`${rma.sprzedaz}`)
+                    else
+                        input#sprzedaz(type="date", name="sprzedaz")
                 div
                     label(for="fv") nr. faktury:
-                    input#fv(type="text", name="fv")
+                    if rma 
+                        if rma.fv == ""
+                            input#fv.bad(type="text", name="fv", value=`${rma.fv}`)
+                        else
+                            input#fv(type="text", name="fv", value=`${rma.fv}`)
+                    else 
+                        input#fv(type="text", name="fv")
             .description 
                 .types
                     .selectWrap 
                         label(for="type") Typ zlecenia: 
                         select#type(name="type")
-                            //- each val in types
-                            //-     each typ, key in val
-                            //-         option(value=key) #{typ}
                     .selectWrap
                         label(for="prio") Priorytet zlecenia: 
                         select#prio(name="prio") 
                 div
                     label(for="opis") Opis zlecenia:
-                    textarea#opis(name="opis", cols="30", rows="10") 
+                    if rma 
+                        if rma.opis == "" || rma.opis == " "
+                            textarea#opis.bad(name="opis", cols="30", rows="10", value=`${rma.opis}`) 
+                        else
+                            textarea#opis(name="opis", cols="30", rows="10", value=`${rma.opis}`) 
+                    else
+                        textarea#opis(name="opis", cols="30", rows="10") 
             div.submitDiv
                 input(type="submit", value="Utwórz")
                 if err

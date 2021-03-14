@@ -162,5 +162,25 @@ $(function () {
                     prioSelect.append(option)
                 });
             });
+        
+        $("input[type='text']").each(function(item) {
+            $(this).change(e => {
+                if (this.value != "") {
+                    $(this).removeClass("bad")
+                }
+            })
+        })
+
+        $("#sprzedaz").change(e => {
+            if (this.value != "") {
+                $(this).removeClass("bad")
+            }
+        })
+
+        $("#opis").change(e => {
+            if (this.value != "") {
+                $(this).removeClass("bad")
+            }
+        })
     }
 })

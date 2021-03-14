@@ -227,6 +227,7 @@ nav {
   box-shadow: none;
   padding: 0.4em;
   font-size: 16px;
+  border-radius: 3px;
 }
 
 .createRMA input[type="submit"] {
@@ -291,6 +292,10 @@ nav {
 
 .createRMA div + div {
   margin-top: 15px;
+}
+
+.createRMA .bad {
+  background: rgb(210 74 74);
 }
 
 label + input,
