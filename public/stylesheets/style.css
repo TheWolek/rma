@@ -264,18 +264,29 @@ nav {
   flex-direction: row;
 }
 
-.createRMA .description .types > select {
-  display: block;
-  width: 20%;
-  padding: 0.2em;
+.types .selectWrap + * {
+  margin-left: 1em;
+  margin-top: 0;
 }
 
-.types > select + * {
-  margin-left: 1em;
+.types .selectWrap {
+  width: 25%;
+}
+
+.selectWrap select {
+  padding: .2em;
 }
 
 .createRMA .submitDiv {
   grid-area: submit;
+}
+
+.createRMA .submitDiv p {
+  text-align: center;
+  margin-top: 1em;
+  color: red;
+  font-weight: bold;
+  font-size: .9rem;
 }
 
 .createRMA div + div {

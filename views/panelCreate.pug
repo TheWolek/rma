@@ -22,14 +22,20 @@ block content
                     input#fv(type="text", name="fv")
             .description 
                 .types
-                    select#type(name="type")
-                        each val in types
-                            each typ, key in val
-                                option(value=key) #{typ}
-                    select#prio(name="prio") 
+                    .selectWrap 
+                        label(for="type") Typ zlecenia: 
+                        select#type(name="type")
+                            //- each val in types
+                            //-     each typ, key in val
+                            //-         option(value=key) #{typ}
+                    .selectWrap
+                        label(for="prio") Priorytet zlecenia: 
+                        select#prio(name="prio") 
                 div
                     label(for="opis") Opis zlecenia:
                     textarea#opis(name="opis", cols="30", rows="10") 
             div.submitDiv
-                input(type="submit", value="Create")
+                input(type="submit", value="Utwórz")
+                if err
+                    p #{err}
             

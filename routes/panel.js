@@ -19,34 +19,17 @@ router.get("/create", function(req,res) {
         return;
     }
 
-    RMA.getTypes(function (err, types_data) {
-        if (err) {
-            res.status(500).send({
-                message: "error while fetching types"
-            });
-        }
-
-        let name = req.session.user.name;
-        let permissions = req.session.user.permissions;
-        let types = [];
-
-        types_data.forEach(obj => {
-            let id = obj.id;
-            let val = obj.typ
-            let temp = {};
-            temp[id] = val;
-            types.push(temp);
-        });
-
-        res.render("panelCreate", {title: "Tworzenie zlecenia RMA", name: name, permissions: permissions, types: types})
-    });
+    let name = req.session.user.name;
+    let permissions = req.session.user.permissions;
+    res.render("panelCreate", {title: "Tworzenie zlecenia RMA", name: name, permissions: permissions})
 });
 
-router.post("/create", function(req,res) {
-    if(!req.body) {
+router.post("/create", function (req, res) {
+    if (!req.body) {
         res.status(400).send({
             message: "Content can not be empty"
         });
+        return;
     }
 
     const rma = new RMA({
@@ -58,6 +41,15 @@ router.post("/create", function(req,res) {
         opis: req.body.opis
     })
 
+    let name = req.session.user.name;
+    let permissions = req.session.user.permissions;
+
+    if (rma.producent == "" || rma.model == "" || rma.sn == "" || sprzedaz == "" || rma.fv == "" || rma.opis == "") {
+        let msg = "Uzupełnij pola"
+        res.render("panelCreate", {title: "Tworzenie zlecenia RMA", name: name, permissions: permissions, err: msg})
+        return;
+    }
+
     RMA.genUniqueCode(function (code) {
         rma.rma = code;
 
@@ -67,11 +59,31 @@ router.post("/create", function(req,res) {
                     message: err.message || "Error occured while creating the RMA"
                 });
             } else {
-                let name = req.session.user.name;
-                let permissions = req.session.user.permissions;
                 res.render("rmaView", { title: "rma view", name: name, permissions: permissions, rma: data });
             }
         });
+    });
+});
+
+router.post("/create/gettypes", function (req, res) {
+   RMA.getTypes(function (err, types_data) {
+        if (err) {
+            res.status(500).send({
+                message: "error while fetching types"
+            });
+        }
+
+        let types = [];
+
+        types_data.forEach(obj => {
+            let id = obj.id;
+            let val = obj.typ
+            let temp = {};
+            temp[id] = val;
+            types.push(temp);
+        });
+
+        res.json(types);
     });
 });
 
