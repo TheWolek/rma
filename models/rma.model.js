@@ -8,9 +8,11 @@ const RMA =function(rma) {
     this.sprzedaz = rma.sprzedaz;
     this.fv = rma.fv;
     this.opis = rma.opis;
+    this.typ = rma.typ;
+    this.priorytet = rma.priorytet;
 };
 
-RMA.create = function(newRMA, result) {
+RMA.create = function (newRMA, result) {
     sql.query("INSERT INTO ZLECENIA SET ?", newRMA, function(err,res) {
         if(err) {
             console.log("error: ",err);
@@ -51,7 +53,7 @@ RMA.findById = function (id, result) {
         
         if(res.length) {
             // console.log("found rma: ", res[0]);
-            result(null, res);
+            result(null, res[0]);
             return;
         }
         

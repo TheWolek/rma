@@ -143,5 +143,24 @@ $(function () {
                     typeSelect.append(option)
                 });
             });
+        
+        fetch('http://localhost:3000/panel/create/getprio', {
+                method: 'post',
+                headers: {
+                    'Accept': 'application/json, text/plain, */*',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({})
+                }).then(res => res.json())
+            .then(res => {
+                res.forEach((item, key) => {
+                    let option = document.createElement("option")
+                    key = key + 1
+                    let optionTxt = document.createTextNode(item[key])
+                    option.value = key
+                    option.appendChild(optionTxt)
+                    prioSelect.append(option)
+                });
+            });
     }
 })
