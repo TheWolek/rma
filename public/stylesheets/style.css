@@ -354,12 +354,20 @@ textarea:focus {
 }
 
 .rmaView {
-  position: absolute;
-  top: 2em;
-  left: 50vw;
   width: 70%;
-  transform: translateX(-50%);
+  min-height: 80vh;
   display: grid;
   background: rgb(0, 0, 0);
   padding: 2.5em;
+  grid-template-rows: 8% 1fr;
+  gap: .5em;
+}
+
+.rmaView .tile {
+  display: flex;
+  width: 20%;
+}
+
+.rmaView .tile p {
+  margin-left: .5em;
 }
