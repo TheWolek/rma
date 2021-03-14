@@ -89,4 +89,40 @@ RMA.genUniqueCode = function (result) {
     CheckIfUnique(b);
 };
 
+RMA.getTypes = function (result) {
+    sql.query(`SELECT * FROM typy_zlecen`, function (err, res) {
+        if (err) {
+            console.log("err: ", err);
+            result(err, null);
+            return;
+        }
+
+        result(null, res);
+    });
+};
+
+RMA.getPrio = function (result) {
+    sql.query(`SELECT * FROM typy_priorytet`, function (err, res) {
+        if (err) {
+            console.log("err: ", err);
+            result(err, null);
+            return;
+        }
+
+        result(null, res);
+    });
+};
+
+RMA.getStatuses = function (result) {
+    sql.query(`SELECT * FROM typy_statusy`, function (err, res) {
+        if (err) {
+            console.log("err: ", err);
+            result(err, null);
+            return;
+        }
+
+        result(null, res);
+    });
+};
+
 module.exports = RMA;
