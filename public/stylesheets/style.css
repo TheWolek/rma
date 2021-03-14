@@ -20,6 +20,7 @@ a {
   display: flex;
   justify-content: center;
   align-items: center;
+  position: relative;
 }
 
 .center {
@@ -202,9 +203,17 @@ nav {
 }
 
 .createRMA {
-  display: flex;
-  flex-direction: column;
-  width: 23vw;
+  display: grid;
+  width: 40vw;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: repeat(2, 30vh) 8vh;
+  position: absolute;
+  top: 0;
+  grid-template-areas:
+    "device purchase"
+    "desc desc"
+    "submit submit";
+  align-items: center;
 }
 
 .createRMA div {
@@ -236,22 +245,41 @@ nav {
   padding: 0.07em;
 }
 
-.sprzedaz div {
-  width: 45%;
+.createRMA .deviceInfo {
+  grid-area: device;
+}
+
+.createRMA .sprzedaz {
+  grid-area: purchase;
+  width: 70%;
+  justify-self: center;
+}
+
+.createRMA .description {
+  grid-area: desc;
+}
+
+.createRMA .description .types {
+  display: flex;
+  flex-direction: row;
+}
+
+.createRMA .description .types > select {
+  display: block;
+  width: 20%;
+  padding: 0.2em;
+}
+
+.types > select + * {
+  margin-left: 1em;
+}
+
+.createRMA .submitDiv {
+  grid-area: submit;
 }
 
 .createRMA div + div {
   margin-top: 15px;
-}
-
-.sprzedaz {
-  flex-direction: row !important;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.sprzedaz div {
-  margin-top: 0 !important;
 }
 
 label + input,

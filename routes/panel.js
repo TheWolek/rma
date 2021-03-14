@@ -19,9 +19,27 @@ router.get("/create", function(req,res) {
         return;
     }
 
-    let name = req.session.user.name;
-    let permissions = req.session.user.permissions;
-    res.render("panelCreate", {title: "Tworzenie zlecenia RMA", name: name, permissions: permissions})
+    RMA.getTypes(function (err, types_data) {
+        if (err) {
+            res.status(500).send({
+                message: "error while fetching types"
+            });
+        }
+
+        let name = req.session.user.name;
+        let permissions = req.session.user.permissions;
+        let types = [];
+
+        types_data.forEach(obj => {
+            let id = obj.id;
+            let val = obj.typ
+            let temp = {};
+            temp[id] = val;
+            types.push(temp);
+        });
+
+        res.render("panelCreate", {title: "Tworzenie zlecenia RMA", name: name, permissions: permissions, types: types})
+    });
 });
 
 router.post("/create", function(req,res) {

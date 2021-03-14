@@ -32,7 +32,7 @@ RMA.findByCode = function (code, result) {
         }
 
         if(res.length) {
-            console.log("found rma: ", res);
+            // console.log("found rma: ", res);
             result(null, res);
             return;
         }
@@ -50,7 +50,7 @@ RMA.findById = function (id, result) {
         }
         
         if(res.length) {
-            console.log("found rma: ", res[0]);
+            // console.log("found rma: ", res[0]);
             result(null, res);
             return;
         }
