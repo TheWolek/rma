@@ -3,6 +3,7 @@ $(function () {
     //##### /PANEL #########
     //######################
     if (window.location.pathname == "/panel" || window.location.pathname == "/panel/") {
+        let modalOpened = false;
         const tableHolder = $("#container")
         tableHolder.html(showTableHeader())
         fetchContent("")
@@ -42,7 +43,9 @@ $(function () {
                             cell.appendChild(tag)
                             let a = document.createElement("a")
                             a.appendChild(txt)
-                            a.href = "/panel/find/" + id
+                            //a.href = "/panel/find/" + id
+                            a.href = "#"
+                            a.onclick = () => { openModal(id) }
                             cell.appendChild(a)
                         } else {
                             cell.appendChild(txt)
@@ -68,7 +71,6 @@ $(function () {
 
                     if (key == "priorytet") {
                         let color
-                        console.log(item[key])
 
                         switch (item[key]) {
                             case "ponowna reklamacja":
@@ -107,20 +109,47 @@ $(function () {
                 },
                 body: JSON.stringify({rma: searchText})
                 }).then(res => res.json())
-                .then(res => { console.log(res); showContent(res)});
+                .then(res => { showContent(res)})
         }
 
         $("#search").submit(function (e) {
             let rma = $("#rma").val()
-            fetchContent(rma);
-            return false;
+            fetchContent(rma)
+            return false
         })
 
         $("#rma").change(function (e) {
             window.setTimeout(function () {
-                fetchContent($("#rma").val());
+                fetchContent($("#rma").val())
             },800)
         })
+
+        function openModal(id) {
+            if (modalOpened) return false;
+
+            modalOpened = !modalOpened
+            fetch('http://localhost:3000/panel/find/'+id, {
+                method: 'get',
+                headers: {
+                    'Accept': 'application/json, text/plain, */*',
+                    'Content-Type': 'application/json'
+                }
+                }).then(res => res.json())
+                .then(res => {
+                    console.log(res)
+                    $("#modal").css("display","block")
+                    return true
+                })
+        }
+
+        function closeModal() {
+            if (!modalOpened) return false
+            modalOpened = !modalOpened
+
+            $("#modal").css("display","none")
+            return true;
+        }
+
     }
 
     //#######################

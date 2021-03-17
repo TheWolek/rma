@@ -147,23 +147,26 @@ router.get("/find/:id", function (req, res) {
     RMA.findById(id, function (err, data) {
         if (err) {
             if (err.kind == "not_found") {
-                res.send("not found");
+                res.json({
+                    message: "not found"
+                });
             } else {
-                res.status(500).send({
+                res.status(500).json({
                     message: "error while searching for rma"
                 });
             }
         }
 
-        let name = req.session.user.name;
-        let permissions = req.session.user.permissions;
-        let date = new Date(data.sprzedaz);
-        let day = date.getDate()
-        let month = date.getMonth() + 1
-        if(day < 10) day = "0" + day
-        if(month < 10) month = "0" + month
-        data.sprzedaz = date.getFullYear() + "-" + month + "-" + day;
-        res.render("rmaView", { title: "RMA view", name: name, permissions: permissions, rma: data });
+        // let name = req.session.user.name;
+        // let permissions = req.session.user.permissions;
+        // let date = new Date(data.sprzedaz);
+        // let day = date.getDate()
+        // let month = date.getMonth() + 1
+        // if(day < 10) day = "0" + day
+        // if(month < 10) month = "0" + month
+        // data.sprzedaz = date.getFullYear() + "-" + month + "-" + day;
+        // res.render("rmaView", { title: "RMA view", name: name, permissions: permissions, rma: data });
+        res.json(data);
     })
 });
 
