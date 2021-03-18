@@ -148,10 +148,20 @@ $(function () {
                 }).then(res => res.json())
                 .then(res => {
                     console.log(res)
+
                     if (modalInit) {
                         $("#closeDiv").click(() => { closeModal() })
                         modalInit = false;
                     }
+
+                    $("#rma").html(res.rma)
+                    $("#producent").html(res.producent)
+                    $("#model").html(res.model)
+                    $("#sn").html(res.sn)
+                    $("#sprzedaz").html(res.sprzedaz)
+                    $("#fv").html(res.fv)
+                    $("#opis").html(res.opis)
+
                     $("#modal").css("display","block")
                     return true
                 })

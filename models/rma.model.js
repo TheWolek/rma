@@ -44,7 +44,7 @@ RMA.findByCode = function (code, result) {
 };
 
 RMA.findById = function (id, result) {
-    sql.query(`SELECT * FROM ZLECENIA WHERE id=${id}`, function (err, res) {
+    sql.query(`SELECT ZLECENIA.id, zlecenia.rma, typy_priorytet.priorytet, typy_zlecen.typ, zlecenia.status, typy_statusy.status as status_zlecenia, zlecenia.producent, zlecenia.model, zlecenia.sn, zlecenia.sprzedaz, zlecenia.fv, zlecenia.opis FROM ZLECENIA, typy_statusy, typy_zlecen, typy_priorytet WHERE ZLECENIA.id = ${id} and ZLECENIA.status_realizacji = typy_statusy.id and ZLECENIA.typ = typy_zlecen.id and ZLECENIA.priorytet = typy_priorytet.id`, function (err, res) {
         if (err) {
             console.log("err: ", err);
             result(err, null);
