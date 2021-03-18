@@ -1,9 +1,9 @@
 $(function () {
+    
     //######################
     //##### /PANEL #########
     //######################
     if (window.location.pathname == "/panel" || window.location.pathname == "/panel/") {
-        let modalOpened = false;
         const tableHolder = $("#container")
         tableHolder.html(showTableHeader())
         fetchContent("")
@@ -124,6 +124,17 @@ $(function () {
             },800)
         })
 
+        let modalOpened = false;
+        let modalInit = true;
+
+        function closeModal() {
+            if (!modalOpened) return false
+            modalOpened = !modalOpened
+
+            $("#modal").css("display","none")
+            return true;
+        }
+
         function openModal(id) {
             if (modalOpened) return false;
 
@@ -137,20 +148,16 @@ $(function () {
                 }).then(res => res.json())
                 .then(res => {
                     console.log(res)
+                    if (modalInit) {
+                        $("#closeDiv").click(() => { closeModal() })
+                        modalInit = false;
+                    }
                     $("#modal").css("display","block")
                     return true
                 })
         }
-
-        function closeModal() {
-            if (!modalOpened) return false
-            modalOpened = !modalOpened
-
-            $("#modal").css("display","none")
-            return true;
-        }
-
     }
+
 
     //#######################
     // /PANEL/CREATE
