@@ -52,5 +52,18 @@ router.put("/changeshelve", (req, res) => {
     })
 })
 
+router.delete("/", (req, res) => {
+    // recive barcode in format "ticket_id/name/category" and current shelve
+    // returns
+    let ticket_id = req.body.barcode.split("/")[0]
+    let current = req.body.shelve
+
+    let sql = `DELETE FROM items WHERE ticket_id = ${ticket_id} AND shelve = ${current}`
+    connection.query(sql, function (err, result) {
+        if (err) throw err;
+        if (result.affectedRows == 0) return res.status(404).send()
+        res.status(200).json({ ticket_id: ticket_id, shelve: current })
+    })
+})
 
 module.exports = router
