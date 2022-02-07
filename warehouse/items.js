@@ -34,21 +34,30 @@ router.get("/", (req, res) => {
 })
 
 router.put("/changeshelve", (req, res) => {
-    // recive barcode in format "ticket_id/name/category", destination shelve and current shelve
+    // recive barcodes in format ["ticket_id/name/category",...], destination shelve and current shelve
     // if current and destiantion sheleve are equal returns 400
     // if no rows were changes return 404
     // returns 200 with ticket_id, new_shelve id
-    let ticket_id = req.body.barcode.split("/")[0]
+    let ticket_id_arr = req.body.barcodes.map((el) => {
+        return el.split("/")[0]
+    })
     let dest = req.body.new_shelve
     let current = req.body.shelve
 
     if (dest == current) return res.status(400).send()
 
-    let sql = `UPDATE items SET shelve = ${dest} WHERE ticket_id = ${ticket_id}`
+    let ticket_idParsed = "("
+    ticket_id_arr.forEach((el, index) => {
+        ticket_idParsed += el
+        if (index != ticket_id_arr.length - 1) ticket_idParsed += ", ";
+    })
+    ticket_idParsed += ")"
+
+    let sql = `UPDATE items SET shelve = ${dest} WHERE ticket_id in ${ticket_idParsed} AND shelve = ${current}`
     connection.query(sql, function (err, result) {
         if (err) throw err;
         if (result.changedRows == 0) return res.status(404).send()
-        res.status(200).json({ ticket_id: ticket_id, new_shelve: dest })
+        res.status(200).json({ ticket_id_arr: ticket_id_arr, new_shelve: dest })
     })
 })
 
