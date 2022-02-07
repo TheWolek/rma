@@ -33,8 +33,22 @@ router.get("/", (req, res) => {
     })
 })
 
+router.get("/shelve", (req, res) => {
+    // recive shelve id in req.params
+    // if nothing was found return 404
+    // reutns 200 with array of all items in shelve
+    let shelve = req.query.shelve
+    let sql = `SELECT ticket_id, name, category, tags FROM items WHERE shelve = ${shelve}`
+
+    connection.query(sql, function (err, rows) {
+        if (err) throw err;
+        if (rows.length == 0) return res.status(404).send()
+        res.status(200).json(rows)
+    })
+})
+
 router.put("/changeshelve", (req, res) => {
-    // recive barcodes in format ["ticket_id/name/category",...], destination shelve and current shelve
+    // recive barcodes in format ["ticket_id/name/category",...], destination shelve id and current shelve id
     // if current and destiantion sheleve are equal returns 400
     // if no rows were changes return 404
     // returns 200 with ticket_id, new_shelve id
