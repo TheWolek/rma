@@ -22,10 +22,15 @@ router.post("/", (req, res) => {
 router.get("/", (req, res) => {
     // recive barcode in format "ticket_id/name/category"
     // if nothing was found return 404 status
-    // returns 200 with first result
-    let data = req.body.barcode.split("/")
+    // returns 200 with first row
+    let sql, data
+    let mode = 0
+    if (req.body.barcode) {
+        data = req.body.barcode.split("/")[0];
+        sql = `SELECT item_id, name, shelve, category, ticket_id FROM items WHERE ticket_id = ${data}`
+        mode = 1
+    }
 
-    let sql = `SELECT item_id, name, shelve, tags, category, ticket_id FROM items WHERE ticket_id = ${data[0]}`
     connection.query(sql, function (err, rows) {
         if (err) throw err;
         if (rows.length == 0) return res.status(404).send()
@@ -38,7 +43,7 @@ router.get("/shelve", (req, res) => {
     // if nothing was found return 404
     // reutns 200 with array of all items in shelve
     let shelve = req.query.shelve
-    let sql = `SELECT ticket_id, name, category, tags FROM items WHERE shelve = ${shelve}`
+    let sql = `SELECT ticket_id, name, category FROM items WHERE shelve = ${shelve}`
 
     connection.query(sql, function (err, rows) {
         if (err) throw err;
