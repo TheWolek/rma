@@ -75,9 +75,12 @@ router.get("/", (req, res) => {
 //find items in specific shelve
 router.get("/shelve", (req, res) => {
     // recive shelve id in req.params
-    // if nothing was found return 404
+    // return 400 if shelve is empty
+    // return 404 if nothing was found 
     // reutns 200 with array of all items in shelve
     if (!req.query.shelve) return res.status(400).json({ "message": "pole shelve jest wymagne" })
+    const reg = /^(\d{1,})$/
+    if (!reg.test(req.query.shelve)) return res.status(400).json({ "message": "nieprawidłowy format pola shelve" })
 
     let shelve = req.query.shelve
     let sql = `SELECT ticket_id, name, category FROM items WHERE shelve = ${shelve}`
