@@ -14,10 +14,9 @@ function checkBarcode(barcode) {
 // register new item in warehouse
 router.post("/", (req, res) => {
     // recive barcode in format "ticket_id-name-category"
-    // return {inserted id, ticket id, shelve id}
+    // return 400 if barcode is empty of barcode does not match regEx
+    // return 200 {inserted id, ticket id, shelve id}
     if (!req.body.barcode) return res.status(400).json({ "message": "pole barcode jest wymagane" })
-
-
     if (!checkBarcode(req.body.barcode)) return res.status(400).json({ "message": "nieprawidłowy format pola barcode" })
 
     let data = req.body.barcode.split("-")
@@ -35,11 +34,14 @@ router.post("/", (req, res) => {
 //check if item with specific ticket_id is registered in warehouse
 router.get("/exists", (req, res) => {
     // recive barcode in format "ticket-id-name-category"
-    // if nothing was found return 404 with found: False
+    // return 400 if barcode is empty or barcode does not match regEx
+    // return 404 with {found: False} if nothing was found
     // returns 200 with found: True
     if (!req.query.barcode) return res.status(400).json({ "message": "pole barcode jest wymagane" })
+    if (!checkBarcode(req.query.barcode)) return res.status(400).json({ "message": "nieprawidłowy format pola barcode" })
 
     let data = req.query.barcode.split("-")[0]
+
     let sql = `SELECT item_id FROM items WHERE ticket_id = ${data}`
 
     connection.query(sql, function (err, rows) {
