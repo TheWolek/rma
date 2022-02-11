@@ -60,6 +60,7 @@ router.put("/changeshelve", (req, res) => {
     // recive barcodes in format ["ticket_id/name/category",...], destination shelve id and current shelve id
     // if current and destiantion sheleve are equal returns 400
     // if no rows were changes return 404
+    // if number of rows changed is diffrent from number of barcodes return 404 with message
     // returns 200 with ticket_id, new_shelve id
     let ticket_id_arr = req.body.barcodes.map((el) => {
         return el.split("/")[0]
@@ -80,6 +81,7 @@ router.put("/changeshelve", (req, res) => {
     connection.query(sql, function (err, result) {
         if (err) throw err;
         if (result.changedRows == 0) return res.status(404).send()
+        if (result.changedRows != ticket_id_arr.length) return res.status(404).send()
         res.status(200).json({ ticket_id_arr: ticket_id_arr, new_shelve: dest })
     })
 })
