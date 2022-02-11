@@ -7,7 +7,7 @@ const connection = mysql.createConnection(creds)
 connection.connect()
 
 function checkBarcode(barcode) {
-    const reg = /^(\d{1,})-([A-ż(),.]{1,})([1-9]{1,})-([A-z(),.]{1,})([1-9]{1,})$/
+    const reg = /^(\d{1,})-([A-ż(),. 0-9]{1,})-([A-z(),. 0-9]{1,})$/
     return reg.test(barcode)
 }
 
@@ -55,9 +55,12 @@ router.get("/exists", (req, res) => {
 //find item by ticket_id
 router.get("/", (req, res) => {
     // recive barcode in format "ticket_id-name-category"
-    // if nothing was found return 404 status
-    // returns 200 with first row
+    // return 400 if barcode is empty OR barcode does not match regEx
+    // return 404 if nothing was found 
+    // return 500 if there was DB error
+    // returns 200 with first row object {item_id: int, name: string, shelve: int, category: string, ticket_id: int}
     if (!req.query.barcode) return res.status(400).json({ "message": "pole barcode jest wymagane" })
+    if (!checkBarcode(req.query.barcode)) return res.status(400).json({ "message": "nieprawidłowy format pola barcode" })
 
     let data = req.query.barcode.split("-")[0];
     let sql = `SELECT item_id, name, shelve, category, ticket_id FROM items WHERE ticket_id = ${data}`
