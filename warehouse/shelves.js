@@ -16,4 +16,13 @@ router.post("/add", (req, res) => {
     })
 })
 
+router.get("/", (req, res) => {
+    let sql = `SELECT shelve_id, code FROM shelves`
+
+    connection.query(sql, function (err, rows) {
+        if (err) throw err;
+        res.status(200).json(rows)
+    })
+})
+
 module.exports = router
