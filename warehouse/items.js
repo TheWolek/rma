@@ -19,7 +19,10 @@ router.post("/", (req, res) => {
 
     let sql = `INSERT INTO items (name, category, ticket_id, shelve) VALUES ("${data[1]}", "${data[2]}", ${data[0]}, 0)`
     connection.query(sql, function (err, result) {
-        if (err) return res.status(500).json(err);
+        if (err) {
+            if (err.code == "ER_DUP_ENTRY") return res.status(400).json({ "message": "produkt z podanym ticket id został już zarejestrowany" })
+            return res.status(500).json(err)
+        };
         res.status(200).json({ id: result.insertId, ticket_id: data[0], shelve: 0 })
     })
 })
