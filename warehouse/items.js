@@ -8,9 +8,9 @@ connection.connect()
 
 // register new item in warehouse
 router.post("/", (req, res) => {
-    // recive barcode in format "ticket_id/name/category"
+    // recive barcode in format "ticket_id-name-category"
     // return {inserted id, ticket id, shelve id}
-    let data = req.body.barcode.split("/")
+    let data = req.body.barcode.split("-")
 
     let sql = `INSERT INTO items (name, category, ticket_id, shelve) VALUES ("${data[1]}", "${data[2]}", ${data[0]}, 0)`
     connection.query(sql, function (err, result) {
@@ -22,16 +22,11 @@ router.post("/", (req, res) => {
 
 //find item by ticket_id
 router.get("/", (req, res) => {
-    // recive barcode in format "ticket_id/name/category"
+    // recive barcode in format "ticket_id-name-category"
     // if nothing was found return 404 status
     // returns 200 with first row
-    let sql, data
-    let mode = 0
-    if (req.body.barcode) {
-        data = req.body.barcode.split("/")[0];
-        sql = `SELECT item_id, name, shelve, category, ticket_id FROM items WHERE ticket_id = ${data}`
-        mode = 1
-    }
+    let data = req.query.barcode.split("-")[0];
+    let sql = `SELECT item_id, name, shelve, category, ticket_id FROM items WHERE ticket_id = ${data}`
 
     connection.query(sql, function (err, rows) {
         if (err) throw err;
@@ -57,13 +52,13 @@ router.get("/shelve", (req, res) => {
 
 //change shelve of registered item
 router.put("/changeshelve", (req, res) => {
-    // recive barcodes in format ["ticket_id/name/category",...], destination shelve id and current shelve id
+    // recive barcodes in format ["ticket_id-name-category",...], destination shelve id and current shelve id
     // if current and destiantion sheleve are equal returns 400
     // if no rows were changes return 404
     // if number of rows changed is diffrent from number of barcodes return 404 with message
     // returns 200 with ticket_id, new_shelve id
     let ticket_id_arr = req.body.barcodes.map((el) => {
-        return el.split("/")[0]
+        return el.split("-")[0]
     })
     let dest = req.body.new_shelve
     let current = req.body.shelve
@@ -88,9 +83,9 @@ router.put("/changeshelve", (req, res) => {
 
 //delete specific item by ticket_id
 router.delete("/", (req, res) => {
-    // recive barcode in format "ticket_id/name/category" and current shelve
+    // recive barcode in format "ticket_id-name-category" and current shelve
     // returns
-    let ticket_id = req.body.barcode.split("/")[0]
+    let ticket_id = req.body.barcode.split("-")[0]
     let current = req.body.shelve
 
     let sql = `DELETE FROM items WHERE ticket_id = ${ticket_id} AND shelve = ${current}`
