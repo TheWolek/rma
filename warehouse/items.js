@@ -6,6 +6,7 @@ const connection = mysql.createConnection(creds)
 
 connection.connect()
 
+// register new item in warehouse
 router.post("/", (req, res) => {
     // recive barcode in format "ticket_id/name/category"
     // return {inserted id, ticket id, shelve id}
@@ -19,6 +20,7 @@ router.post("/", (req, res) => {
 
 })
 
+//find item by ticket_id
 router.get("/", (req, res) => {
     // recive barcode in format "ticket_id/name/category"
     // if nothing was found return 404 status
@@ -38,6 +40,7 @@ router.get("/", (req, res) => {
     })
 })
 
+//find items in specific shelve
 router.get("/shelve", (req, res) => {
     // recive shelve id in req.params
     // if nothing was found return 404
@@ -52,6 +55,7 @@ router.get("/shelve", (req, res) => {
     })
 })
 
+//change shelve of registered item
 router.put("/changeshelve", (req, res) => {
     // recive barcodes in format ["ticket_id/name/category",...], destination shelve id and current shelve id
     // if current and destiantion sheleve are equal returns 400
@@ -80,6 +84,7 @@ router.put("/changeshelve", (req, res) => {
     })
 })
 
+//delete specific item by ticket_id
 router.delete("/", (req, res) => {
     // recive barcode in format "ticket_id/name/category" and current shelve
     // returns

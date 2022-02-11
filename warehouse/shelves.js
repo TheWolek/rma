@@ -6,6 +6,7 @@ const connection = mysql.createConnection(creds)
 
 connection.connect()
 
+//add shelve
 router.post("/add", (req, res) => {
     let code = req.body.code
     let sql = `INSERT INTO shelves (code) VALUES ("${code}")`
@@ -16,6 +17,7 @@ router.post("/add", (req, res) => {
     })
 })
 
+//get all shelves
 router.get("/", (req, res) => {
     let sql = `SELECT shelve_id, code FROM shelves`
 
