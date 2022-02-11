@@ -9,7 +9,7 @@ const warehouseShelves = require('./warehouse/shelves')
 
 // app.use(cors)
 app.use(bodyParser.json())
-app.use('/warehouse/item', warehouseItems)
+app.use('/warehouse/items', warehouseItems)
 app.use('/warehouse/shelve', warehouseShelves)
 
 app.get('/', (req, res) => {
