@@ -20,6 +20,22 @@ router.post("/", (req, res) => {
 
 })
 
+//check if item with specific ticket_id is registered in warehouse
+router.get("/exists", (req, res) => {
+    // recive barcode in format "ticket-id-name-category"
+    // if nothing was found return 404 with found: False
+    // returns 200 with found: True
+    let data = req.query.barcode.split("-")[0]
+    let sql = `SELECT item_id FROM items WHERE ticket_id = ${data}`
+
+    connection.query(sql, function (err, rows) {
+        if (err) throw err;
+        if (rows.length == 0) return res.status(404).json({ found: false })
+        return res.json({ found: true })
+
+    })
+})
+
 //find item by ticket_id
 router.get("/", (req, res) => {
     // recive barcode in format "ticket_id-name-category"
