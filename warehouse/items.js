@@ -6,14 +6,19 @@ const connection = mysql.createConnection(creds)
 
 connection.connect()
 
+function checkBarcode(barcode) {
+    const reg = /^(\d{1,})-([A-ż(),.]{1,})([1-9]{1,})-([A-z(),.]{1,})([1-9]{1,})$/
+    return reg.test(barcode)
+}
+
 // register new item in warehouse
 router.post("/", (req, res) => {
     // recive barcode in format "ticket_id-name-category"
     // return {inserted id, ticket id, shelve id}
     if (!req.body.barcode) return res.status(400).json({ "message": "pole barcode jest wymagane" })
 
-    const reg = /^(\d{1,})-([A-ż(),.]{1,})([1-9]{1,})-([A-z(),.]{1,})([1-9]{1,})$/
-    if (!reg.test(req.body.barcode)) return res.status(400).json({ "message": "nieprawidłowy format pola barcode" })
+
+    if (!checkBarcode(req.body.barcode)) return res.status(400).json({ "message": "nieprawidłowy format pola barcode" })
 
     let data = req.body.barcode.split("-")
 
