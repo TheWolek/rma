@@ -67,8 +67,23 @@ router.get("/", (req, res) => {
 
     connection.query(sql, function (err, rows) {
         if (err) return res.status(500).json(err);
-        if (rows.length == 0) return res.status(404).send()
+        if (rows.length == 0) return res.status(404).json({ "message": "nie znaleziono przedmiotu o podanym ticket id" })
         res.status(200).json(rows[0])
+    })
+})
+
+//counts all items in warehouse
+router.get("/countall", (req, res) => {
+    // return 404 if there is no items
+    // return 500 if there was DB error
+    // return 200 with {"productCount": INT}
+
+    let sql = `SELECT count(item_id) as 'count' FROM items`
+
+    connection.query(sql, function (err, rows) {
+        if (err) return res.status(500).json(err)
+        if (rows[0].count == 0) return res.status(404).json({ "message": "brak przedmiotów na magazynie" })
+        res.status(200).json({ "productCount": rows[0].count })
     })
 })
 
