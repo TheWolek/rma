@@ -147,15 +147,24 @@ router.put("/changeshelve", (req, res) => {
 
 //delete specific item by ticket_id
 router.delete("/", (req, res) => {
-    // recive barcode in format "ticket_id-name-category" and current shelve
-    // returns
+    // recive barcode in format "ticket_id-name-category" and current shelve INT
+    // return 400 if barcode OR shelve is empty
+    // return 400 if barcode OR shelve does not match regEx
+    // return 404 if nothing was deleted = cannot find specific item
+    // return 500 if there was DB error
+    // return 200 with {ticket_id: INT, shelve: INT}
+    if (!req.body.barcode) return res.status(400).json({ "message": "pole barcode jest wymagane" })
+    if (!req.body.shelve && req.body.shelve != 0) return res.status(400).json({ "message": "pole shelve jest wymagane" })
+
+    if (!checkBarcode(req.body.barcode)) return res.status(400).json({ "message": "nieprawidłowy format pola barcode" })
+
     let ticket_id = req.body.barcode.split("-")[0]
     let current = req.body.shelve
 
     let sql = `DELETE FROM items WHERE ticket_id = ${ticket_id} AND shelve = ${current}`
     connection.query(sql, function (err, result) {
-        if (err) throw err;
-        if (result.affectedRows == 0) return res.status(404).send()
+        if (err) return res.status(500).json(err);
+        if (result.affectedRows == 0) return res.status(404).json({ "message": "nie można znaleźć wskazanego produktu na magazynie. Nic nie zostało usunięte" })
         res.status(200).json({ ticket_id: ticket_id, shelve: current })
     })
 })
