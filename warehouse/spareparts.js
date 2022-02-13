@@ -60,7 +60,7 @@ router.post("/orders", (req, res) => {
     let date = req.body.exp_date.substring(0, 10)
 
     let sql_findCategory = `SELECT part_cat_id FROM spareparts_cat WHERE part_cat_id = ${req.body.category_id}`
-    let sql_insertOrder = `INSERT INTO spareparts_orders (part_cat_id, amount, expected_date) VALUES (${req.body.category_id}, ${req.body.amount}, "${date}")`
+    let sql_insertOrder = `INSERT INTO spareparts_orders (part_cat_id, amount, expected_date, status) VALUES (${req.body.category_id}, ${req.body.amount}, "${date}", 0)`
 
     let findCategory = new Promise((resolve, reject) => {
         connection.query(sql_findCategory, (err, rows) => {
@@ -80,6 +80,30 @@ router.post("/orders", (req, res) => {
             if (err) return res.status(500).json(err)
             res.status(200).json({ order_id: result.insertId })
         })
+    })
+})
+
+//change order status
+router.put("/orders", (req, res) => {
+    // recive {"order_id": INT, "status": INT}
+    // return 400 if any of parameters is missing OR empty OR does not match regEx
+    // return 404 if cannot find specific order
+    // return 500 if there was DB error
+    // return 200 on success
+
+    if (!req.body.order_id) return res.status(400).json({ "message": "pole order_id jest wymagane" })
+    if (!req.body.status && !req.body.status == 0) return res.status(400).json({ "message": "pole status jest wymagane" })
+
+    const reg = /^([0-9]{1,})$/
+
+    if (!reg.test(req.body.order_id)) return res.status(400).json({ "message": "nieprawidłowy format pola order_id" })
+    if (!reg.test(req.body.status)) return res.status(400).json({ "message": "nieprawidłowy format pola status" })
+
+    let sql = `UPDATE spareparts_orders SET status = ${req.body.status} WHERE part_order_id = ${req.body.order_id}`
+
+    connection.query(sql, (err, result) => {
+        if (err) return res.status(500).json(err)
+        res.status(200).send()
     })
 })
 
