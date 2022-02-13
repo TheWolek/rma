@@ -20,14 +20,14 @@ router.post("/add/new", (req, res) => {
 
     const regName = /^([A-ż,. ()0-9'"-]{1,})$/
     // const regSN = /^([0-9-]{1,})$/
-    const regCatProd = /^([A-ż ]{1,})$/
+    const regCatProd = /^([A-ż 0-9'"]{1,})$/
 
     if (!regName.test(req.body.name)) return res.status(400).json({ "message": "nieprawidłowy format pola name" })
     // if (!regSN.test(req.body.sn)) return res.status(400).json({ "message": "nieprawidłowy format pola sn" })
     if (!regCatProd.test(req.body.category)) return res.status(400).json({ "message": "nieprawidłowy format pola category" })
     if (!regCatProd.test(req.body.producer)) return res.status(400).json({ "message": "nieprawidłowy format pola producer" })
 
-    let sql = `INSERT INTO spareparts (name, category, producer) VALUES ('${req.body.name}','${req.body.category}','${req.body.producer}')`
+    let sql = `INSERT INTO spareparts_cat (name, category, producer) VALUES ('${req.body.name}','${req.body.category}','${req.body.producer}')`
 
     connection.query(sql, function (err, result) {
         if (err) {
