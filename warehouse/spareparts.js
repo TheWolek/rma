@@ -64,9 +64,13 @@ router.post("/orders", (req, res) => {
 
     let findCategory = new Promise((resolve, reject) => {
         connection.query(sql_findCategory, (err, rows) => {
-            if (err) return res.status(500).json(err)
+            if (err) reject(err)
             resolve(rows)
         })
+    })
+
+    findCategory.catch((err) => {
+        return res.status(500).json(err)
     })
 
     findCategory.then((data) => {
