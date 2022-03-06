@@ -6,8 +6,59 @@ const connection = mysql.createConnection(creds)
 
 connection.connect()
 
+//removes specified amount of specified part
 router.post("/use", (req, res) => {
+    // recive {"part_id": INT, "amount": INT, "shelve": INT}
+    // return 400 if any of parameters is missing OR is empty OR does not match regEx
+    // return 400 if registered amount is fewer than requested
+    // return 404 if cannot find specific part
+    // return 500 if there was DB error
+    // return 200 on success
 
+    if (!req.body.part_id || req.body.part_id == 0) return res.status(400).json({ "message": "pole part_id jest wymagane" })
+    if (!req.body.amount || req.body.amount == 0) return res.status(400).json({ "message": "pole amount jest wymagane" })
+    if (!req.body.shelve || req.body.shelve == 0) return res.status(400).json({ "message": "pole shelve jest wymagane" })
+
+    let part_id = req.body.part_id
+    let amount = req.body.amount
+    let shelve = req.body.shelve
+
+    const reg = /^([1-9]){1,}([0-9]){0,}$/
+
+    if (!reg.test(part_id)) return res.status(400).json({ "message": "nieprawidłowy format pola part_id" })
+    if (!reg.test(amount)) return res.status(400).json({ "message": "nieprawidłowy format pola amount" })
+    if (!reg.test(shelve)) return res.status(400).json({ "message": "nieprawidłowy format pola shelve" })
+
+    function checkPartAmount(part_id, shelve) {
+        return new Promise(function (resolve, reject) {
+            let sql = `select part_id, amount, shelve from spareparts where part_id = ${part_id} and shelve = ${shelve}`
+            connection.query(sql, function (err, rows) {
+                if (err) return reject(err);
+                resolve(rows)
+            })
+        })
+    }
+
+    checkPartAmount(part_id, shelve).then(function (rows) {
+        if (rows.length == 0) return res.status(404).json({ "message": "nie znaleziono wskazanej części" })
+        if (rows[0].amount < amount) return res.status(400).json({ "message": "na wskazanej półce znajduje się za mało sztuk wskazanej części" })
+
+        let newAmount = rows[0].amount - amount
+
+        if (newAmount == 0) {
+            let sql = `delete from spareparts where part_id = ${part_id} and shelve = ${shelve}`
+            connection.query(sql, (err, result) => {
+                if (err) return res.status(500).json(err)
+                return res.status(200).send()
+            })
+        } else {
+            let sql = `update spareparts set amount = ${newAmount} where part_id = ${part_id} and shelve = ${shelve}`
+            connection.query(sql, (err, result) => {
+                if (err) return res.status(500).json(err)
+                return res.status(200).send()
+            })
+        }
+    })
 })
 
 //find data about stock of specific parts
