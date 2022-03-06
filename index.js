@@ -6,12 +6,15 @@ const port = 3000
 
 const warehouseItems = require('./warehouse/items')
 const warehouseShelves = require('./warehouse/shelves')
+
 const spareParts = require('./warehouse/spareparts')
+const sparePartsAdd = require('./warehouse/spareparts/add')
 
 // app.use(cors)
 app.use(bodyParser.json())
 app.use('/warehouse/items', warehouseItems)
 app.use('/warehouse/shelve', warehouseShelves)
+app.use('/warehouse/spareparts/add', sparePartsAdd)
 app.use('/warehouse/spareparts', spareParts)
 
 app.get('/', (req, res) => {
