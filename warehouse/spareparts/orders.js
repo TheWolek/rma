@@ -19,7 +19,7 @@ router.post("/", (req, res) => {
     if (!req.body.exp_date) return res.status(400).json({ "message": "pole exp_date jest wymagane" })
 
     const regCatAmount = /^([1-9]{1,})([0-9]*)$/
-    const regDate = /^([1-9]{1})([0-9]{3})-([0-9]{2})-([0-9]{2})T([0-9]{2}):([0-9]{2}):([0-9]{2})\.([0-9]{3})Z$/
+    const regDate = /^([1-9]{1})([0-9]{3})-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([0-9]{2}):([0-9]{2}):([0-9]{2})\.([0-9]{3})Z$/
 
     if (!regCatAmount.test(req.body.category_id)) return res.status(400).json({ "message": "nieprawidłowy format pola category_id" })
     if (!regCatAmount.test(req.body.amount)) return res.status(400).json({ "message": "nieprawidłowy format pola amount" })
@@ -73,6 +73,81 @@ router.put("/", (req, res) => {
         if (err) return res.status(500).json(err)
         res.status(200).send()
     })
+})
+
+//edit order
+router.put("/edit", (req, res) => {
+    // recive {"order_id": INT, "part_cat_id": INT, "amount": INT, "exp_date": DATE}
+    // return 400 if order_id is missing
+    // return 400 if any of parameters does not match regEx
+    // return 400 if specified orders is closed
+    // return 404 if cannot find specified order
+    // return 500 if there was DB error
+    // return 200 on success
+
+    function checkOrderStatus(order_id) {
+        return new Promise(function (resolve, reject) {
+            connection.query(`select part_order_id, status from spareparts_orders where part_order_id = ${order_id}`, function (err, rows) {
+                if (err) return reject(err);
+                resolve(rows)
+            })
+        })
+    }
+
+    const regInt = /^([1-9]){1,}([0-9]){0,}$/
+    const regDate = /^([1-9]{1})([0-9]{3})-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([0-9]{2}):([0-9]{2}):([0-9]{2})\.([0-9]{3})Z$/
+
+    let fields = []
+    let date
+
+    if (!req.body.order_id || req.body.order_id == 0) return res.status(400).json({ "message": "pole order_id jest wymagane" })
+    if (!regInt.test(req.body.order_id)) return res.status(400).json({ "message": "nieprawidłowy format pola order_id" })
+
+
+    if (req.body.part_cat_id && req.body.part_cat_id != 0) {
+        if (!regInt.test(req.body.part_cat_id)) return res.status(400).json({ "message": "nieprawidłowy format pola part_cat_id" })
+        fields.push("part_cat_id")
+    }
+    if (req.body.amount && req.body.amount != 0) {
+        if (!regInt.test(req.body.amount)) return res.status(400).json({ "message": "nieprawidłowy format pola amount" })
+        fields.push("amount")
+    }
+    if (req.body.exp_date && req.body.exp_date != "") {
+        if (!regDate.test(req.body.exp_date)) return res.status(400).json({ "message": "nieprawidłowy format pola exp_date" })
+        date = req.body.exp_date.substring(0, 10)
+        fields.push("exp_date")
+    }
+
+    if (fields.length == 0) return res.status(400).json({ "message": "podaj przynjamniej jeden parametr" })
+
+    checkOrderStatus(req.body.order_id).then(function (rows) {
+        if (rows.length == 0) return res.status(404).json({ "message": "nie znaleziono wskazanego zamówienia" })
+        if (rows[0].status == 2) return res.status(400).json({ "message": "nie można edytować zakończonego zamówienia" })
+
+        console.log(fields)
+        let sql = `update spareparts_orders set `
+
+        if (fields.includes("part_cat_id")) {
+            sql += `part_cat_id = ${req.body.part_cat_id}`
+        }
+        if (fields.includes("amount")) {
+            if (fields.length > 1) sql += ` , `
+            sql += `amount = ${req.body.amount}`
+        }
+        if (fields.includes("exp_date")) {
+            if (fields.length > 1) sql += ` , `
+            sql += `expected_date = "${date}"`
+        }
+
+        sql += ` where part_order_id = ${req.body.order_id}`
+
+        console.log(sql)
+
+        connection.query(sql, (err, result) => {
+            if (err) return res.status(500).json(err)
+            res.status(200).send()
+        })
+    }).catch((err) => res.status(500).json(err))
 })
 
 module.exports = router
