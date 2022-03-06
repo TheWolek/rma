@@ -117,13 +117,13 @@ router.post("/use", (req, res) => {
 
 // find all data about specific part
 router.get("/", (req, res) => {
-    // recive one or more of parameters "producer": STRING, "category": STRING, "name": STRING, "amount": INT
+    // recive one or more of parameters "producer": STRING, "category": STRING, "name": STRING
     // return 400 if no parameter is passed OR is empty
     // return 400 if any of parameters does not match regEx
     // return 404 if cannot find anything
     // return 500 if there was DB error
     // return 200 with 
-    // [{"part":{"category": STRING, "producer": STRING, "name": STRING}, "warehouse": {"amount": INT, "shelve": [INT,...]}],
+    // {"cat_id": {"part":{"category": STRING, "cat_id": INT, "producer": STRING, "name": STRING}, "warehouse": {shelves: [INT, ...], totalAmount: INT, parts_id: [INT, ...]}},
     // 
 
     let query = req.query
