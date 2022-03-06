@@ -9,12 +9,14 @@ const warehouseShelves = require('./warehouse/shelves')
 
 const spareParts = require('./warehouse/spareparts')
 const sparePartsAdd = require('./warehouse/spareparts/add')
+const sparePartsOrders = require('./warehouse/spareparts/orders')
 
 // app.use(cors)
 app.use(bodyParser.json())
 app.use('/warehouse/items', warehouseItems)
 app.use('/warehouse/shelve', warehouseShelves)
 app.use('/warehouse/spareparts/add', sparePartsAdd)
+app.use('/warehouse/spareparts/orders', sparePartsOrders)
 app.use('/warehouse/spareparts', spareParts)
 
 app.get('/', (req, res) => {
