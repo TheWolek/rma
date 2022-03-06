@@ -115,6 +115,37 @@ router.post("/use", (req, res) => {
 
 })
 
+//find data about stock of specific parts
+router.get("/stock", (req, res) => {
+    //recive parameter "cat_id": INT
+    // return 400 if no parameters is passed OR is empty
+    // return 400 if any of parameters does not match regEx
+    // return 404 if cannot find anything
+    // return 500 if there was DB error
+    // return 200 with
+    // {"cat_id": INT, "totalAmount": INT}
+
+    let query = req.query
+
+    if (!query.cat_id || query.cat_id == 0) return res.status(400).json({ "message": "podaj id kategorii do wyszukania" })
+
+    let reg = /^([0-9]){1,}$/
+    if (!reg.test(query.cat_id)) return res.status(400).json({ "message": "nieprawidłowy format pola cat_id" })
+
+    let sql = `select cat_id, sum(amount) as 'totalAmount' 
+    from spareparts s where cat_id = ${query.cat_id} group by cat_id;`
+
+    connection.query(sql, (err, rows) => {
+        if (err) return res.status(500).json(err)
+        if (rows.length == 0) return res.status(404).json({ "message": "nieznaleziono części na magazynie dla podanych kryteriów" })
+
+        res.status(200).json({
+            "cat_id": rows[0].cat_id,
+            "totalAmount": rows[0].totalAmount
+        })
+    })
+})
+
 // find all data about specific part
 router.get("/", (req, res) => {
     // recive one or more of parameters "producer": STRING, "category": STRING, "name": STRING
