@@ -38,4 +38,29 @@ router.post("/new", (req, res) => {
     })
 })
 
+// add part to warehouse
+router.post("/", (req, res) => {
+    // recive {"cat_id": INT, "amount": INT, "shelve": INT}
+    // return 400 if any of parameters is missing OR is empty OR does not match regEx
+    // return 500 if there was DB error
+    // return 200 with {"part_id": INT}
+
+    if (!req.body.cat_id) return res.status(400).json({ "message": "pole cat_id jest wymagane" })
+    if (!req.body.amount) return res.status(400).json({ "message": "pole amount jest wymagane" })
+    if (!req.body.shelve) return res.status(400).json({ "message": "pole shelve jest wymagane" })
+
+    const reg = /^([1-9]{1,})$/
+
+    if (!reg.test(req.body.cat_id)) return res.status(400).json({ "message": "nieprawidłowy format pola cat_id" })
+    if (!reg.test(req.body.amount)) return res.status(400).json({ "message": "nieprawidłowy format pola amount" })
+    if (!reg.test(req.body.shelve)) return res.status(400).json({ "message": "nieprawidłowy format pola shelve" })
+
+    let sql = `insert into spareparts (cat_id, amount, shelve) values (${req.body.cat_id}, ${req.body.amount}, ${req.body.shelve})`
+
+    connection.query(sql, (err, result) => {
+        if (err) return res.status(500).json(err)
+        res.status(200).json({ "part_id": result.insertId })
+    })
+})
+
 module.exports = router
