@@ -12,7 +12,7 @@ const sparePartsAdd = require('./warehouse/spareparts/add')
 const sparePartsOrders = require('./warehouse/spareparts/orders')
 const sparePartsShelve = require('./warehouse/spareparts/shelve')
 
-// app.use(cors)
+app.use(cors())
 app.use(bodyParser.json())
 app.use('/warehouse/items', warehouseItems)
 app.use('/warehouse/shelve', warehouseShelves)
