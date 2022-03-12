@@ -106,7 +106,7 @@ router.get("/shelve", (req, res) => {
     if (!reg.test(req.query.shelve)) return res.status(400).json({ "message": "nieprawidłowy format pola shelve" })
 
     let shelve = req.query.shelve
-    let sql = `SELECT ticket_id, name, category FROM items WHERE shelve = ${shelve}`
+    let sql = `SELECT item_id, ticket_id, name, category, shelve FROM items WHERE shelve = ${shelve}`
 
     connection.query(sql, function (err, rows) {
         if (err) return res.status(500).json(err);
