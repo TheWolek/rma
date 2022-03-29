@@ -110,7 +110,7 @@ router.get("/shelve", (req, res) => {
 
     connection.query(sql, function (err, rows) {
         if (err) return res.status(500).json(err);
-        if (rows.length == 0) return res.status(404).send()
+        if (rows.length == 0) return res.status(404).json({ "message": "Brak produktów dla wybranej lokalizacji" })
         res.status(200).json(rows)
     })
 })
