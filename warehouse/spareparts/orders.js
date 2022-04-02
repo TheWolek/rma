@@ -150,4 +150,52 @@ router.put("/edit", (req, res) => {
     }).catch((err) => res.status(500).json(err))
 })
 
+//find order
+router.get("/", (req, res) => {
+    // recive any or all of params "partCatId": INT, "expDate": STRING, "status": INT
+    // return 400 if none of params was passed
+    // return 400 if any of passed params is in wrong format
+    // return 404 if nothing was found
+    // return 500 if there was a DB error
+    // return 200 with [{"part_order_id": INT, "part_cat_id": INT, "amount": INT, "exp_date": STRING, "status": INT}]
+    const intReg = /^[0-9]{1,}$/
+    const regDate = /^([1-9]{1})([0-9]{3})-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$/
+
+    let params = {
+        partCatId: false,
+        expDate: false,
+        status: false
+    }
+    if (req.query.partCatId) params.partCatId = true
+    if (req.query.expDate) params.expDate = true
+    if (req.query.status) params.status = true
+
+    if (!params.partCatId && !params.expDate && !params.status) return res.status(400).json({ "message": "podaj przynjamniej jeden parametr" })
+    if (params.partCatId && !intReg.test(req.query.partCatId)) return res.status(400).json({ "message": "nieprawidłowy format pola partCatId" })
+    if (params.expDate && !regDate.test(req.query.expDate)) return res.status(400).json({ "message": "nieprawidłowy format pola expDate" })
+    if (params.status && !intReg.test(req.query.status)) return res.status(400).json({ "message": "nieprawidłowy format pola status" })
+
+    let sql = `SELECT part_order_id, part_cat_id, amount, expected_date, status FROM spareparts_orders WHERE`
+
+    if (params.partCatId) {
+        sql += ` part_cat_id = ${req.query.partCatId}`
+    }
+
+    if (params.expDate) {
+        if (params.partCatId) sql += ` AND`
+        sql += ` expected_date = '${req.query.expDate}'`
+    }
+
+    if (params.status) {
+        if (params.partCatId || params.expDate) sql += ` AND`
+        sql += ` status = ${req.query.status}`
+    }
+
+    connection.query(sql, function (err, rows) {
+        if (err) return res.status(500).json(err);
+        if (rows.length == 0) return res.status(404).json({ "message": "nie znaleziono zamówień dla podanych kryteriów" })
+        res.status(200).json(rows)
+    })
+})
+
 module.exports = router
