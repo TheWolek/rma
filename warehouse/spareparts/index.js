@@ -194,4 +194,14 @@ router.get("/", (req, res) => {
     })
 })
 
+//get all categories
+router.get("/categories", (req, res) => {
+    let sql = `SELECT part_cat_id, producer, category, name FROM spareparts_cat`
+
+    connection.query(sql, function (err, rows) {
+        if (err) throw err;
+        res.status(200).json(rows)
+    })
+})
+
 module.exports = router
