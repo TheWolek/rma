@@ -237,7 +237,7 @@ router.get("/find", (req, res) => {
     if (params.status && !regInt.test(req.query.status)) return res.status(400).json({ "message": "nieprawidłowy format pola status" })
 
     let sql = `select distinct so.part_order_id, so.expected_date, so.status, so.supplier_id
-    from spareparts_orders so join spareparts_orders_items soi on so.part_order_id = soi.order_id where`
+    from spareparts_orders so left join spareparts_orders_items soi on so.part_order_id = soi.order_id where`
 
     if (params.partCatId) {
         sql += ` soi.part_cat_id = ${req.query.partCatId}`
