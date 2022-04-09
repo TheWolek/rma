@@ -219,7 +219,7 @@ router.get("/find", (req, res) => {
     // return 404 if nothing was found
     // return 500 if there was a DB error
     // return 200 with [{"part_order_id": INT, "part_cat_id": INT, "amount": INT, "exp_date": STRING, "status": INT}]
-    const intReg = /^[0-9]{1,}$/
+    const regInt = /^[0-9]{1,}$/
     const regDate = /^([1-9]{1})([0-9]{3})-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$/
 
     let params = {
@@ -232,9 +232,9 @@ router.get("/find", (req, res) => {
     if (req.query.status) params.status = true
 
     if (!params.partCatId && !params.expDate && !params.status) return res.status(400).json({ "message": "podaj przynjamniej jeden parametr" })
-    if (params.partCatId && !intReg.test(req.query.partCatId)) return res.status(400).json({ "message": "nieprawidłowy format pola partCatId" })
+    if (params.partCatId && !regInt.test(req.query.partCatId)) return res.status(400).json({ "message": "nieprawidłowy format pola partCatId" })
     if (params.expDate && !regDate.test(req.query.expDate)) return res.status(400).json({ "message": "nieprawidłowy format pola expDate" })
-    if (params.status && !intReg.test(req.query.status)) return res.status(400).json({ "message": "nieprawidłowy format pola status" })
+    if (params.status && !regInt.test(req.query.status)) return res.status(400).json({ "message": "nieprawidłowy format pola status" })
 
     let sql = `select so.part_order_id, so.expected_date, so.status, so.supplier_id
     from spareparts_orders so join spareparts_orders_items soi on so.part_order_id = soi.order_id where`
@@ -256,6 +256,29 @@ router.get("/find", (req, res) => {
     connection.query(sql, function (err, rows) {
         if (err) return res.status(500).json(err);
         if (rows.length == 0) return res.status(404).json({ "message": "nie znaleziono zamówień dla podanych kryteriów" })
+        res.status(200).json(rows)
+    })
+})
+
+//get order details
+router.get("/", (req, res) => {
+    // recive {"order_id": INT}
+    // return 400 if no params were passed OR param is empty OR does not match regEx
+    // return 404 if cannot find specified order
+    // return 500 if there was an DB error
+    // return 200 with [{"order_item_id": INT, "part_cat_id": INT, "amount": INT}, ...]
+
+    if (!req.query.order_id) return res.status(400).json({ "message": "pole order_id jest wymagane" })
+
+    const regInt = /^([1-9]{1,})([0-9]{0,})$/
+
+    if (!regInt.test(req.query.order_id)) return res.status(400).json({ "message": "nieprawidłowy format pola order_id" })
+
+    let sql = `select soi.order_item_id, soi.part_cat_id, soi.amount from spareparts_orders_items soi
+    where soi.order_id = ${req.query.order_id}`
+
+    connection.query(sql, (err, rows) => {
+        if (err) return res.status(500).json(err)
         res.status(200).json(rows)
     })
 })
