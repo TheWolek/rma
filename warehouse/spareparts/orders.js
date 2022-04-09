@@ -236,7 +236,7 @@ router.get("/find", (req, res) => {
     if (params.expDate && !regDate.test(req.query.expDate)) return res.status(400).json({ "message": "nieprawidłowy format pola expDate" })
     if (params.status && !regInt.test(req.query.status)) return res.status(400).json({ "message": "nieprawidłowy format pola status" })
 
-    let sql = `select so.part_order_id, so.expected_date, so.status, so.supplier_id
+    let sql = `select distinct so.part_order_id, so.expected_date, so.status, so.supplier_id
     from spareparts_orders so join spareparts_orders_items soi on so.part_order_id = soi.order_id where`
 
     if (params.partCatId) {
