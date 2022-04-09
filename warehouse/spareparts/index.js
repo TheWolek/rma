@@ -199,7 +199,17 @@ router.get("/categories", (req, res) => {
     let sql = `SELECT part_cat_id, producer, category, name FROM spareparts_cat`
 
     connection.query(sql, function (err, rows) {
-        if (err) throw err;
+        if (err) res.status(500).json(err);
+        res.status(200).json(rows)
+    })
+})
+
+//get all suppliers
+router.get("/suppliers", (req, res) => {
+    let sql = `SELECT id, name FROM suppliers`
+
+    connection.query(sql, function (err, rows) {
+        if (err) res.status(500).json(err)
         res.status(200).json(rows)
     })
 })
