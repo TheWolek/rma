@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const mysql = require('mysql')
+const mysql = require('mysql');
 const creds = require('../../db_creds')
 const connection = mysql.createConnection(creds)
 
@@ -8,45 +8,106 @@ connection.connect()
 
 //register new order of spareparts
 router.post("/", (req, res) => {
-    // recive {"category_id": INT, "amount": INT, "exp_date": DATE}
+    // recive {"supplier_id": INT, "exp_date": DATE}
     // return 400 if any of parameters is missing OR empty OR does not match regEX
-    // return 404 if cannot find part_category_id
+    // return 404 if cannot find supplied_id
     // return 500 if there was DB error
     // return 200 with {"order_id": INT}
 
-    if (!req.body.category_id) return res.status(400).json({ "message": "pole category_id jest wymagane" })
-    if (!req.body.amount) return res.status(400).json({ "message": "pole amount jest wymagane" })
+    // if (!req.body.category_id) return res.status(400).json({ "message": "pole category_id jest wymagane" })
+    // if (!req.body.amount) return res.status(400).json({ "message": "pole amount jest wymagane" })
     if (!req.body.exp_date) return res.status(400).json({ "message": "pole exp_date jest wymagane" })
+    if (!req.body.supplier_id) return res.status(400).json({ "message": "pole supplier_id jest wymagane" })
 
-    const regCatAmount = /^([1-9]{1,})([0-9]*)$/
+    const regInt = /^([1-9]{1,})([0-9]*)$/
     const regDate = /^([1-9]{1})([0-9]{3})-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([0-9]{2}):([0-9]{2}):([0-9]{2})\.([0-9]{3})Z$/
 
-    if (!regCatAmount.test(req.body.category_id)) return res.status(400).json({ "message": "nieprawidłowy format pola category_id" })
-    if (!regCatAmount.test(req.body.amount)) return res.status(400).json({ "message": "nieprawidłowy format pola amount" })
+    // if (!regCatAmount.test(req.body.category_id)) return res.status(400).json({ "message": "nieprawidłowy format pola category_id" })
+    // if (!regCatAmount.test(req.body.amount)) return res.status(400).json({ "message": "nieprawidłowy format pola amount" })
     if (!regDate.test(req.body.exp_date)) return res.status(400).json({ "message": "nieprawidłowy format pola exp_date" })
+    if (!regInt.test(req.body.supplier_id)) return res.status(400).json({ "message": "nieprawidłowy format pola supplier_id" })
 
     let date = req.body.exp_date.substring(0, 10)
 
-    let sql_findCategory = `SELECT part_cat_id FROM spareparts_cat WHERE part_cat_id = ${req.body.category_id}`
-    let sql_insertOrder = `INSERT INTO spareparts_orders (part_cat_id, amount, expected_date, status) VALUES (${req.body.category_id}, ${req.body.amount}, "${date}", 0)`
+    let sql_findSupplier = `SELECT name FROM suppliers WHERE id = ${req.body.supplier_id}`
+    let sql_insertOrder = `INSERT INTO spareparts_orders (expected_date, supplier_id, status) VALUES ("${date}", ${req.body.supplier_id},0)`
 
+    let findSupplier = new Promise((resolve, reject) => {
+        connection.query(sql_findSupplier, (err, rows) => {
+            if (err) reject(err)
+            resolve(rows)
+        })
+    })
+
+    findSupplier.catch((err) => {
+        return res.status(500).json(err)
+    })
+
+    findSupplier.then((data) => {
+        if (data.length == 0) return res.status(404).json({ "message": "wpisany dostawca nie istnieje" })
+
+        connection.query(sql_insertOrder, (err, result) => {
+            if (err) return res.status(500).json(err)
+            res.status(200).json({ order_id: result.insertId })
+        })
+    })
+})
+
+//add parts into order
+router.post("/add", (req, res) => {
+    // recive {"order_id": INT, "part_cat_id": INT, "amount": INT}
+    // return 400 if any of parameters is missing OR empty OR does not match regEx
+    // return 404 if cannot find category
+    // return 500 if there was an DB error
+    // return 200 with {"order_item_id": INT}
+
+    if (!req.body.order_id) return res.status(400).json({ "message": "pole order_id jest wymagane" })
+    if (!req.body.part_cat_id) return res.status(400).json({ "message": "pole part_cat_id jest wymagane" })
+    if (!req.body.amount) return res.status(400).json({ "message": "pole amount jest wymagane" })
+
+    const regInt = /^([1-9]{1,})([0-9]*)$/
+
+    if (!regInt.test(req.body.order_id)) return res.status(400).json({ "message": "nieprawidłowy format pola order_id" })
+    if (!regInt.test(req.body.part_cat_id)) return res.status(400).json({ "message": "nieprawidłowy format pola part_cat_id" })
+    if (!regInt.test(req.body.amount)) return res.status(400).json({ "message": "nieprawidłowy format pola amount" })
+
+    let sql_findCategory = `SELECT name FROM spareparts_cat WHERE part_cat_id = ${req.body.part_cat_id}`
+    let sql_findOrder = `SELECT part_order_id FROM spareparts_orders WHERE part_order_id = ${req.body.order_id}`
+    let sql_insertOrderItem = `INSERT INTO spareparts_orders_items (order_id, part_cat_id, amount) VALUES (${req.body.order_id}, ${req.body.part_cat_id}, ${req.body.amount})`
+
+    
     let findCategory = new Promise((resolve, reject) => {
         connection.query(sql_findCategory, (err, rows) => {
             if (err) reject(err)
             resolve(rows)
         })
     })
-
+    
     findCategory.catch((err) => {
         return res.status(500).json(err)
     })
 
-    findCategory.then((data) => {
-        if (data.length == 0) return res.status(404).json({ "message": "wpisana kategoria nie istnieje" })
+    let findOrder = new Promise((resolve, reject) => {
+        connection.query(sql_findOrder, (err, rows) => {
+            if (err) reject(err)
+            resolve(rows)
+        })
+    })
 
-        connection.query(sql_insertOrder, (err, result) => {
-            if (err) return res.status(500).json(err)
-            res.status(200).json({ order_id: result.insertId })
+    findOrder.catch((err) => {
+        return res.status(500).json(err)
+    })
+
+    findCategory.then((catData) => {
+        if (catData.length == 0) return res.status(404).json({ "message": "wpisana kategoria nie istnieje" })
+
+        findOrder.then((orderData) => {
+            if (orderData.length == 0) return res.status(400).json({"message": "wpisane zamówienie nie istnieje"})
+
+            connection.query(sql_insertOrderItem, (err, result) => {
+                if (err) return res.status(500).json(err)
+                res.status(200).json({ order_item_id: result.insertId })
+            })
         })
     })
 })
@@ -71,7 +132,7 @@ router.put("/", (req, res) => {
 
     connection.query(sql, (err, result) => {
         if (err) return res.status(500).json(err)
-        res.status(200).send()
+        res.status(200).json({ message: "ok" })
     })
 })
 
@@ -145,20 +206,20 @@ router.put("/edit", (req, res) => {
 
         connection.query(sql, (err, result) => {
             if (err) return res.status(500).json(err)
-            res.status(200).send()
+            res.status(200).json({ message: "ok" })
         })
     }).catch((err) => res.status(500).json(err))
 })
 
 //find order
-router.get("/", (req, res) => {
+router.get("/find", (req, res) => {
     // recive any or all of params "partCatId": INT, "expDate": STRING, "status": INT
     // return 400 if none of params was passed
     // return 400 if any of passed params is in wrong format
     // return 404 if nothing was found
     // return 500 if there was a DB error
     // return 200 with [{"part_order_id": INT, "part_cat_id": INT, "amount": INT, "exp_date": STRING, "status": INT}]
-    const intReg = /^[0-9]{1,}$/
+    const regInt = /^[0-9]{1,}$/
     const regDate = /^([1-9]{1})([0-9]{3})-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$/
 
     let params = {
@@ -171,29 +232,53 @@ router.get("/", (req, res) => {
     if (req.query.status) params.status = true
 
     if (!params.partCatId && !params.expDate && !params.status) return res.status(400).json({ "message": "podaj przynjamniej jeden parametr" })
-    if (params.partCatId && !intReg.test(req.query.partCatId)) return res.status(400).json({ "message": "nieprawidłowy format pola partCatId" })
+    if (params.partCatId && !regInt.test(req.query.partCatId)) return res.status(400).json({ "message": "nieprawidłowy format pola partCatId" })
     if (params.expDate && !regDate.test(req.query.expDate)) return res.status(400).json({ "message": "nieprawidłowy format pola expDate" })
-    if (params.status && !intReg.test(req.query.status)) return res.status(400).json({ "message": "nieprawidłowy format pola status" })
+    if (params.status && !regInt.test(req.query.status)) return res.status(400).json({ "message": "nieprawidłowy format pola status" })
 
-    let sql = `SELECT part_order_id, part_cat_id, amount, expected_date, status FROM spareparts_orders WHERE`
+    let sql = `select so.part_order_id, so.expected_date, so.status, so.supplier_id
+    from spareparts_orders so join spareparts_orders_items soi on so.part_order_id = soi.order_id where`
 
     if (params.partCatId) {
-        sql += ` part_cat_id = ${req.query.partCatId}`
+        sql += ` soi.part_cat_id = ${req.query.partCatId}`
     }
 
     if (params.expDate) {
         if (params.partCatId) sql += ` AND`
-        sql += ` expected_date = '${req.query.expDate}'`
+        sql += ` so.expected_date = '${req.query.expDate}'`
     }
 
     if (params.status) {
         if (params.partCatId || params.expDate) sql += ` AND`
-        sql += ` status = ${req.query.status}`
+        sql += ` so.status = ${req.query.status}`
     }
 
     connection.query(sql, function (err, rows) {
         if (err) return res.status(500).json(err);
         if (rows.length == 0) return res.status(404).json({ "message": "nie znaleziono zamówień dla podanych kryteriów" })
+        res.status(200).json(rows)
+    })
+})
+
+//get order details
+router.get("/", (req, res) => {
+    // recive {"order_id": INT}
+    // return 400 if no params were passed OR param is empty OR does not match regEx
+    // return 404 if cannot find specified order
+    // return 500 if there was an DB error
+    // return 200 with [{"order_item_id": INT, "part_cat_id": INT, "amount": INT}, ...]
+
+    if (!req.query.order_id) return res.status(400).json({ "message": "pole order_id jest wymagane" })
+
+    const regInt = /^([1-9]{1,})([0-9]{0,})$/
+
+    if (!regInt.test(req.query.order_id)) return res.status(400).json({ "message": "nieprawidłowy format pola order_id" })
+
+    let sql = `select soi.order_item_id, soi.part_cat_id, soi.amount from spareparts_orders_items soi
+    where soi.order_id = ${req.query.order_id}`
+
+    connection.query(sql, (err, rows) => {
+        if (err) return res.status(500).json(err)
         res.status(200).json(rows)
     })
 })
