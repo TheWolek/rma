@@ -212,7 +212,7 @@ router.put("/edit", (req, res) => {
 })
 
 //find order
-router.get("/", (req, res) => {
+router.get("/find", (req, res) => {
     // recive any or all of params "partCatId": INT, "expDate": STRING, "status": INT
     // return 400 if none of params was passed
     // return 400 if any of passed params is in wrong format
@@ -236,20 +236,21 @@ router.get("/", (req, res) => {
     if (params.expDate && !regDate.test(req.query.expDate)) return res.status(400).json({ "message": "nieprawidłowy format pola expDate" })
     if (params.status && !intReg.test(req.query.status)) return res.status(400).json({ "message": "nieprawidłowy format pola status" })
 
-    let sql = `SELECT part_order_id, part_cat_id, amount, expected_date, status FROM spareparts_orders WHERE`
+    let sql = `select so.part_order_id, so.expected_date, so.status, so.supplier_id
+    from spareparts_orders so join spareparts_orders_items soi on so.part_order_id = soi.order_id where`
 
     if (params.partCatId) {
-        sql += ` part_cat_id = ${req.query.partCatId}`
+        sql += ` soi.part_cat_id = ${req.query.partCatId}`
     }
 
     if (params.expDate) {
         if (params.partCatId) sql += ` AND`
-        sql += ` expected_date = '${req.query.expDate}'`
+        sql += ` so.expected_date = '${req.query.expDate}'`
     }
 
     if (params.status) {
         if (params.partCatId || params.expDate) sql += ` AND`
-        sql += ` status = ${req.query.status}`
+        sql += ` so.status = ${req.query.status}`
     }
 
     connection.query(sql, function (err, rows) {
