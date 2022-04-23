@@ -148,8 +148,6 @@ router.delete("/remove", (req, res) => {
   // return 500 if there was an DB error
   // return 200 on success
 
-  console.log(typeof req.body.toDel, req.body.toDel);
-
   if (!req.body.toDel) {
     return res.status(400).json({ message: "pole toDel jest wymagane" });
   }
