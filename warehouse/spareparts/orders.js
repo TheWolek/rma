@@ -355,6 +355,7 @@ router.put("/edit", (req, res) => {
       orderItems.forEach(function (item) {
         if (item.order_item_id === undefined || !item.order_item_id) {
           queries += `INSERT INTO spareparts_orders_items (part_cat_id, amount, order_id) VALUES (${item.part_cat_id}, ${item.amount}, ${orderData.part_order_id});`;
+          queries += `INSERT INTO spareparts_orders_items_sn (codes, item_id) VALUES ("", ${item.order_item_id})`;
         } else if (item.toRemove !== undefined || item.toRemove) {
           queries += `DELETE FROM spareparts_orders_items WHERE order_item_id = ${item.order_item_id};`;
         } else {
@@ -370,6 +371,36 @@ router.put("/edit", (req, res) => {
       });
     })
     .catch((err) => res.status(500).json(err));
+});
+
+//set items codes
+router.post("/codes", (req, res) => {
+  // recive {"item_id": INT, "codes": [STR, STR, ...]}
+  // return 400 if any param is missing
+  // return 400 if any param does not match regEx
+  // return 500 if there was a DB error
+  // return 200 on success
+  const regInt = /^([1-9]{1})([0-9]{0,})$/;
+
+  if (!req.body.item_id) {
+    return res.status(400).json({ message: "pole item_id jest wymagane" });
+  }
+  if (!req.body.codes) {
+    return res.status(400).json({ message: "pole codes jest wymagane" });
+  }
+  if (!regInt.test(req.body.item_id)) {
+    return res
+      .status(400)
+      .json({ message: "nieprawidłowy format pola item_id" });
+  }
+
+  connection.query(
+    `UPDATE spareparts_orders_items_sn SET codes = "${req.body.codes}" WHERE item_id = ${req.body.item_id}`,
+    (err, result) => {
+      if (err) return res.status(500).json(err);
+      res.status(200).json({ message: "ok" });
+    }
+  );
 });
 
 //find order
