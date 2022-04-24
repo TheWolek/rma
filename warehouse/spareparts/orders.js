@@ -1,3 +1,4 @@
+const { query } = require("express");
 const express = require("express");
 const { type } = require("express/lib/response");
 const router = express.Router();
@@ -214,13 +215,94 @@ router.put("/", (req, res) => {
 
 //edit order
 router.put("/edit", (req, res) => {
-  // recive {"order_id": INT, "part_cat_id": INT, "amount": INT, "exp_date": DATE}
-  // return 400 if order_id is missing
+  // recive {"items": [{"amount": INT, "order_item_id": INT, "part_cat_id": 3}],
+  // "orderData": {"expected_date": DATE, "part_order_id": INT, "status": INT, "supplier_id": INT}}
+  // return 400 if part_order_id is missing
   // return 400 if any of parameters does not match regEx
-  // return 400 if specified orders is closed
+  // return 400 if specified order is closed
   // return 404 if cannot find specified order
   // return 500 if there was DB error
   // return 200 on success
+
+  const regInt = /^([1-9]){1,}([0-9]){0,}$/;
+  const regStatus = /^([0-9]{1})$/;
+  const regDate =
+    /^([1-9]{1})([0-9]{3})-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([0-9]{2}):([0-9]{2}):([0-9]{2})\.([0-9]{3})Z$/;
+
+  let fields = [];
+  let date;
+  const orderData = req.body.orderData;
+  const orderItems = req.body.items;
+
+  //part_order_id
+  if (!orderData.part_order_id || orderData.part_order_id == 0)
+    return res
+      .status(400)
+      .json({ message: "pole part_order_id jest wymagane" });
+  if (!regInt.test(orderData.part_order_id))
+    return res
+      .status(400)
+      .json({ message: "nieprawidłowy format pola part_order_id" });
+
+  //expected_date
+  if (!orderData.expected_date || orderData.expected_date === "") {
+    return res
+      .status(400)
+      .json({ message: "pole expected_date jest wymagane" });
+  }
+  if (!regDate.test(orderData.expected_date)) {
+    return res
+      .status(400)
+      .json({ message: "nieprawidłowy format pola expected_date" });
+  }
+  date = orderData.expected_date.substring(0, 10);
+
+  //status
+  if (orderData.status === undefined || orderData.status === null) {
+    return res.status(400).json({ message: "pole status jest wymagane" });
+  }
+  if (!regStatus.test(orderData.status)) {
+    return res
+      .status(400)
+      .json({ message: "nieprawidłowy format pola status" });
+  }
+
+  //supplier_id
+  if (!orderData.supplier_id || orderData.supplier_id === 0) {
+    return res.status(400).json({ message: "pole supplier_id jest wymagane" });
+  }
+  if (!regInt.test(orderData.supplier_id)) {
+    return res
+      .status(400)
+      .json({ message: "nieprawidłowy format pola supplier_id" });
+  }
+
+  //items loop
+  for (let i = 0; i < orderItems.length; i++) {
+    let item = orderItems[i];
+
+    //part_cat_id
+    if (!item.part_cat_id || item.part_cat_id === 0) {
+      res.status(400).json({ message: "pole part_cat_id jest wymagane" });
+      break;
+    }
+    if (!regInt.test(item.part_cat_id)) {
+      res
+        .status(400)
+        .json({ message: "nieprawidłowy format pola part_cat_id" });
+      break;
+    }
+
+    //amount
+    if (!item.amount || item.amount === 0) {
+      res.status(400).json({ message: "pole amount jest wymagane" });
+      break;
+    }
+    if (!regInt.test(item.amount)) {
+      res.status(400).json({ message: "nieprawidłowy format pola amount" });
+      break;
+    }
+  }
 
   function checkOrderStatus(order_id) {
     return new Promise(function (resolve, reject) {
@@ -234,49 +316,19 @@ router.put("/edit", (req, res) => {
     });
   }
 
-  const regInt = /^([1-9]){1,}([0-9]){0,}$/;
-  const regDate =
-    /^([1-9]{1})([0-9]{3})-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([0-9]{2}):([0-9]{2}):([0-9]{2})\.([0-9]{3})Z$/;
-
-  let fields = [];
-  let date;
-
-  if (!req.body.order_id || req.body.order_id == 0)
-    return res.status(400).json({ message: "pole order_id jest wymagane" });
-  if (!regInt.test(req.body.order_id))
-    return res
-      .status(400)
-      .json({ message: "nieprawidłowy format pola order_id" });
-
-  if (req.body.part_cat_id && req.body.part_cat_id != 0) {
-    if (!regInt.test(req.body.part_cat_id))
-      return res
-        .status(400)
-        .json({ message: "nieprawidłowy format pola part_cat_id" });
-    fields.push("part_cat_id");
-  }
-  if (req.body.amount && req.body.amount != 0) {
-    if (!regInt.test(req.body.amount))
-      return res
-        .status(400)
-        .json({ message: "nieprawidłowy format pola amount" });
-    fields.push("amount");
-  }
-  if (req.body.exp_date && req.body.exp_date != "") {
-    if (!regDate.test(req.body.exp_date))
-      return res
-        .status(400)
-        .json({ message: "nieprawidłowy format pola exp_date" });
-    date = req.body.exp_date.substring(0, 10);
-    fields.push("exp_date");
+  function checkIfItemExists(itemId) {
+    return new Promise(function (resolve, reject) {
+      connection.query(
+        `select order_item_id from spareparts_orders_items where order_item_id = ${itemId}`,
+        function (err, rows) {
+          if (err) return reject(err);
+          resolve(rows);
+        }
+      );
+    });
   }
 
-  if (fields.length == 0)
-    return res
-      .status(400)
-      .json({ message: "podaj przynjamniej jeden parametr" });
-
-  checkOrderStatus(req.body.order_id)
+  checkOrderStatus(orderData.part_order_id)
     .then(function (rows) {
       if (rows.length == 0)
         return res
@@ -287,28 +339,34 @@ router.put("/edit", (req, res) => {
           .status(400)
           .json({ message: "nie można edytować zakończonego zamówienia" });
 
-      console.log(fields);
-      let sql = `update spareparts_orders set `;
-
-      if (fields.includes("part_cat_id")) {
-        sql += `part_cat_id = ${req.body.part_cat_id}`;
-      }
-      if (fields.includes("amount")) {
-        if (fields.length > 1) sql += ` , `;
-        sql += `amount = ${req.body.amount}`;
-      }
-      if (fields.includes("exp_date")) {
-        if (fields.length > 1) sql += ` , `;
-        sql += `expected_date = "${date}"`;
-      }
-
-      sql += ` where part_order_id = ${req.body.order_id}`;
+      let sql = `update spareparts_orders set expected_date = "${orderData.expected_date}", status = ${orderData.status}, supplier_id = ${orderData.supplier_id} where part_order_id = ${orderData.part_order_id}`;
 
       console.log(sql);
 
       connection.query(sql, (err, result) => {
+        if (err) Promise.reject(err);
+        Promise.resolve();
+        // res.status(200).json({ message: "ok" });
+      });
+    })
+    .then(function () {
+      let queries = "";
+
+      orderItems.forEach(function (item) {
+        if (item.order_item_id === undefined || !item.order_item_id) {
+          queries += `INSERT INTO spareparts_orders_items (part_cat_id, amount, order_id) VALUES (${item.part_cat_id}, ${item.amount}, ${orderData.part_order_id});`;
+        } else if (item.toRemove !== undefined || item.toRemove) {
+          queries += `DELETE FROM spareparts_orders_items WHERE order_item_id = ${item.order_item_id};`;
+        } else {
+          queries += `UPDATE spareparts_orders_items set part_cat_id = ${item.part_cat_id}, amount = ${item.amount} WHERE order_item_id = ${item.order_item_id};`;
+        }
+      });
+
+      console.log(queries);
+
+      connection.query(queries, function (err, result) {
         if (err) return res.status(500).json(err);
-        res.status(200).json({ message: "ok" });
+        res.status(200).json({ status: "ok" });
       });
     })
     .catch((err) => res.status(500).json(err));
