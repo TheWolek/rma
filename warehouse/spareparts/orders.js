@@ -1,10 +1,11 @@
 const { query } = require("express");
 const express = require("express");
-const { type } = require("express/lib/response");
+const { type, format } = require("express/lib/response");
 const router = express.Router();
 const mysql = require("mysql");
 const creds = require("../../db_creds");
 const connection = mysql.createConnection(creds);
+const formatDate = require("../../utils/formatDate");
 
 connection.connect();
 
@@ -339,7 +340,8 @@ router.put("/edit", (req, res) => {
           .status(400)
           .json({ message: "nie można edytować zakończonego zamówienia" });
 
-      let sql = `update spareparts_orders set expected_date = "${orderData.expected_date}", status = ${orderData.status}, supplier_id = ${orderData.supplier_id} where part_order_id = ${orderData.part_order_id}`;
+      let date = formatDate(orderData.expected_date);
+      let sql = `update spareparts_orders set expected_date = "${date}", status = ${orderData.status}, supplier_id = ${orderData.supplier_id} where part_order_id = ${orderData.part_order_id}`;
 
       console.log(sql);
 
@@ -355,8 +357,9 @@ router.put("/edit", (req, res) => {
       orderItems.forEach(function (item) {
         if (item.order_item_id === undefined || !item.order_item_id) {
           queries += `INSERT INTO spareparts_orders_items (part_cat_id, amount, order_id) VALUES (${item.part_cat_id}, ${item.amount}, ${orderData.part_order_id});`;
-          queries += `INSERT INTO spareparts_orders_items_sn (codes, item_id) VALUES ("", ${item.order_item_id})`;
+          //queries += `INSERT INTO spareparts_orders_items_sn (codes, item_id) VALUES ("", ${item.order_item_id})`;
         } else if (item.toRemove !== undefined || item.toRemove) {
+          queries += `DELETE FROM spareparts_orders_items_sn WHERE item_id = ${item.order_item_id};`;
           queries += `DELETE FROM spareparts_orders_items WHERE order_item_id = ${item.order_item_id};`;
         } else {
           queries += `UPDATE spareparts_orders_items set part_cat_id = ${item.part_cat_id}, amount = ${item.amount} WHERE order_item_id = ${item.order_item_id};`;
