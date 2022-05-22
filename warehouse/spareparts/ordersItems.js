@@ -24,11 +24,16 @@ router.get("/", (req, res) => {
       .status(400)
       .json({ message: "nieprawidłowy format pola order_id" });
 
-  let sql = `select soi.order_item_id, soi.part_cat_id, soi.amount from spareparts_orders_items soi
-      where soi.order_id = ${req.query.order_id}`;
+  let sql = `select soi.order_item_id, soi.part_cat_id, soi.amount, sois.codes 
+  from spareparts_orders_items soi join spareparts_orders_items_sn sois on soi.order_item_id = sois.item_id
+  where soi.order_id =${req.query.order_id}`;
 
   connection.query(sql, (err, rows) => {
     if (err) return res.status(500).json(err);
+    rows.forEach((el, index) => {
+      let newCodes = JSON.parse(el.codes);
+      rows[index].codes = newCodes;
+    });
     res.status(200).json(rows);
   });
 });

@@ -190,7 +190,7 @@ on spareparts_orders_items for each row
 
 begin 
 
-	insert into spareparts_orders_items_sn (codes, item_id) values ("", new.order_item_id);
+	insert into spareparts_orders_items_sn (codes, item_id) values ("[]", new.order_item_id);
 
 end ;;
 DELIMITER ;
@@ -208,7 +208,7 @@ DROP TABLE IF EXISTS `spareparts_orders_items_sn`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `spareparts_orders_items_sn` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
-  `codes` varchar(100) NOT NULL,
+  `codes` json NOT NULL,
   `item_id` int(11) NOT NULL,
   PRIMARY KEY (`id`),
   KEY `spareparts_orders_items_sn_FK` (`item_id`),
