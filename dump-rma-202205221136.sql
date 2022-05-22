@@ -184,15 +184,15 @@ UNLOCK TABLES;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
--- /*!50003*/ CREATE /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 */trigger onCreateNewItem after insert 
+/*!50003*/ CREATE /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 */trigger onCreateNewOrderItem after insert 
 
--- on spareparts_orders_items for each row 
+on spareparts_orders_items for each row 
 
--- begin 
+begin 
 
--- 	insert into spareparts_orders_items_sn (codes, item_id) values ("", new.order_item_id);
+	insert into spareparts_orders_items_sn (codes, item_id) values ("", new.order_item_id);
 
--- end ;;
+end ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
 /*!50003 SET character_set_client  = @saved_cs_client */ ;
