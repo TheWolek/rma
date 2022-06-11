@@ -156,32 +156,44 @@ router.delete("/remove", (req, res) => {
 
 //set items codes
 router.post("/codes", (req, res) => {
-  // recive {"item_id": INT, "codes": [STR, STR, ...]}
+  // recive [{"item_id": INT, "codes": [STR, STR, ...]}, ...]
   // return 400 if any param is missing
   // return 400 if any param does not match regEx
   // return 500 if there was a DB error
   // return 200 on success
   const regInt = /^([1-9]{1})([0-9]{0,})$/;
 
-  if (!req.body.item_id) {
-    return res.status(400).json({ message: "pole item_id jest wymagane" });
-  }
-  if (!req.body.codes) {
-    return res.status(400).json({ message: "pole codes jest wymagane" });
-  }
-  if (!regInt.test(req.body.item_id)) {
+  if (req.body.length === 0) {
     return res
       .status(400)
-      .json({ message: "nieprawidłowy format pola item_id" });
+      .json({ message: "podaj prznajmniej jeden przedmiot" });
   }
 
-  connection.query(
-    `UPDATE spareparts_orders_items_sn SET codes = "${req.body.codes}" WHERE item_id = ${req.body.item_id}`,
-    (err, result) => {
-      if (err) return res.status(500).json(err);
-      res.status(200).json({ message: "ok" });
+  req.body.forEach((el) => {
+    if (!el.item_id) {
+      return res.status(400).json({ message: "pole item_id jest wymagane" });
     }
-  );
+    if (!el.codes) {
+      return res.status(400).json({ message: "pole codes jest wymagane" });
+    }
+    if (!regInt.test(el.item_id)) {
+      return res
+        .status(400)
+        .json({ message: "nieprawidłowy format pola item_id" });
+    }
+  });
+
+  req.body.forEach((el) => {
+    let codes = JSON.stringify(el.codes);
+    connection.query(
+      `UPDATE spareparts_orders_items_sn SET codes = '${codes}' WHERE item_id = ${el.item_id}`,
+      (err, result) => {
+        // if (err) return res.status(500).json(err);
+        if (err) console.log(err);
+      }
+    );
+  });
+  res.status(200).json({ message: "ok" });
 });
 
 module.exports = router;
