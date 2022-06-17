@@ -57,12 +57,10 @@ router.post("/use", (req, res) => {
         .status(404)
         .json({ message: "nie znaleziono wskazanej części" });
     if (rows[0].amount < amount)
-      return res
-        .status(400)
-        .json({
-          message:
-            "na wskazanej półce znajduje się za mało sztuk wskazanej części",
-        });
+      return res.status(400).json({
+        message:
+          "na wskazanej półce znajduje się za mało sztuk wskazanej części",
+      });
 
     let newAmount = rows[0].amount - amount;
 
@@ -111,11 +109,9 @@ router.get("/stock", (req, res) => {
   connection.query(sql, (err, rows) => {
     if (err) return res.status(500).json(err);
     if (rows.length == 0)
-      return res
-        .status(404)
-        .json({
-          message: "nieznaleziono części na magazynie dla podanych kryteriów",
-        });
+      return res.status(404).json({
+        message: "nieznaleziono części na magazynie dla podanych kryteriów",
+      });
 
     res.status(200).json({
       cat_id: rows[0].cat_id,
@@ -151,7 +147,9 @@ router.get("/", (req, res) => {
         .status(400)
         .json({ message: "nieprawidłowy format pola producer" });
 
-    statement += `spareparts_cat.producer like "%${query.producer}%"`;
+    statement += `spareparts_cat.producer like "%${query.producer
+      .trim()
+      .toLowerCase()}%"`;
     conditions += 1;
   }
 
@@ -163,9 +161,13 @@ router.get("/", (req, res) => {
         .json({ message: "nieprawidłowy format pola category" });
 
     if (conditions > 0) {
-      statement += ` and spareparts_cat.category like "%${query.category}%"`;
+      statement += ` and spareparts_cat.category like "%${query.category
+        .trim()
+        .toLowerCase()}%"`;
     } else {
-      statement += `spareparts_cat.category like "%${query.category}%"`;
+      statement += `spareparts_cat.category like "%${query.category
+        .trim()
+        .toLowerCase()}%"`;
     }
 
     conditions += 1;
@@ -179,9 +181,13 @@ router.get("/", (req, res) => {
         .json({ message: "nieprawidłowy format pola name" });
 
     if (conditions > 0) {
-      statement += ` and spareparts_cat.name like "%${query.name}%"`;
+      statement += ` and spareparts_cat.name like "%${query.name
+        .trim()
+        .toLowerCase()}%"`;
     } else {
-      statement += `spareparts_cat.name like "%${query.name}%"`;
+      statement += `spareparts_cat.name like "%${query.name
+        .trim()
+        .toLowerCase()}%"`;
     }
 
     conditions += 1;
