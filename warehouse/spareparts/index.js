@@ -211,7 +211,7 @@ router.get("/", (req, res) => {
       .status(400)
       .json({ message: "podaj przynajmniej jedną wartość do wyszukania" });
 
-  let sql_findPart = `select distinct category, producer, name, amount, shelve, part_cat_id, part_id
+  let sql_findPart = `select distinct category, producer, name, IFNULL(amount, 0) as 'amount', shelve, part_cat_id, part_id
     from spareparts_cat left join spareparts on spareparts_cat.part_cat_id = spareparts.cat_id 
     where ${statement}`;
 
