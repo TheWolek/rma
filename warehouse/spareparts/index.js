@@ -147,9 +147,9 @@ router.get("/", (req, res) => {
         .status(400)
         .json({ message: "nieprawidłowy format pola producer" });
 
-    statement += `spareparts_cat.producer like "%${query.producer
+    statement += `spareparts_cat.producer like '%${query.producer
       .trim()
-      .toLowerCase()}%"`;
+      .toLowerCase()}%'`;
     conditions += 1;
   }
 
@@ -161,13 +161,13 @@ router.get("/", (req, res) => {
         .json({ message: "nieprawidłowy format pola category" });
 
     if (conditions > 0) {
-      statement += ` and spareparts_cat.category like "%${query.category
+      statement += ` and spareparts_cat.category like '%${query.category
         .trim()
-        .toLowerCase()}%"`;
+        .toLowerCase()}%'`;
     } else {
-      statement += `spareparts_cat.category like "%${query.category
+      statement += `spareparts_cat.category like '%${query.category
         .trim()
-        .toLowerCase()}%"`;
+        .toLowerCase()}%'`;
     }
 
     conditions += 1;
@@ -181,13 +181,13 @@ router.get("/", (req, res) => {
         .json({ message: "nieprawidłowy format pola name" });
 
     if (conditions > 0) {
-      statement += ` and spareparts_cat.name like "%${query.name
+      statement += ` and spareparts_cat.name like '%${query.name
         .trim()
-        .toLowerCase()}%"`;
+        .toLowerCase()}%'`;
     } else {
-      statement += `spareparts_cat.name like "%${query.name
+      statement += `spareparts_cat.name like '%${query.name
         .trim()
-        .toLowerCase()}%"`;
+        .toLowerCase()}%'`;
     }
 
     conditions += 1;
