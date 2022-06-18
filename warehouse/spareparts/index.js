@@ -122,7 +122,7 @@ router.get("/stock", (req, res) => {
 
 // find all data about specific part
 router.get("/", (req, res) => {
-  // recive one or more of parameters "producer": STRING, "category": STRING, "name": STRING
+  // recive one or more of parameters "producer": STRING, "category": STRING, "name": STRING, "cat_id": INT
   // return 400 if no parameter is passed OR is empty
   // return 400 if any of parameters does not match regEx
   // return 404 if cannot find anything
@@ -140,7 +140,20 @@ router.get("/", (req, res) => {
 
   let statement = "";
   let conditions = 0;
-  if (query.producer) {
+  let onlyOneStatement = false;
+
+  if (query.cat_id) {
+    let reg = /^([1-9]{1})([0-9]{0,})$/;
+    if (!reg.test(query.cat_id))
+      return res
+        .status(400)
+        .json({ message: "nieprawidłowy format pola cat_id" });
+    statement = `spareparts_cat.part_cat_id = ${query.cat_id}`;
+    onlyOneStatement = true;
+    conditions = 1;
+  }
+
+  if (query.producer && !onlyOneStatement) {
     let reg = /^([A-ż 0-9'"-]{2,})$/;
     if (!reg.test(query.producer))
       return res
@@ -153,7 +166,7 @@ router.get("/", (req, res) => {
     conditions += 1;
   }
 
-  if (query.category) {
+  if (query.category && !onlyOneStatement) {
     let reg = /^([A-ż 0-9'"-]{2,})$/;
     if (!reg.test(query.category))
       return res
@@ -173,7 +186,7 @@ router.get("/", (req, res) => {
     conditions += 1;
   }
 
-  if (query.name) {
+  if (query.name && !onlyOneStatement) {
     let reg = /^([A-ż,. ()0-9'"-]{2,})$/;
     if (!reg.test(query.name))
       return res
