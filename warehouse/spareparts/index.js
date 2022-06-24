@@ -228,6 +228,8 @@ router.get("/", (req, res) => {
     from spareparts_cat left join spareparts on spareparts_cat.part_cat_id = spareparts.cat_id 
     where ${statement}`;
 
+  console.log(sql_findPart);
+
   connection.query(sql_findPart, (err, rows) => {
     if (err) return res.status(500).json(err);
     if (rows.length == 0)
@@ -239,6 +241,7 @@ router.get("/", (req, res) => {
     rows.forEach((el) => {
       if ("cat_" + el.part_cat_id in output) {
         output["cat_" + el.part_cat_id].warehouse.shelves.push(el.shelve);
+        output["cat_" + el.part_cat_id].warehouse.stock.push(el.amount);
         output["cat_" + el.part_cat_id].warehouse.totalAmount += el.amount;
         output["cat_" + el.part_cat_id].warehouse.parts_id.push(el.part_id);
       } else {
@@ -252,6 +255,7 @@ router.get("/", (req, res) => {
           shelves: [el.shelve],
           totalAmount: el.amount,
           parts_id: [el.part_id],
+          stock: [el.amount],
         };
         output["cat_" + el.part_cat_id] = {
           part: part,
