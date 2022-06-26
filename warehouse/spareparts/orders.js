@@ -211,16 +211,22 @@ router.put("/edit", (req, res) => {
     });
   }
 
+  let badOrder = false;
+
   checkOrderStatus(orderData.part_order_id)
     .then(function (rows) {
-      if (rows.length == 0)
+      if (rows.length == 0) {
+        badOrder = true;
         return res
           .status(404)
           .json({ message: "nie znaleziono wskazanego zamówienia" });
-      if (rows[0].status == 2)
+      }
+      if (rows[0].status == 2) {
+        badOrder = true;
         return res
           .status(400)
           .json({ message: "nie można edytować zakończonego zamówienia" });
+      }
 
       let date = formatDate(orderData.expected_date);
       let sql = `update spareparts_orders set expected_date = "${date}", status = ${orderData.status}, supplier_id = ${orderData.supplier_id} where part_order_id = ${orderData.part_order_id}`;
@@ -234,6 +240,8 @@ router.put("/edit", (req, res) => {
       });
     })
     .then(function () {
+      if (badOrder) return;
+
       let queries = "";
 
       orderItems.forEach(function (item) {
