@@ -86,14 +86,29 @@ router.post("/", (req, res) => {
         .json({ message: "nieprawidłowy format pola shelve" });
   });
 
-  req.body.forEach((el) => {
-    let sql = `insert into spareparts (cat_id, amount, shelve) values (${el.cat_id}, ${el.amount}, ${el.shelve})`;
+  let output = [];
+  let sql = `insert into spareparts (cat_id, amount, shelve) values `;
 
-    connection.query(sql, (err, result) => {
-      if (err) return console.log(err);
+  req.body.forEach((el, index, arr) => {
+    sql += `(${el.cat_id}, ${el.amount}, ${el.shelve})`;
+    if (arr.length - 1 !== index) {
+      sql += ", ";
+    }
+    output.push({
+      cat_id: el.cat_id,
+      insertedId: null,
     });
   });
-  res.status(200).json({ status: "OK" });
+
+  sql += `; select LAST_INSERT_ID() AS lastid, ROW_COUNT() as rowcount;`;
+
+  connection.query(sql, (err, result) => {
+    if (err) return console.log(err);
+    for (let i = 0; i < result[1][0].rowcount; i++) {
+      output[i].insertedId = result[1][0].lastid + i;
+    }
+    res.status(200).json({ inertedRows: output });
+  });
 });
 
 module.exports = router;

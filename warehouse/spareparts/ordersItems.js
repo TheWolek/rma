@@ -12,7 +12,7 @@ router.get("/", (req, res) => {
   // return 400 if no params were passed OR param is empty OR does not match regEx
   // return 404 if cannot find specified order
   // return 500 if there was an DB error
-  // return 200 with [{"order_item_id": INT, "part_cat_id": INT, "amount": INT}, ...]
+  // return 200 with [{"order_item_id": INT, "part_cat_id": INT, "amount": INT, "codes": [STR, ...]}, ...]
 
   if (!req.query.order_id)
     return res.status(400).json({ message: "pole order_id jest wymagane" });
@@ -25,16 +25,29 @@ router.get("/", (req, res) => {
       .json({ message: "nieprawidłowy format pola order_id" });
 
   let sql = `select soi.order_item_id, soi.part_cat_id, soi.amount, sois.codes 
-  from spareparts_orders_items soi join spareparts_orders_items_sn sois on soi.order_item_id = sois.item_id
+  from spareparts_orders_items soi left join spareparts_orders_items_sn sois on soi.order_item_id = sois.item_id
   where soi.order_id =${req.query.order_id}`;
 
   connection.query(sql, (err, rows) => {
     if (err) return res.status(500).json(err);
+
+    let output = [];
+
     rows.forEach((el, index) => {
-      let newCodes = JSON.parse(el.codes);
-      rows[index].codes = newCodes;
+      let findItem = output.find((o) => o.order_item_id == el.order_item_id);
+
+      if (findItem !== undefined) {
+        findItem.codes.push(el.codes);
+      } else {
+        output.push({
+          order_item_id: el.order_item_id,
+          part_cat_id: el.part_cat_id,
+          amount: el.amount,
+          codes: [el.codes],
+        });
+      }
     });
-    res.status(200).json(rows);
+    res.status(200).json(output);
   });
 });
 
@@ -156,7 +169,7 @@ router.delete("/remove", (req, res) => {
 
 //set items codes
 router.post("/codes", (req, res) => {
-  // recive [{"item_id": INT, "codes": [STR, STR, ...]}, ...]
+  // recive [{"item_id": INT, "codes": [STR, STR, ...], part_id: INT}, ...]
   // return 400 if any param is missing
   // return 400 if any param does not match regEx
   // return 500 if there was a DB error
@@ -184,14 +197,14 @@ router.post("/codes", (req, res) => {
   });
 
   req.body.forEach((el) => {
-    let codes = JSON.stringify(el.codes);
-    connection.query(
-      `UPDATE spareparts_orders_items_sn SET codes = '${codes}' WHERE item_id = ${el.item_id}`,
-      (err, result) => {
-        // if (err) return res.status(500).json(err);
-        if (err) console.log(err);
-      }
-    );
+    for (let i = 0; i < el.codes.length; i++) {
+      connection.query(
+        `INSERT INTO spareparts_orders_items_sn (codes, item_id, part_id) values ('${el.codes[i]}', ${el.item_id}, ${el.part_id});`,
+        (err, result) => {
+          if (err) console.log(err);
+        }
+      );
+    }
   });
   res.status(200).json({ message: "ok" });
 });
