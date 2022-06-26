@@ -129,7 +129,6 @@ router.get("/", (req, res) => {
   // return 500 if there was DB error
   // return 200 with
   // {"cat_id": {"part":{"category": STRING, "cat_id": INT, "producer": STRING, "name": STRING}, "warehouse": {shelves: [INT, ...], totalAmount: INT, parts_id: [INT, ...]}},
-  //
 
   let query = req.query;
 
@@ -263,6 +262,56 @@ router.get("/", (req, res) => {
         };
       }
     });
+
+    res.status(200).json(output);
+  });
+});
+
+//find all data about specific part by SN
+router.get("/code", (req, res) => {
+  // recive one parameter "codes": STR
+  // return 400 if no parameter is passed OR is empty
+  // return 404 if cannot find anything
+  // return 500 if there was DB error
+  // return 200 with
+  // {"part":{"category": STRING, "cat_id": INT, "producer": STRING, "name": STRING}, "warehouse": {"shelve": INT, "part_id": INT, codes: STRING }},
+
+  if (!req.query.codes || req.query.codes == "") {
+    return res
+      .status(400)
+      .json({ message: "podaj przynajmniej jedną wartość do wyszukania" });
+  }
+
+  let sql = `select sois.codes, sois.part_id, sc.part_cat_id, sc.category, sc.producer, sc.name, s.shelve from spareparts_orders_items_sn sois 
+  join spareparts s
+  on sois.part_id = s.part_id 
+  join spareparts_cat sc 
+  on s.cat_id = sc.part_cat_id
+  where sois.codes = '${req.query.codes}'`;
+
+  connection.query(sql, (err, rows) => {
+    if (err) res.status(500).json(err);
+
+    if (rows.length === 0)
+      return res
+        .status(404)
+        .json({ message: "nieznaleziono części dla podanych kryteriów" });
+
+    let part = rows[0];
+
+    let output = {
+      part: {
+        category: part.category,
+        cat_id: part.part_cat_id,
+        producer: part.producer,
+        name: part.name,
+      },
+      warehouse: {
+        shelve: part.shelve,
+        part_id: part.part_id,
+        codes: part.codes,
+      },
+    };
 
     res.status(200).json(output);
   });
