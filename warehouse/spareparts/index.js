@@ -227,8 +227,6 @@ router.get("/", (req, res) => {
     from spareparts_cat left join spareparts on spareparts_cat.part_cat_id = spareparts.cat_id 
     where ${statement}`;
 
-  console.log(sql_findPart);
-
   connection.query(sql_findPart, (err, rows) => {
     if (err) return res.status(500).json(err);
     if (rows.length == 0)
@@ -299,7 +297,9 @@ router.get("/code", (req, res) => {
 
     let part = rows[0];
 
-    let output = {
+    let output = {};
+
+    let item = {
       part: {
         category: part.category,
         cat_id: part.part_cat_id,
@@ -312,6 +312,8 @@ router.get("/code", (req, res) => {
         codes: part.codes,
       },
     };
+
+    output["cat_" + part.part_cat_id] = item;
 
     res.status(200).json(output);
   });
