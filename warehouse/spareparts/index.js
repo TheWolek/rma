@@ -8,7 +8,7 @@ connection.connect();
 
 //removes specified amount of specified part
 router.post("/use", (req, res) => {
-  // recive {"part_id": INT, "amount": INT, "shelve": INT}
+  // recive {"part_id": INT, "shelve": INT, "sn": STR}
   // return 400 if any of parameters is missing OR is empty OR does not match regEx
   // return 400 if registered amount is fewer than requested
   // return 404 if cannot find specific part
@@ -17,33 +17,39 @@ router.post("/use", (req, res) => {
 
   if (!req.body.part_id || req.body.part_id == 0)
     return res.status(400).json({ message: "pole part_id jest wymagane" });
-  if (!req.body.amount || req.body.amount == 0)
-    return res.status(400).json({ message: "pole amount jest wymagane" });
-  if (!req.body.shelve || req.body.shelve == 0)
-    return res.status(400).json({ message: "pole shelve jest wymagane" });
+  // if (!req.body.amount || req.body.amount == 0)
+  //   return res.status(400).json({ message: "pole amount jest wymagane" });
+  // if (!req.body.shelve || req.body.shelve == 0)
+  //   return res.status(400).json({ message: "pole shelve jest wymagane" });
+  if (!req.body.sn || req.body.sn === undefined)
+    return res.status(400).json({ message: "pole sn jest wymagane" });
 
   let part_id = req.body.part_id;
-  let amount = req.body.amount;
-  let shelve = req.body.shelve;
+  //let amount = req.body.amount;
+  //let shelve = req.body.shelve;
+  let sn = req.body.sn;
 
   const reg = /^([1-9]){1,}([0-9]){0,}$/;
+  const sn_reg = /^[A-z0-9]{3,}$/;
 
   if (!reg.test(part_id))
     return res
       .status(400)
       .json({ message: "nieprawidłowy format pola part_id" });
-  if (!reg.test(amount))
-    return res
-      .status(400)
-      .json({ message: "nieprawidłowy format pola amount" });
-  if (!reg.test(shelve))
-    return res
-      .status(400)
-      .json({ message: "nieprawidłowy format pola shelve" });
+  // if (!reg.test(amount))
+  //   return res
+  //     .status(400)
+  //     .json({ message: "nieprawidłowy format pola amount" });
+  // if (!reg.test(shelve))
+  //   return res
+  //     .status(400)
+  //     .json({ message: "nieprawidłowy format pola shelve" });
+  if (!sn_reg.test(sn))
+    return res.status(400).json({ message: "nieprawidłowy format pola sn" });
 
-  function checkPartAmount(part_id, shelve) {
+  function checkPartAmount(part_id) {
     return new Promise(function (resolve, reject) {
-      let sql = `select part_id, amount, shelve from spareparts where part_id = ${part_id} and shelve = ${shelve}`;
+      let sql = `select part_id, amount from spareparts where part_id = ${part_id};`;
       connection.query(sql, function (err, rows) {
         if (err) return reject(err);
         resolve(rows);
@@ -51,27 +57,30 @@ router.post("/use", (req, res) => {
     });
   }
 
-  checkPartAmount(part_id, shelve).then(function (rows) {
+  checkPartAmount(part_id).then(function (rows) {
     if (rows.length == 0)
       return res
         .status(404)
         .json({ message: "nie znaleziono wskazanej części" });
-    if (rows[0].amount < amount)
+    if (rows[0].amount < 1)
       return res.status(400).json({
         message:
           "na wskazanej półce znajduje się za mało sztuk wskazanej części",
       });
 
-    let newAmount = rows[0].amount - amount;
+    let newAmount = rows[0].amount - 1;
+    let sql = `delete from spareparts_sn where codes = '${sn}' and part_id = ${part_id};`;
+
+    console.log(sql);
 
     if (newAmount == 0) {
-      let sql = `delete from spareparts where part_id = ${part_id} and shelve = ${shelve}`;
+      sql += `delete from spareparts where part_id = ${part_id};`;
       connection.query(sql, (err, result) => {
         if (err) return res.status(500).json(err);
         return res.status(200).send();
       });
     } else {
-      let sql = `update spareparts set amount = ${newAmount} where part_id = ${part_id} and shelve = ${shelve}`;
+      sql += `update spareparts set amount = ${newAmount} where part_id = ${part_id};`;
       connection.query(sql, (err, result) => {
         if (err) return res.status(500).json(err);
         return res.status(200).send();
@@ -223,7 +232,7 @@ router.get("/", (req, res) => {
       .status(400)
       .json({ message: "podaj przynajmniej jedną wartość do wyszukania" });
 
-  let sql_findPart = `select distinct category, producer, name, IFNULL(amount, 0) as 'amount', shelve, part_cat_id, part_id
+  let sql_findPart = `select distinct category, producer, name, IFNULL(amount, 0) as 'amount', part_cat_id, part_id
     from spareparts_cat left join spareparts on spareparts_cat.part_cat_id = spareparts.cat_id 
     where ${statement}`;
 
@@ -280,7 +289,7 @@ router.get("/code", (req, res) => {
       .json({ message: "podaj przynajmniej jedną wartość do wyszukania" });
   }
 
-  let sql = `select sois.codes, sois.part_id, sc.part_cat_id, sc.category, sc.producer, sc.name, s.shelve from spareparts_orders_items_sn sois 
+  let sql = `select sois.codes, sois.part_id, sc.part_cat_id, sc.category, sc.producer, sc.name, from spareparts_sn sois 
   join spareparts s
   on sois.part_id = s.part_id 
   join spareparts_cat sc 

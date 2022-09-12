@@ -25,7 +25,7 @@ router.get("/", (req, res) => {
       .json({ message: "nieprawidłowy format pola order_id" });
 
   let sql = `select soi.order_item_id, soi.part_cat_id, soi.amount, sois.codes 
-  from spareparts_orders_items soi left join spareparts_orders_items_sn sois on soi.order_item_id = sois.item_id
+  from spareparts_orders_items soi left join spareparts_sn sois on soi.order_item_id = sois.item_id
   where soi.order_id =${req.query.order_id}`;
 
   connection.query(sql, (err, rows) => {
@@ -199,7 +199,7 @@ router.post("/codes", (req, res) => {
   req.body.forEach((el) => {
     for (let i = 0; i < el.codes.length; i++) {
       connection.query(
-        `INSERT INTO spareparts_orders_items_sn (codes, item_id, part_id) values ('${el.codes[i]}', ${el.item_id}, ${el.part_id});`,
+        `INSERT INTO spareparts_sn (codes, item_id, part_id, shelve) values ('${el.codes[i]}', ${el.item_id}, ${el.part_id}, 0);`,
         (err, result) => {
           if (err) console.log(err);
         }

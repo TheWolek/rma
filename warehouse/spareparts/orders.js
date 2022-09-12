@@ -247,9 +247,9 @@ router.put("/edit", (req, res) => {
       orderItems.forEach(function (item) {
         if (item.order_item_id === undefined || !item.order_item_id) {
           queries += `INSERT INTO spareparts_orders_items (part_cat_id, amount, order_id) VALUES (${item.part_cat_id}, ${item.amount}, ${orderData.part_order_id});`;
-          //queries += `INSERT INTO spareparts_orders_items_sn (codes, item_id) VALUES ("", ${item.order_item_id})`;
+          //queries += `INSERT INTO spareparts_sn (codes, item_id) VALUES ("", ${item.order_item_id})`;
         } else if (item.toRemove !== undefined || item.toRemove) {
-          queries += `DELETE FROM spareparts_orders_items_sn WHERE item_id = ${item.order_item_id};`;
+          queries += `DELETE FROM spareparts_sn WHERE item_id = ${item.order_item_id};`;
           queries += `DELETE FROM spareparts_orders_items WHERE order_item_id = ${item.order_item_id};`;
         } else {
           queries += `UPDATE spareparts_orders_items set part_cat_id = ${item.part_cat_id}, amount = ${item.amount} WHERE order_item_id = ${item.order_item_id};`;

@@ -50,7 +50,7 @@ router.post("/new", (req, res) => {
 
 // add part to warehouse
 router.post("/", (req, res) => {
-  // recive [{"cat_id": INT, "amount": INT, "shelve": INT}, ...]
+  // recive [{"cat_id": INT, "amount": INT}, ...]
   // return 400 if array is empty
   // return 400 if any of parameters is missing OR is empty OR does not match regEx
   // return 500 if there was DB error
@@ -64,11 +64,11 @@ router.post("/", (req, res) => {
       return res.status(400).json({ message: "pole cat_id jest wymagane" });
     if (!el.amount)
       return res.status(400).json({ message: "pole amount jest wymagane" });
-    if (!el.shelve && el.shelve !== 0)
-      return res.status(400).json({ message: "pole shelve jest wymagane" });
+    // if (!el.shelve && el.shelve !== 0)
+    //   return res.status(400).json({ message: "pole shelve jest wymagane" });
   });
 
-  const reg = /^([1-9]{1,})$/;
+  const reg = /^([1-9]{1,}[0-9]{0,})$/;
   const regShelve = /^([0-9]{1,})$/;
 
   req.body.forEach((el) => {
@@ -80,17 +80,17 @@ router.post("/", (req, res) => {
       return res
         .status(400)
         .json({ message: "nieprawidłowy format pola amount" });
-    if (!regShelve.test(el.shelve))
-      return res
-        .status(400)
-        .json({ message: "nieprawidłowy format pola shelve" });
+    // if (!regShelve.test(el.shelve))
+    //   return res
+    //     .status(400)
+    //     .json({ message: "nieprawidłowy format pola shelve" });
   });
 
   let output = [];
-  let sql = `insert into spareparts (cat_id, amount, shelve) values `;
+  let sql = `insert into spareparts (cat_id, amount) values `;
 
   req.body.forEach((el, index, arr) => {
-    sql += `(${el.cat_id}, ${el.amount}, ${el.shelve})`;
+    sql += `(${el.cat_id}, ${el.amount})`;
     if (arr.length - 1 !== index) {
       sql += ", ";
     }
