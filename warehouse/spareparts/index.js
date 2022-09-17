@@ -156,7 +156,7 @@ router.get("/", (req, res) => {
       return res
         .status(400)
         .json({ message: "nieprawidłowy format pola cat_id" });
-    statement = `spareparts_cat.part_cat_id = ${query.cat_id}`;
+    statement = `sc.part_cat_id = ${query.cat_id}`;
     onlyOneStatement = true;
     conditions = 1;
   }
@@ -168,9 +168,7 @@ router.get("/", (req, res) => {
         .status(400)
         .json({ message: "nieprawidłowy format pola producer" });
 
-    statement += `spareparts_cat.producer like '%${query.producer
-      .trim()
-      .toLowerCase()}%'`;
+    statement += `sc.producer like '%${query.producer.trim().toLowerCase()}%'`;
     conditions += 1;
   }
 
@@ -182,11 +180,11 @@ router.get("/", (req, res) => {
         .json({ message: "nieprawidłowy format pola category" });
 
     if (conditions > 0) {
-      statement += ` and spareparts_cat.category like '%${query.category
+      statement += ` and sc.category like '%${query.category
         .trim()
         .toLowerCase()}%'`;
     } else {
-      statement += `spareparts_cat.category like '%${query.category
+      statement += `sc.category like '%${query.category
         .trim()
         .toLowerCase()}%'`;
     }
@@ -202,13 +200,9 @@ router.get("/", (req, res) => {
         .json({ message: "nieprawidłowy format pola name" });
 
     if (conditions > 0) {
-      statement += ` and spareparts_cat.name like '%${query.name
-        .trim()
-        .toLowerCase()}%'`;
+      statement += ` and sc.name like '%${query.name.trim().toLowerCase()}%'`;
     } else {
-      statement += `spareparts_cat.name like '%${query.name
-        .trim()
-        .toLowerCase()}%'`;
+      statement += `sc.name like '%${query.name.trim().toLowerCase()}%'`;
     }
 
     conditions += 1;
@@ -232,9 +226,18 @@ router.get("/", (req, res) => {
       .status(400)
       .json({ message: "podaj przynajmniej jedną wartość do wyszukania" });
 
-  let sql_findPart = `select distinct category, producer, name, IFNULL(amount, 0) as 'amount', part_cat_id, part_id
-    from spareparts_cat left join spareparts on spareparts_cat.part_cat_id = spareparts.cat_id 
-    where ${statement}`;
+  // let sql_findPart = `select distinct category, producer, name, IFNULL(amount, 0) as 'amount', part_cat_id, part_id
+  //   from spareparts_cat left join spareparts on spareparts_cat.part_cat_id = spareparts.cat_id
+  //   where ${statement}`;
+
+  let sql_findPart = `select distinct sc.category, sc.producer, sc.name, sc.part_cat_id, s.part_id,
+	ss.codes, ss.shelve
+    from spareparts_cat sc 
+    left join spareparts s on sc.part_cat_id = s.cat_id
+    left join spareparts_sn ss on s.part_id = ss.part_id
+   	where ${statement}`;
+
+  console.log(sql_findPart);
 
   connection.query(sql_findPart, (err, rows) => {
     if (err) return res.status(500).json(err);
@@ -244,12 +247,28 @@ router.get("/", (req, res) => {
         .json({ message: "nieznaleziono części dla podanych kryteriów" });
 
     let output = {};
+    console.log(rows);
     rows.forEach((el) => {
       if ("cat_" + el.part_cat_id in output) {
+        // if (
+        //   !output["cat_" + el.part_cat_id].warehouse.shelves.includes(el.shelve)
+        // ) {
         output["cat_" + el.part_cat_id].warehouse.shelves.push(el.shelve);
-        output["cat_" + el.part_cat_id].warehouse.stock.push(el.amount);
-        output["cat_" + el.part_cat_id].warehouse.totalAmount += el.amount;
+        //}
+
+        // if (
+        //   !output["cat_" + el.part_cat_id].warehouse.parts_id.includes(
+        //     el.part_id
+        //   )
+        // ) {
         output["cat_" + el.part_cat_id].warehouse.parts_id.push(el.part_id);
+        //}
+
+        //output["cat_" + el.part_cat_id].warehouse.stock.push(el.amount);
+        if (el.codes !== null) {
+          output["cat_" + el.part_cat_id].warehouse.totalAmount += 1;
+          output["cat_" + el.part_cat_id].warehouse.codes.push(el.codes);
+        }
       } else {
         let part = {
           category: el.category,
@@ -257,11 +276,16 @@ router.get("/", (req, res) => {
           producer: el.producer,
           name: el.name,
         };
+        let partAmount = 0;
+        if (el.codes !== null) {
+          partAmount = 1;
+        }
         let warehouse = {
           shelves: [el.shelve],
-          totalAmount: el.amount,
+          totalAmount: partAmount,
           parts_id: [el.part_id],
-          stock: [el.amount],
+          codes: [el.codes],
+          // stock: [el.amount],
         };
         output["cat_" + el.part_cat_id] = {
           part: part,
