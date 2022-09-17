@@ -313,12 +313,12 @@ router.get("/code", (req, res) => {
       .json({ message: "podaj przynajmniej jedną wartość do wyszukania" });
   }
 
-  let sql = `select sois.codes, sois.part_id, sc.part_cat_id, sc.category, sc.producer, sc.name, from spareparts_sn sois 
+  let sql = `select ss.codes, ss.shelve, s.part_id, sc.part_cat_id, sc.category, sc.producer, sc.name from spareparts_sn ss 
   join spareparts s
-  on sois.part_id = s.part_id 
+  on ss.part_id = s.part_id 
   join spareparts_cat sc 
   on s.cat_id = sc.part_cat_id
-  where sois.codes = '${req.query.codes}'`;
+  where ss.codes = '${req.query.codes}'`;
 
   connection.query(sql, (err, rows) => {
     if (err) res.status(500).json(err);
