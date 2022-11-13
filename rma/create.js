@@ -4,6 +4,8 @@ const mysql = require("mysql");
 const creds = require("../db_creds");
 const connection = mysql.createConnection(creds);
 
+const formatDate = require("../utils/formatDateAndHours");
+
 connection.connect();
 
 router.post("/", (req, res) => {
@@ -87,10 +89,10 @@ router.post("/", (req, res) => {
     return res.status(400).json({ Message: "zły format pola phone" });
   }
 
-  let createdDate = new Date();
+  let createdDate = formatDate(new Date());
 
   let sql = `insert into tickets (email, name, phone, device_sn, device_name, device_producer, type, device_accessories, issue, status, created) VALUES \
-      ("${req.body.email}", "${req.body.name}", "${req.body.phone}", "${req.body.deviceSn}", "${req.body.deviceName}", "${req.body.deviceProducer}", 1, "${req.body.deviceAccessories}", "${req.body.issue}", 1, "2022-11-13")`;
+      ("${req.body.email}", "${req.body.name}", "${req.body.phone}", "${req.body.deviceSn}", "${req.body.deviceName}", "${req.body.deviceProducer}", 1, "${req.body.deviceAccessories}", "${req.body.issue}", 1, "${createdDate}")`;
 
   connection.query(sql, (err, result) => {
     if (err) return console.log(err);
