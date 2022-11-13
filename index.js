@@ -13,6 +13,9 @@ const sparePartsOrders = require("./warehouse/spareparts/orders");
 const sparePartsOrdersItems = require("./warehouse/spareparts/ordersItems");
 const sparePartsShelve = require("./warehouse/spareparts/shelve");
 
+const rma = require("./rma");
+const rmaCreate = require("./rma/create");
+
 app.use(cors());
 app.use(bodyParser.json());
 app.use("/warehouse/items", warehouseItems);
@@ -22,6 +25,8 @@ app.use("/warehouse/spareparts/orders", sparePartsOrders);
 app.use("/warehouse/spareparts/orders/items", sparePartsOrdersItems);
 app.use("/warehouse/spareparts/shelve", sparePartsShelve);
 app.use("/warehouse/spareparts", spareParts);
+app.use("/rma/", rma);
+app.use("/rma/create/", rmaCreate);
 
 app.get("/", (req, res) => {
   res.send("Welcome to RMA system");
