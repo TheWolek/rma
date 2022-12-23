@@ -9,7 +9,7 @@ const formatDate = require("../utils/formatDateAndHours");
 connection.connect();
 
 router.post("/", (req, res) => {
-  //recive {email: STR, name: STR, phone: STR, deviceSn: STR, deviceName: STR, deviceProducer: STR, deviceAccessories: STR (optional), issue: STR}
+  //recive {email: STR, name: STR, phone: STR, deviceSn: STR, deviceName: STR, deviceCat: STR, deviceProducer: STR, deviceAccessories: STR (optional), issue: STR, lines: STR, postCode: STR, city: STR}
   //return 400 if any of required params are missing
   //return 400 if any of passed params is in wrong format
   //return 500 if there is DB error
@@ -51,6 +51,13 @@ router.post("/", (req, res) => {
     return res.status(400).json({ Message: "Pole deviceName jest wymagane" });
   }
   if (
+    req.body.deviceCat === undefined ||
+    req.body.deviceCat === null ||
+    req.body.deviceCat.length === 0
+  ) {
+    return res.status(400).json({ Message: "Pole deviceCat jest wymagane" });
+  }
+  if (
     req.body.deviceProducer === undefined ||
     req.body.deviceProducer === null ||
     req.body.deviceProducer.length === 0
@@ -74,10 +81,33 @@ router.post("/", (req, res) => {
   ) {
     return res.status(400).json({ Message: "Pole issue jest wymagane" });
   }
+  if (
+    req.body.lines === undefined ||
+    req.body.lines === null ||
+    req.body.lines.length === 0
+  ) {
+    return res.status(400).json({ Message: "Pole lines jest wymagane" });
+  }
+  if (
+    req.body.postCode === undefined ||
+    req.body.postCode === null ||
+    req.body.postCode.length === 0
+  ) {
+    return res.status(400).json({ Message: "Pole postCode jest wymagane" });
+  }
+  if (
+    req.body.city === undefined ||
+    req.body.city === null ||
+    req.body.city.length === 0
+  ) {
+    return res.status(400).json({ Message: "Pole city jest wymagane" });
+  }
 
-  const regString = /^([a-zA-Z0-9 ]){4,}$/;
+  const regString = /^([a-żA-Ż0-9 ]){2,}$/;
   const regEmail = /^(.){1,}@(.){1,}\.([A-z]){1,}$/;
   const regNumber = /^([0-9]{9})$/;
+  const regLines = /^([a-żA-Ż0-9/. ]){2,}([1-9]){0,}([0-9]){1,}$/;
+  const regPostCode = /^([0-9]){2}-([0-9]){3}$/;
 
   if (!regEmail.test(req.body.email)) {
     return res.status(400).json({ Message: "zły format pola email" });
@@ -88,11 +118,18 @@ router.post("/", (req, res) => {
   if (!regNumber.test(req.body.phone)) {
     return res.status(400).json({ Message: "zły format pola phone" });
   }
+  if (!regLines.test(req.body.lines)) {
+    return res.status(400).json({ Message: "zły format pola lines" });
+  }
+  if (!regPostCode.test(req.body.postCode)) {
+    return res.status(400).json({ Message: "zły format pola postCode" });
+  }
+  if (!regString.test(req.body.city)) {
+    return res.status(400).json({ Message: "zły format pola city" });
+  }
 
-  let createdDate = formatDate(new Date());
-
-  let sql = `insert into tickets (email, name, phone, device_sn, device_name, device_producer, type, device_accessories, issue, status, created) VALUES \
-      ("${req.body.email}", "${req.body.name}", "${req.body.phone}", "${req.body.deviceSn}", "${req.body.deviceName}", "${req.body.deviceProducer}", 1, "${req.body.deviceAccessories}", "${req.body.issue}", 1, "${createdDate}")`;
+  let sql = `insert into tickets (email, name, phone, device_sn, device_name, device_cat, device_producer, type, device_accessories, issue, status, \`lines\`, postCode, city) VALUES \
+      ("${req.body.email}", "${req.body.name}", "${req.body.phone}", "${req.body.deviceSn}", "${req.body.deviceName}", "${req.body.deviceCat}", "${req.body.deviceProducer}", 1, "${req.body.deviceAccessories}", "${req.body.issue}", 1, "${req.body.lines}", "${req.body.postCode}", "${req.body.city}")`;
 
   connection.query(sql, (err, result) => {
     if (err) return console.log(err);
