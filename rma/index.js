@@ -91,7 +91,7 @@ router.get("/", (req, res) => {
     filters += `w.waybill_number like '${req.query.waybill}%'`;
   }
 
-  let sql = `SELECT t.ticket_id, t.email, t.name, t.phone, t.device_sn, t.device_name, t.device_producer, t.type, t.device_accessories, t.issue, t.status, t.created, t.lines, t.postCode, t.city, t.device_cat, t.lastStatusUpdate FROM tickets t`;
+  let sql = `SELECT t.ticket_id, t.email, t.name, t.phone, t.device_sn, t.device_name, t.device_producer, t.type, t.device_accessories, t.issue, t.status, t.created, t.lines, t.postCode, t.city, t.device_cat, t.lastStatusUpdate, t.inWarehouse, i.item_id FROM tickets t left join items i on t.ticket_id = i.ticket_id `;
 
   if (req.query.waybill !== undefined)
     sql += ` JOIN waybills w ON t.ticket_id = w.ticket_id`;
