@@ -8,7 +8,7 @@ connection.connect();
 
 router.get("/", (req, res) => {
   //recive filter params: ticketId: INT, status: INT, type: INT, deviceSn: STR, deviceProducer: STR
-  // email: STR, name: STR, phone: STR, date: STR
+  // email: STR, name: STR, phone: STR, date: STR, waybill: STR
   //return 404 if no tickets were found
   //return 500 if there was a DB erorr
   //return 200 with all tickets Data on success
@@ -16,7 +16,7 @@ router.get("/", (req, res) => {
   let filters = "";
 
   if (req.query.ticketId !== undefined) {
-    filters += `ticket_id = ${req.query.ticketId}`;
+    filters += `t.ticket_id = ${req.query.ticketId}`;
   }
 
   if (req.query.status !== undefined) {
@@ -24,7 +24,7 @@ router.get("/", (req, res) => {
       filters += " and ";
     }
 
-    filters += `status = ${req.query.status}`;
+    filters += `t.status = ${req.query.status}`;
   }
 
   if (req.query.type !== undefined) {
@@ -32,7 +32,7 @@ router.get("/", (req, res) => {
       filters += " and ";
     }
 
-    filters += `type = ${req.query.type}`;
+    filters += `t.type = ${req.query.type}`;
   }
 
   if (req.query.deviceSn !== undefined) {
@@ -40,7 +40,7 @@ router.get("/", (req, res) => {
       filters += " and ";
     }
 
-    filters += `device_sn = '${req.query.deviceSn}'`;
+    filters += `t.device_sn = '${req.query.deviceSn}'`;
   }
 
   if (req.query.deviceProducer !== undefined) {
@@ -48,7 +48,7 @@ router.get("/", (req, res) => {
       filters += " and ";
     }
 
-    filters += `device_producer like '%${req.query.deviceProducer}%'`;
+    filters += `t.device_producer like '%${req.query.deviceProducer}%'`;
   }
 
   if (req.query.email !== undefined) {
@@ -56,7 +56,7 @@ router.get("/", (req, res) => {
       filters += " and ";
     }
 
-    filters += `email like '%${req.query.email}%'`;
+    filters += `t.email like '%${req.query.email}%'`;
   }
 
   if (req.query.name !== undefined) {
@@ -64,7 +64,7 @@ router.get("/", (req, res) => {
       filters += " and ";
     }
 
-    filters += `name like '%${req.query.name}%'`;
+    filters += `t.name like '%${req.query.name}%'`;
   }
 
   if (req.query.phone !== undefined) {
@@ -72,10 +72,29 @@ router.get("/", (req, res) => {
       filters += " and ";
     }
 
-    filters += `phone like '%${req.query.phone}%'`;
+    filters += `t.phone like '%${req.query.phone}%'`;
   }
 
-  let sql = `SELECT * FROM tickets`;
+  if (req.query.date !== undefined) {
+    if (filters.length > 0) {
+      filters += " and ";
+    }
+
+    filters += `t.created like '${req.query.date}%'`;
+  }
+
+  if (req.query.waybill !== undefined) {
+    if (filters.length > 0) {
+      filters += " and ";
+    }
+
+    filters += `w.waybill_number like '${req.query.waybill}%'`;
+  }
+
+  let sql = `SELECT t.ticket_id, t.email, t.name, t.phone, t.device_sn, t.device_name, t.device_producer, t.type, t.device_accessories, t.issue, t.status, t.created, t.lines, t.postCode, t.city, t.device_cat, t.lastStatusUpdate FROM tickets t`;
+
+  if (req.query.waybill !== undefined)
+    sql += ` JOIN waybills w ON t.ticket_id = w.ticket_id`;
 
   if (filters.length > 0) sql += ` WHERE ${filters}`;
 
