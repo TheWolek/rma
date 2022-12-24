@@ -105,4 +105,32 @@ router.get("/", (req, res) => {
   });
 });
 
+router.put("/register/:ticketId", (req, res) => {
+  const reg = /^([1-9]){1,}([0-9]){0,}$/;
+
+  if (!reg.test(req.params.ticketId))
+    return res.status(400).json({ message: "Zły format pola ticketId" });
+
+  function checkIfTicketExists(id) {
+    return new Promise(function (resolve, reject) {
+      let sql = `SELECT ticket_id FROM tickets WHERE ticket_id=${id};`;
+      connection.query(sql, function (err, rows) {
+        if (err) return reject(err);
+        resolve(rows);
+      });
+    });
+  }
+
+  checkIfTicketExists(req.params.ticketId).then(function (rows) {
+    if (rows.length === 0)
+      return res.status(404).json({ message: "Brak zlecenia o podanym ID" });
+
+    let sql = `UPDATE tickets SET inWarehouse=1 WHERE ticket_id=${req.params.ticketId};`;
+    connection.query(sql, (err, results) => {
+      if (err) return res.status(500).json(err);
+      return res.status(200).json({});
+    });
+  });
+});
+
 module.exports = router;
