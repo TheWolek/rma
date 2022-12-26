@@ -3,6 +3,7 @@ const router = express.Router();
 const mysql = require("mysql");
 const creds = require("../db_creds");
 const connection = mysql.createConnection(creds);
+const formatDateAndHours = require("../utils/formatDateAndHours");
 
 connection.connect();
 
@@ -153,7 +154,8 @@ router.put("/changeState/:ticketId", (req, res) => {
     if (rows.length === 0)
       return res.status(404).json({ message: "Brak zlecenia o podanym ID" });
 
-    let sql = `UPDATE tickets SET status=${req.body.status} WHERE ticket_id=${req.params.ticketId};`;
+    const updateDate = formatDateAndHours(new Date());
+    let sql = `UPDATE tickets SET status=${req.body.status}, lastStatusUpdate="${updateDate}" WHERE ticket_id=${req.params.ticketId};`;
     connection.query(sql, (err, results) => {
       if (err) return res.status(500).json(err);
       return res.status(200).json({});
