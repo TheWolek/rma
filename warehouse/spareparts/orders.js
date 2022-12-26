@@ -231,8 +231,6 @@ router.put("/edit", (req, res) => {
       let date = formatDate(orderData.expected_date);
       let sql = `update spareparts_orders set expected_date = "${date}", status = ${orderData.status}, supplier_id = ${orderData.supplier_id} where part_order_id = ${orderData.part_order_id}`;
 
-      console.log(sql);
-
       connection.query(sql, (err, result) => {
         if (err) Promise.reject(err);
         Promise.resolve();
@@ -255,8 +253,6 @@ router.put("/edit", (req, res) => {
           queries += `UPDATE spareparts_orders_items set part_cat_id = ${item.part_cat_id}, amount = ${item.amount} WHERE order_item_id = ${item.order_item_id};`;
         }
       });
-
-      console.log(queries);
 
       connection.query(queries, function (err, result) {
         if (err) return res.status(500).json(err);

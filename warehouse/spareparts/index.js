@@ -71,8 +71,6 @@ router.post("/use", (req, res) => {
     let newAmount = rows[0].amount - 1;
     let sql = `delete from spareparts_sn where codes = '${sn}' and part_id = ${part_id};`;
 
-    console.log(sql);
-
     if (newAmount == 0) {
       sql += `delete from spareparts where part_id = ${part_id};`;
       connection.query(sql, (err, result) => {
@@ -237,8 +235,6 @@ router.get("/", (req, res) => {
     left join spareparts_sn ss on s.part_id = ss.part_id
    	where ${statement}`;
 
-  console.log(sql_findPart);
-
   connection.query(sql_findPart, (err, rows) => {
     if (err) return res.status(500).json(err);
     if (rows.length == 0)
@@ -247,7 +243,6 @@ router.get("/", (req, res) => {
         .json({ message: "nieznaleziono części dla podanych kryteriów" });
 
     let output = {};
-    console.log(rows);
     rows.forEach((el) => {
       if ("cat_" + el.part_cat_id in output) {
         // if (
