@@ -123,6 +123,12 @@ router.get("/", (req, res) => {
 });
 
 router.put("/register/:ticketId", (req, res) => {
+  //recive ticketId in url
+  //return 400 if ticketId does not match regEx
+  //return 404 if no ticket was found
+  //return 500 on DB error
+  //return 200 on success
+
   if (!ticketReg.test(req.params.ticketId))
     return res.status(400).json({ message: "Zły format pola ticketId" });
 
@@ -139,6 +145,14 @@ router.put("/register/:ticketId", (req, res) => {
 });
 
 router.put("/changeState/:ticketId", (req, res) => {
+  //recive ticketId in URL
+  //recive body {status: INT [1-9]}
+  //return 400 if ticketId does not match regEx
+  //return 400 if status does not match regEx
+  //return 404 if no ticket was found
+  //return 500 on DB erorr
+  //return 200 on success
+
   if (!ticketReg.test(req.params.ticketId))
     return res.status(400).json({ message: "Zły format pola ticketId" });
 
@@ -164,6 +178,56 @@ router.put("/changeState/:ticketId", (req, res) => {
       if (err) return res.status(500).json(err);
       return res.status(200).json({});
     });
+  });
+});
+
+router.post("/comment/:ticketId", (req, res) => {
+  //recive ticketId in url
+  //recive body {comment: STR}
+  //return 400 if ticketId does not match regEx
+  //return 400 if comment is empty
+  //return 404 if no ticket was found
+  //return 500 on DB erorr
+  //return 200 on success
+
+  if (!ticketReg.test(req.params.ticketId))
+    return res.status(400).json({ message: "Zły format pola ticketId" });
+
+  if (
+    req.body.comment === undefined ||
+    req.body.comment === "" ||
+    req.body.comment === null
+  )
+    return res.status(400).json({ message: "Pole comment jest wymagane" });
+
+  checkIfTicketExists(req.params.ticketId).then(function (rows) {
+    if (rows.length === 0)
+      return res.status(404).json({ message: "Brak zlecenia o podanym ID" });
+
+    let sql = `INSERT INTO tickets_comments (ticket_id, comment) VALUES (${req.params.ticketId}, "${req.body.comment}");`;
+    connection.query(sql, (err, results) => {
+      if (err) return res.status(500).json(err);
+      return res.status(200).json({});
+    });
+  });
+});
+
+router.get("/comments/:ticketId", (req, res) => {
+  //recive ticketId in url
+  //return 400 if ticketId does not match regEx
+  //return 404 if no comments were found
+  //return 500 on DB error
+  //return 200 on success with [{comment: STR, created: DATE}, ...]
+
+  if (!ticketReg.test(req.params.ticketId))
+    return res.status(400).json({ message: "Zły format pola ticketId" });
+
+  let sql = `SELECT comment, created FROM tickets_comments WHERE ticket_id = ${req.params.ticketId};`;
+
+  connection.query(sql, (err, rows) => {
+    if (err) return res.status(500).json(err);
+    if (rows.length === 0) return res.status(404).json([]);
+    return res.status(200).json(rows);
   });
 });
 
