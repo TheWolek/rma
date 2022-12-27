@@ -8,15 +8,15 @@ connection.connect();
 
 //removes specified amount of specified part
 router.post("/use", (req, res) => {
-  // recive {"part_id": INT, "shelve": INT, "sn": STR}
+  // recive {"sn": STR}
   // return 400 if any of parameters is missing OR is empty OR does not match regEx
   // return 400 if registered amount is fewer than requested
   // return 404 if cannot find specific part
   // return 500 if there was DB error
   // return 200 on success
 
-  if (!req.body.part_id || req.body.part_id == 0)
-    return res.status(400).json({ message: "pole part_id jest wymagane" });
+  // if (!req.body.part_id || req.body.part_id == 0)
+  //   return res.status(400).json({ message: "pole part_id jest wymagane" });
   // if (!req.body.amount || req.body.amount == 0)
   //   return res.status(400).json({ message: "pole amount jest wymagane" });
   // if (!req.body.shelve || req.body.shelve == 0)
@@ -24,18 +24,18 @@ router.post("/use", (req, res) => {
   if (!req.body.sn || req.body.sn === undefined)
     return res.status(400).json({ message: "pole sn jest wymagane" });
 
-  let part_id = req.body.part_id;
+  // let part_id = req.body.part_id;
   //let amount = req.body.amount;
   //let shelve = req.body.shelve;
   let sn = req.body.sn;
 
-  const reg = /^([1-9]){1,}([0-9]){0,}$/;
+  // const reg = /^([1-9]){1,}([0-9]){0,}$/;
   const sn_reg = /^[A-z0-9]{3,}$/;
 
-  if (!reg.test(part_id))
-    return res
-      .status(400)
-      .json({ message: "nieprawidłowy format pola part_id" });
+  // if (!reg.test(part_id))
+  //   return res
+  //     .status(400)
+  //     .json({ message: "nieprawidłowy format pola part_id" });
   // if (!reg.test(amount))
   //   return res
   //     .status(400)
@@ -47,9 +47,10 @@ router.post("/use", (req, res) => {
   if (!sn_reg.test(sn))
     return res.status(400).json({ message: "nieprawidłowy format pola sn" });
 
-  function checkPartAmount(part_id) {
+  function checkPartAmount(sn) {
     return new Promise(function (resolve, reject) {
-      let sql = `select part_id, amount from spareparts where part_id = ${part_id};`;
+      let sql = `select s.part_id, s.amount, ss.codes from spareparts s 
+      join spareparts_sn ss on s.part_id = ss.part_id where ss.codes = ${sn} and ss.isUsed = 0;`;
       connection.query(sql, function (err, rows) {
         if (err) return reject(err);
         resolve(rows);
@@ -57,7 +58,7 @@ router.post("/use", (req, res) => {
     });
   }
 
-  checkPartAmount(part_id).then(function (rows) {
+  checkPartAmount(sn).then(function (rows) {
     if (rows.length == 0)
       return res
         .status(404)
@@ -68,22 +69,23 @@ router.post("/use", (req, res) => {
           "na wskazanej półce znajduje się za mało sztuk wskazanej części",
       });
 
+    let part_id = rows[0].part_id;
     let newAmount = rows[0].amount - 1;
-    let sql = `delete from spareparts_sn where codes = '${sn}' and part_id = ${part_id};`;
+    let sql = `update spareparts_sn set isUsed = 1 where codes = '${sn}' and part_id = ${part_id};`;
 
-    if (newAmount == 0) {
-      sql += `delete from spareparts where part_id = ${part_id};`;
-      connection.query(sql, (err, result) => {
-        if (err) return res.status(500).json(err);
-        return res.status(200).send();
-      });
-    } else {
-      sql += `update spareparts set amount = ${newAmount} where part_id = ${part_id};`;
-      connection.query(sql, (err, result) => {
-        if (err) return res.status(500).json(err);
-        return res.status(200).send();
-      });
-    }
+    // if (newAmount == 0) {
+    //   sql += `delete from spareparts where part_id = ${part_id};`;
+    //   connection.query(sql, (err, result) => {
+    //     if (err) return res.status(500).json(err);
+    //     return res.status(200).json({});
+    //   });
+    // } else {
+    sql += `update spareparts set amount = ${newAmount} where part_id = ${part_id};`;
+    connection.query(sql, (err, result) => {
+      if (err) return res.status(500).json(err);
+      return res.status(200).json({});
+    });
+    // }
   });
 });
 
@@ -228,7 +230,7 @@ router.get("/", (req, res) => {
   //   from spareparts_cat left join spareparts on spareparts_cat.part_cat_id = spareparts.cat_id
   //   where ${statement}`;
 
-  let sql_findPart = `select distinct sc.category, sc.producer, sc.name, sc.part_cat_id, s.part_id,
+  let sql_findPart = `select distinct sc.category, sc.producer, sc.name, sc.part_cat_id, s.part_id, s.amount,
 	ss.codes, ss.shelve
     from spareparts_cat sc 
     left join spareparts s on sc.part_cat_id = s.cat_id
@@ -260,8 +262,8 @@ router.get("/", (req, res) => {
         //}
 
         //output["cat_" + el.part_cat_id].warehouse.stock.push(el.amount);
+        output["cat_" + el.part_cat_id].warehouse.totalAmount += el.amount;
         if (el.codes !== null) {
-          output["cat_" + el.part_cat_id].warehouse.totalAmount += 1;
           output["cat_" + el.part_cat_id].warehouse.codes.push(el.codes);
         }
       } else {
@@ -271,10 +273,11 @@ router.get("/", (req, res) => {
           producer: el.producer,
           name: el.name,
         };
-        let partAmount = 0;
-        if (el.codes !== null) {
-          partAmount = 1;
-        }
+        let partAmount = el.amount;
+        // let partAmount = 0;
+        // if (el.codes !== null) {
+        //   partAmount = 1;
+        // }
         let warehouse = {
           shelves: [el.shelve],
           totalAmount: partAmount,

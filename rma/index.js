@@ -132,16 +132,20 @@ router.put("/register/:ticketId", (req, res) => {
   if (!ticketReg.test(req.params.ticketId))
     return res.status(400).json({ message: "Zły format pola ticketId" });
 
-  checkIfTicketExists(req.params.ticketId).then(function (rows) {
-    if (rows.length === 0)
-      return res.status(404).json({ message: "Brak zlecenia o podanym ID" });
+  checkIfTicketExists(req.params.ticketId)
+    .then(function (rows) {
+      if (rows.length === 0)
+        return res.status(404).json({ message: "Brak zlecenia o podanym ID" });
 
-    let sql = `UPDATE tickets SET inWarehouse=1 WHERE ticket_id=${req.params.ticketId};`;
-    connection.query(sql, (err, results) => {
-      if (err) return res.status(500).json(err);
-      return res.status(200).json({});
+      let sql = `UPDATE tickets SET inWarehouse=1 WHERE ticket_id=${req.params.ticketId};`;
+      connection.query(sql, (err, results) => {
+        if (err) return res.status(500).json(err);
+        return res.status(200).json({});
+      });
+    })
+    .catch((e) => {
+      console.log(e);
     });
-  });
 });
 
 router.put("/changeState/:ticketId", (req, res) => {
@@ -168,17 +172,21 @@ router.put("/changeState/:ticketId", (req, res) => {
   if (!statusReg.test(req.body.status))
     return res.status(400).json({ message: "Zły format pola status" });
 
-  checkIfTicketExists(req.params.ticketId).then(function (rows) {
-    if (rows.length === 0)
-      return res.status(404).json({ message: "Brak zlecenia o podanym ID" });
+  checkIfTicketExists(req.params.ticketId)
+    .then(function (rows) {
+      if (rows.length === 0)
+        return res.status(404).json({ message: "Brak zlecenia o podanym ID" });
 
-    const updateDate = formatDateAndHours(new Date());
-    let sql = `UPDATE tickets SET status=${req.body.status}, lastStatusUpdate="${updateDate}" WHERE ticket_id=${req.params.ticketId};`;
-    connection.query(sql, (err, results) => {
-      if (err) return res.status(500).json(err);
-      return res.status(200).json({});
+      const updateDate = formatDateAndHours(new Date());
+      let sql = `UPDATE tickets SET status=${req.body.status}, lastStatusUpdate="${updateDate}" WHERE ticket_id=${req.params.ticketId};`;
+      connection.query(sql, (err, results) => {
+        if (err) return res.status(500).json(err);
+        return res.status(200).json({});
+      });
+    })
+    .catch((e) => {
+      console.log(e);
     });
-  });
 });
 
 router.post("/comment/:ticketId", (req, res) => {
@@ -200,16 +208,20 @@ router.post("/comment/:ticketId", (req, res) => {
   )
     return res.status(400).json({ message: "Pole comment jest wymagane" });
 
-  checkIfTicketExists(req.params.ticketId).then(function (rows) {
-    if (rows.length === 0)
-      return res.status(404).json({ message: "Brak zlecenia o podanym ID" });
+  checkIfTicketExists(req.params.ticketId)
+    .then(function (rows) {
+      if (rows.length === 0)
+        return res.status(404).json({ message: "Brak zlecenia o podanym ID" });
 
-    let sql = `INSERT INTO tickets_comments (ticket_id, comment) VALUES (${req.params.ticketId}, "${req.body.comment}");`;
-    connection.query(sql, (err, results) => {
-      if (err) return res.status(500).json(err);
-      return res.status(200).json({});
+      let sql = `INSERT INTO tickets_comments (ticket_id, comment) VALUES (${req.params.ticketId}, "${req.body.comment}");`;
+      connection.query(sql, (err, results) => {
+        if (err) return res.status(500).json(err);
+        return res.status(200).json({});
+      });
+    })
+    .catch((e) => {
+      console.log(e);
     });
-  });
 });
 
 router.get("/comments/:ticketId", (req, res) => {
@@ -223,6 +235,87 @@ router.get("/comments/:ticketId", (req, res) => {
     return res.status(400).json({ message: "Zły format pola ticketId" });
 
   let sql = `SELECT comment, created FROM tickets_comments WHERE ticket_id = ${req.params.ticketId};`;
+
+  connection.query(sql, (err, rows) => {
+    if (err) return res.status(500).json(err);
+    if (rows.length === 0) return res.status(404).json([]);
+    return res.status(200).json(rows);
+  });
+});
+
+router.post("/spareparts/:ticketId", (req, res) => {
+  //recive ticketId in url
+  //recive body {code: STR}
+  //return 400 if ticketId does not match regEx
+  //return 400 if code is empty
+  //return 404 if no ticket was found
+  //return 404 if no sparepart was found
+  //return 500 on DB erorr
+  //return 200 on success
+
+  if (!ticketReg.test(req.params.ticketId))
+    return res.status(400).json({ message: "Zły format pola ticketId" });
+
+  if (
+    req.body.code === undefined ||
+    req.body.code === "" ||
+    req.body.code === null
+  )
+    return res.status(400).json({ message: "Pole code jest wymagane" });
+
+  function checkIfPartExists(code) {
+    return new Promise(function (resolve, reject) {
+      let sql = `SELECT codes FROM spareparts_sn WHERE codes='${code}';`;
+      connection.query(sql, function (err, rows) {
+        if (err) return reject(err);
+        resolve(rows);
+      });
+    });
+  }
+
+  checkIfTicketExists(req.params.ticketId)
+    .then(function (rows) {
+      if (rows.length === 0)
+        return res.status(404).json({ message: "Brak zlecenia o podanym ID" });
+
+      checkIfPartExists(req.body.code)
+        .then(function (rows) {
+          if (rows.length === 0)
+            return res
+              .status(404)
+              .json({ message: "Brak części o podanym SN" });
+
+          let sql = `INSERT INTO tickets_spareparts (ticket_id, sparepart_sn) VALUES (${req.params.ticketId}, "${req.body.code}");`;
+          connection.query(sql, (err, results) => {
+            if (err) return res.status(500).json(err);
+            return res.status(200).json({});
+          });
+        })
+        .catch((e) => {
+          console.log(e);
+        });
+    })
+    .catch((e) => {
+      console.log(e);
+    });
+});
+
+router.get("/spareparts/:ticketId", (req, res) => {
+  //recive ticketId in url
+  //return 400 if ticketId does not match regEx
+  //return 404 if no parts were found
+  //return 500 on DB error
+  //return 200 on success with [{id: INT, sparepart_sn: STR}, ...]
+
+  if (!ticketReg.test(req.params.ticketId))
+    return res.status(400).json({ message: "Zły format pola ticketId" });
+
+  let sql = `SELECT ts.id, ts.sparepart_sn, sc.category, sc.producer, sc.name 
+  from tickets_spareparts ts 
+  join spareparts_sn ss on ts.sparepart_sn = ss.codes
+  join spareparts s on ss.part_id = s.part_id
+  join spareparts_cat sc on s.cat_id = sc.part_cat_id
+  WHERE ts.ticket_id = ${req.params.ticketId};`;
 
   connection.query(sql, (err, rows) => {
     if (err) return res.status(500).json(err);
