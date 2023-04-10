@@ -128,7 +128,7 @@ router.post("/", (req, res) => {
       ("${req.body.email}", "${req.body.name}", "${req.body.phone}", "${req.body.deviceSn}", "${req.body.deviceName}", "${req.body.deviceCat}", "${req.body.deviceProducer}", 1, "${req.body.deviceAccessories}", "${req.body.issue}", 1, "${req.body.lines}", "${req.body.postCode}", "${req.body.city}")`;
 
   database.query(sql, (err, result) => {
-    if (err) return console.log(err);
+    if (err) return res.status(500).json(err);
     return res.status(200).json({ ticketId: result.insertId });
   });
 });

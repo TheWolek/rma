@@ -139,9 +139,7 @@ router.put("/register/:ticketId", (req, res) => {
         return res.status(200).json({});
       });
     })
-    .catch((e) => {
-      console.log(e);
-    });
+    .catch((e) => res.status(500).json(e));
 });
 
 router.put("/changeState/:ticketId", (req, res) => {
@@ -180,9 +178,7 @@ router.put("/changeState/:ticketId", (req, res) => {
         return res.status(200).json({});
       });
     })
-    .catch((e) => {
-      console.log(e);
-    });
+    .catch((e) => res.status(500).json(e));
 });
 
 router.post("/comment/:ticketId", (req, res) => {
@@ -215,9 +211,7 @@ router.post("/comment/:ticketId", (req, res) => {
         return res.status(200).json({});
       });
     })
-    .catch((e) => {
-      console.log(e);
-    });
+    .catch((e) => res.status(500).json(e));
 });
 
 router.get("/comments/:ticketId", (req, res) => {
@@ -287,13 +281,9 @@ router.post("/spareparts/:ticketId", (req, res) => {
             return res.status(200).json({});
           });
         })
-        .catch((e) => {
-          console.log(e);
-        });
+        .catch((e) => res.status(500).json(e));
     })
-    .catch((e) => {
-      console.log(e);
-    });
+    .catch((e) => res.status(500).json(e));
 });
 
 router.get("/spareparts/:ticketId", (req, res) => {

@@ -75,8 +75,6 @@ router.get("/", (req, res) => {
   // return 500 if there was DB error
   // returns 200 with first row object {item_id: int, name: string, shelve: int, category: string, ticket_id: int}
 
-  // if (!req.query.barcode) return res.status(400).json({ "message": "pole barcode jest wymagane" })
-
   let data, sql;
   if (req.query.barcode) {
     if (!checkBarcode(req.query.barcode))
@@ -91,7 +89,6 @@ router.get("/", (req, res) => {
 
   database.query(sql, function (err, rows) {
     if (err) return res.status(500).json(err);
-    // if (rows.length == 0) return res.status(404).json({ "message": "nie znaleziono przedmiotu o podanym ticket id" })
     res.status(200).json(rows);
   });
 });

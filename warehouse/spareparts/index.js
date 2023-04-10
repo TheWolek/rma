@@ -11,35 +11,11 @@ router.post("/use", (req, res) => {
   // return 500 if there was DB error
   // return 200 on success
 
-  // if (!req.body.part_id || req.body.part_id == 0)
-  //   return res.status(400).json({ message: "pole part_id jest wymagane" });
-  // if (!req.body.amount || req.body.amount == 0)
-  //   return res.status(400).json({ message: "pole amount jest wymagane" });
-  // if (!req.body.shelve || req.body.shelve == 0)
-  //   return res.status(400).json({ message: "pole shelve jest wymagane" });
   if (!req.body.sn || req.body.sn === undefined)
     return res.status(400).json({ message: "pole sn jest wymagane" });
-
-  // let part_id = req.body.part_id;
-  //let amount = req.body.amount;
-  //let shelve = req.body.shelve;
   let sn = req.body.sn;
-
-  // const reg = /^([1-9]){1,}([0-9]){0,}$/;
   const sn_reg = /^[A-z0-9]{3,}$/;
 
-  // if (!reg.test(part_id))
-  //   return res
-  //     .status(400)
-  //     .json({ message: "nieprawidłowy format pola part_id" });
-  // if (!reg.test(amount))
-  //   return res
-  //     .status(400)
-  //     .json({ message: "nieprawidłowy format pola amount" });
-  // if (!reg.test(shelve))
-  //   return res
-  //     .status(400)
-  //     .json({ message: "nieprawidłowy format pola shelve" });
   if (!sn_reg.test(sn))
     return res.status(400).json({ message: "nieprawidłowy format pola sn" });
 
@@ -69,19 +45,11 @@ router.post("/use", (req, res) => {
     let newAmount = rows[0].amount - 1;
     let sql = `update spareparts_sn set isUsed = 1 where codes = '${sn}' and part_id = ${part_id};`;
 
-    // if (newAmount == 0) {
-    //   sql += `delete from spareparts where part_id = ${part_id};`;
-    //   database.query(sql, (err, result) => {
-    //     if (err) return res.status(500).json(err);
-    //     return res.status(200).json({});
-    //   });
-    // } else {
     sql += `update spareparts set amount = ${newAmount} where part_id = ${part_id};`;
     database.query(sql, (err, result) => {
       if (err) return res.status(500).json(err);
       return res.status(200).json({});
     });
-    // }
   });
 });
 

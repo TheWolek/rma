@@ -11,8 +11,6 @@ router.post("/", (req, res) => {
   // return 500 if there was DB error
   // return 200 with {"order_id": INT}
 
-  // if (!req.body.category_id) return res.status(400).json({ "message": "pole category_id jest wymagane" })
-  // if (!req.body.amount) return res.status(400).json({ "message": "pole amount jest wymagane" })
   if (!req.body.exp_date)
     return res.status(400).json({ message: "pole exp_date jest wymagane" });
   if (!req.body.supplier_id)
@@ -22,8 +20,6 @@ router.post("/", (req, res) => {
   const regDate =
     /^([1-9]{1})([0-9]{3})-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([0-9]{2}):([0-9]{2}):([0-9]{2})\.([0-9]{3})Z$/;
 
-  // if (!regCatAmount.test(req.body.category_id)) return res.status(400).json({ "message": "nieprawidłowy format pola category_id" })
-  // if (!regCatAmount.test(req.body.amount)) return res.status(400).json({ "message": "nieprawidłowy format pola amount" })
   if (!regDate.test(req.body.exp_date))
     return res
       .status(400)
@@ -108,7 +104,6 @@ router.put("/edit", (req, res) => {
   const regDate =
     /^([1-9]{1})([0-9]{3})-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([0-9]{2}):([0-9]{2}):([0-9]{2})\.([0-9]{3})Z$/;
 
-  let fields = [];
   let date;
   const orderData = req.body.orderData;
   const orderItems = req.body.items;
@@ -230,7 +225,6 @@ router.put("/edit", (req, res) => {
       database.query(sql, (err, result) => {
         if (err) Promise.reject(err);
         Promise.resolve();
-        // res.status(200).json({ message: "ok" });
       });
     })
     .then(function () {
@@ -241,7 +235,6 @@ router.put("/edit", (req, res) => {
       orderItems.forEach(function (item) {
         if (item.order_item_id === undefined || !item.order_item_id) {
           queries += `INSERT INTO spareparts_orders_items (part_cat_id, amount, order_id) VALUES (${item.part_cat_id}, ${item.amount}, ${orderData.part_order_id});`;
-          //queries += `INSERT INTO spareparts_sn (codes, item_id) VALUES ("", ${item.order_item_id})`;
         } else if (item.toRemove !== undefined || item.toRemove) {
           queries += `DELETE FROM spareparts_sn WHERE item_id = ${item.order_item_id};`;
           queries += `DELETE FROM spareparts_orders_items WHERE order_item_id = ${item.order_item_id};`;

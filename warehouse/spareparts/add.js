@@ -1,11 +1,5 @@
 const express = require("express");
 const router = express.Router();
-// const mysql = require("mysql");
-// const creds = require("../../db_creds");
-// const database = mysql.createdatabase(creds);
-
-// database.connect();
-
 const database = require("../../helpers/database");
 
 // register new category of sparepart
@@ -15,7 +9,6 @@ router.post("/new", (req, res) => {
   // return 500 if there was DB error
   // return 200 with {"id": INT}
 
-  // if (!req.body.sn) return res.status(400).json({ "message": "pole sn jest wymagane" })
   if (!req.body.name)
     return res.status(400).json({ message: "pole name jest wymagane" });
   if (!req.body.category)
@@ -24,12 +17,10 @@ router.post("/new", (req, res) => {
     return res.status(400).json({ message: "pole producer jest wymagane" });
 
   const regName = /^([A-ż]{1,})([,. ()0-9'"-]){0,}$/;
-  // const regSN = /^([0-9-]{1,})$/
   const regCatProd = /^([A-ż]{1,})([,. ()0-9'"-]){0,}$/;
 
   if (!regName.test(req.body.name))
     return res.status(400).json({ message: "nieprawidłowy format pola name" });
-  // if (!regSN.test(req.body.sn)) return res.status(400).json({ "message": "nieprawidłowy format pola sn" })
   if (!regCatProd.test(req.body.category))
     return res
       .status(400)
@@ -43,7 +34,6 @@ router.post("/new", (req, res) => {
 
   database.query(sql, function (err, result) {
     if (err) {
-      // if (err.code == "ER_DUP_ENTRY") return res.status(400).json({ "message": "część z podanym SN została już zarejestrowana" })
       return res.status(500).json(err);
     }
     res.status(200).json({ id: result.insertId });
@@ -66,12 +56,9 @@ router.post("/", (req, res) => {
       return res.status(400).json({ message: "pole cat_id jest wymagane" });
     if (!el.amount)
       return res.status(400).json({ message: "pole amount jest wymagane" });
-    // if (!el.shelve && el.shelve !== 0)
-    //   return res.status(400).json({ message: "pole shelve jest wymagane" });
   });
 
   const reg = /^([1-9]{1,}[0-9]{0,})$/;
-  const regShelve = /^([0-9]{1,})$/;
 
   req.body.forEach((el) => {
     if (!reg.test(el.cat_id))
@@ -82,10 +69,6 @@ router.post("/", (req, res) => {
       return res
         .status(400)
         .json({ message: "nieprawidłowy format pola amount" });
-    // if (!regShelve.test(el.shelve))
-    //   return res
-    //     .status(400)
-    //     .json({ message: "nieprawidłowy format pola shelve" });
   });
 
   let output = [];
@@ -105,7 +88,7 @@ router.post("/", (req, res) => {
   sql += `; select LAST_INSERT_ID() AS lastid, ROW_COUNT() as rowcount;`;
 
   database.query(sql, (err, result) => {
-    if (err) return console.log(err);
+    if (err) return res.status(500).json(err);
     for (let i = 0; i < result[1][0].rowcount; i++) {
       output[i].insertedId = result[1][0].lastid + i;
     }
