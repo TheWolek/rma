@@ -1,10 +1,12 @@
 const express = require("express");
 const router = express.Router();
-const mysql = require("mysql");
-const creds = require("../../db_creds");
-const connection = mysql.createConnection(creds);
+// const mysql = require("mysql");
+// const creds = require("../../db_creds");
+// const database = mysql.createdatabase(creds);
 
-connection.connect();
+// database.connect();
+
+const database = require("../../helpers/database");
 
 // register new category of sparepart
 router.post("/new", (req, res) => {
@@ -21,9 +23,9 @@ router.post("/new", (req, res) => {
   if (!req.body.producer)
     return res.status(400).json({ message: "pole producer jest wymagane" });
 
-  const regName = /^([A-ż]{1,})([,. ()0-9'"-]){0, }$/;
+  const regName = /^([A-ż]{1,})([,. ()0-9'"-]){0,}$/;
   // const regSN = /^([0-9-]{1,})$/
-  const regCatProd = /^([A-ż]{1,})([,. ()0-9'"-]){0, }$/;
+  const regCatProd = /^([A-ż]{1,})([,. ()0-9'"-]){0,}$/;
 
   if (!regName.test(req.body.name))
     return res.status(400).json({ message: "nieprawidłowy format pola name" });
@@ -39,7 +41,7 @@ router.post("/new", (req, res) => {
 
   let sql = `INSERT INTO spareparts_cat (name, category, producer) VALUES ('${req.body.name}','${req.body.category}','${req.body.producer}')`;
 
-  connection.query(sql, function (err, result) {
+  database.query(sql, function (err, result) {
     if (err) {
       // if (err.code == "ER_DUP_ENTRY") return res.status(400).json({ "message": "część z podanym SN została już zarejestrowana" })
       return res.status(500).json(err);
@@ -102,7 +104,7 @@ router.post("/", (req, res) => {
 
   sql += `; select LAST_INSERT_ID() AS lastid, ROW_COUNT() as rowcount;`;
 
-  connection.query(sql, (err, result) => {
+  database.query(sql, (err, result) => {
     if (err) return console.log(err);
     for (let i = 0; i < result[1][0].rowcount; i++) {
       output[i].insertedId = result[1][0].lastid + i;

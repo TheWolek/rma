@@ -1,10 +1,7 @@
 const express = require("express");
 const router = express.Router();
-const mysql = require("mysql");
-const creds = require("../db_creds");
-const connection = mysql.createConnection(creds);
 
-connection.connect();
+const database = require("../helpers/database");
 
 function checkBarcode(barcode) {
   const reg = /^(\d{1,})-([A-ż(),. 0-9]{1,})-([A-z(),. 0-9]{1,})$/;
@@ -32,7 +29,7 @@ router.post("/", (req, res) => {
   let data = req.body.barcode.split("-");
 
   let sql = `INSERT INTO items (name, category, ticket_id, shelve, sn) VALUES ("${data[1]}", "${data[2]}", ${data[0]}, 0, "${req.body.sn}")`;
-  connection.query(sql, function (err, result) {
+  database.query(sql, function (err, result) {
     if (err) {
       if (err.code == "ER_DUP_ENTRY")
         return res.status(400).json({
@@ -63,7 +60,7 @@ router.get("/exists", (req, res) => {
   let data = req.query.barcode.split("-")[0];
 
   let sql = `SELECT item_id FROM items WHERE ticket_id = ${data}`;
-  connection.query(sql, function (err, rows) {
+  database.query(sql, function (err, rows) {
     if (err) return res.status(500).json(err);
     if (rows.length == 0) return res.status(404).json({ found: false });
     return res.json({ found: true });
@@ -92,7 +89,7 @@ router.get("/", (req, res) => {
     sql = `SELECT item_id, name, shelve, category, ticket_id, sn FROM items`;
   }
 
-  connection.query(sql, function (err, rows) {
+  database.query(sql, function (err, rows) {
     if (err) return res.status(500).json(err);
     // if (rows.length == 0) return res.status(404).json({ "message": "nie znaleziono przedmiotu o podanym ticket id" })
     res.status(200).json(rows);
@@ -107,7 +104,7 @@ router.get("/countall", (req, res) => {
 
   let sql = `SELECT count(item_id) as 'count' FROM items`;
 
-  connection.query(sql, function (err, rows) {
+  database.query(sql, function (err, rows) {
     if (err) return res.status(500).json(err);
     if (rows[0].count == 0)
       return res.status(404).json({ message: "brak przedmiotów na magazynie" });
@@ -133,7 +130,7 @@ router.get("/shelve", (req, res) => {
   let shelve = req.query.shelve;
   let sql = `SELECT item_id, ticket_id, name, category, shelve, sn FROM items WHERE shelve = ${shelve}`;
 
-  connection.query(sql, function (err, rows) {
+  database.query(sql, function (err, rows) {
     if (err) return res.status(500).json(err);
     if (rows.length == 0)
       return res
@@ -201,7 +198,7 @@ router.put("/changeshelve", (req, res) => {
   ticket_idParsed += ")";
 
   let sql = `UPDATE items SET shelve = ${dest} WHERE ticket_id in ${ticket_idParsed} AND shelve = ${current}`;
-  connection.query(sql, function (err, result) {
+  database.query(sql, function (err, result) {
     if (err) return res.status(500).json(err);
     if (result.changedRows == 0)
       return res.status(404).json({
@@ -239,7 +236,7 @@ router.delete("/", (req, res) => {
   let current = req.body.shelve;
 
   let sql = `DELETE FROM items WHERE ticket_id = ${ticket_id} AND shelve = ${current}`;
-  connection.query(sql, function (err, result) {
+  database.query(sql, function (err, result) {
     if (err) return res.status(500).json(err);
     if (result.affectedRows == 0)
       return res.status(404).json({

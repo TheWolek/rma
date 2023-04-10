@@ -1,12 +1,8 @@
 const express = require("express");
 const router = express.Router();
-const mysql = require("mysql");
-const creds = require("../db_creds");
-const connection = mysql.createConnection(creds);
+const database = require("../helpers/database");
 
 const formatDate = require("../utils/formatDateAndHours");
-
-connection.connect();
 
 router.post("/", (req, res) => {
   //recive {email: STR, name: STR, phone: STR, deviceSn: STR, deviceName: STR, deviceCat: STR, deviceProducer: STR, deviceAccessories: STR (optional), issue: STR, lines: STR, postCode: STR, city: STR}
@@ -131,7 +127,7 @@ router.post("/", (req, res) => {
   let sql = `insert into tickets (email, name, phone, device_sn, device_name, device_cat, device_producer, type, device_accessories, issue, status, \`lines\`, postCode, city) VALUES \
       ("${req.body.email}", "${req.body.name}", "${req.body.phone}", "${req.body.deviceSn}", "${req.body.deviceName}", "${req.body.deviceCat}", "${req.body.deviceProducer}", 1, "${req.body.deviceAccessories}", "${req.body.issue}", 1, "${req.body.lines}", "${req.body.postCode}", "${req.body.city}")`;
 
-  connection.query(sql, (err, result) => {
+  database.query(sql, (err, result) => {
     if (err) return console.log(err);
     return res.status(200).json({ ticketId: result.insertId });
   });

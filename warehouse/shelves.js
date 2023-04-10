@@ -1,30 +1,24 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const mysql = require('mysql')
-const creds = require('../db_creds')
-const connection = mysql.createConnection(creds)
-
-connection.connect()
+const database = require("../helpers/database");
 
 //add shelve
 router.post("/add", (req, res) => {
-    let code = req.body.code
-    let sql = `INSERT INTO shelves (code) VALUES ("${code}")`
+  let code = req.body.code;
+  let sql = `INSERT INTO shelves (code) VALUES ("${code}")`;
 
-    connection.query(sql, function (err, result) {
-        if (err) throw err;
-        res.status(200).json({ id: result.insertId, code: code })
-    })
-})
+  database.query(sql, (err, result) => {
+    res.status(200).json({ id: result.insertId, code: code });
+  });
+});
 
 //get all shelves
 router.get("/", (req, res) => {
-    let sql = `SELECT shelve_id, code FROM shelves`
+  let sql = `SELECT shelve_id, code FROM shelves`;
 
-    connection.query(sql, function (err, rows) {
-        if (err) throw err;
-        res.status(200).json(rows)
-    })
-})
+  database.query(sql, (err, rows) => {
+    res.status(200).json(rows);
+  });
+});
 
-module.exports = router
+module.exports = router;

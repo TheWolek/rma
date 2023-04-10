@@ -1,10 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const mysql = require("mysql");
-const creds = require("../../db_creds");
-const connection = mysql.createConnection(creds);
-
-connection.connect();
+const database = require("../../helpers/database");
 
 //get order items details
 router.get("/", (req, res) => {
@@ -28,7 +24,7 @@ router.get("/", (req, res) => {
   from spareparts_orders_items soi left join spareparts_sn sois on soi.order_item_id = sois.item_id
   where soi.order_id =${req.query.order_id}`;
 
-  connection.query(sql, (err, rows) => {
+  database.query(sql, (err, rows) => {
     if (err) return res.status(500).json(err);
 
     let output = [];
@@ -86,7 +82,7 @@ router.post("/add", (req, res) => {
   let sql_insertOrderItem = `INSERT INTO spareparts_orders_items (order_id, part_cat_id, amount) VALUES (${req.body.order_id}, ${req.body.part_cat_id}, ${req.body.amount})`;
 
   let findCategory = new Promise((resolve, reject) => {
-    connection.query(sql_findCategory, (err, rows) => {
+    database.query(sql_findCategory, (err, rows) => {
       if (err) reject(err);
       resolve(rows);
     });
@@ -97,7 +93,7 @@ router.post("/add", (req, res) => {
   });
 
   let findOrder = new Promise((resolve, reject) => {
-    connection.query(sql_findOrder, (err, rows) => {
+    database.query(sql_findOrder, (err, rows) => {
       if (err) reject(err);
       resolve(rows);
     });
@@ -119,7 +115,7 @@ router.post("/add", (req, res) => {
           .status(400)
           .json({ message: "wpisane zamówienie nie istnieje" });
 
-      connection.query(sql_insertOrderItem, (err, result) => {
+      database.query(sql_insertOrderItem, (err, result) => {
         if (err) return res.status(500).json(err);
         res.status(200).json({ order_item_id: result.insertId });
       });
@@ -161,7 +157,7 @@ router.delete("/remove", (req, res) => {
     }
   });
 
-  connection.query(sql, (err, result) => {
+  database.query(sql, (err, result) => {
     if (err) return res.status(500).json(err);
     return res.status(200).json({ affectedRows: result.affectedRows });
   });
@@ -198,7 +194,7 @@ router.post("/codes", (req, res) => {
 
   req.body.forEach((el) => {
     for (let i = 0; i < el.codes.length; i++) {
-      connection.query(
+      database.query(
         `INSERT INTO spareparts_sn (codes, item_id, part_id, shelve) values ('${el.codes[i]}', ${el.item_id}, ${el.part_id}, 0);`,
         (err, result) => {
           if (err) console.log(err);

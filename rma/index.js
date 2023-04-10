@@ -1,16 +1,12 @@
 const express = require("express");
 const router = express.Router();
-const mysql = require("mysql");
-const creds = require("../db_creds");
-const connection = mysql.createConnection(creds);
+const database = require("../helpers/database");
 const formatDateAndHours = require("../utils/formatDateAndHours");
-
-connection.connect();
 
 function checkIfTicketExists(id) {
   return new Promise(function (resolve, reject) {
     let sql = `SELECT ticket_id FROM tickets WHERE ticket_id=${id};`;
-    connection.query(sql, function (err, rows) {
+    database.query(sql, function (err, rows) {
       if (err) return reject(err);
       resolve(rows);
     });
@@ -115,7 +111,7 @@ router.get("/", (req, res) => {
 
   if (filters.length > 0) sql += ` WHERE ${filters}`;
 
-  connection.query(sql, (err, rows) => {
+  database.query(sql, (err, rows) => {
     if (err) return res.status(500).json(err);
     if (rows.length === 0) return res.status(404).json([]);
     return res.status(200).json(rows);
@@ -138,7 +134,7 @@ router.put("/register/:ticketId", (req, res) => {
         return res.status(404).json({ message: "Brak zlecenia o podanym ID" });
 
       let sql = `UPDATE tickets SET inWarehouse=1 WHERE ticket_id=${req.params.ticketId};`;
-      connection.query(sql, (err, results) => {
+      database.query(sql, (err, results) => {
         if (err) return res.status(500).json(err);
         return res.status(200).json({});
       });
@@ -179,7 +175,7 @@ router.put("/changeState/:ticketId", (req, res) => {
 
       const updateDate = formatDateAndHours(new Date());
       let sql = `UPDATE tickets SET status=${req.body.status}, lastStatusUpdate="${updateDate}" WHERE ticket_id=${req.params.ticketId};`;
-      connection.query(sql, (err, results) => {
+      database.query(sql, (err, results) => {
         if (err) return res.status(500).json(err);
         return res.status(200).json({});
       });
@@ -214,7 +210,7 @@ router.post("/comment/:ticketId", (req, res) => {
         return res.status(404).json({ message: "Brak zlecenia o podanym ID" });
 
       let sql = `INSERT INTO tickets_comments (ticket_id, comment) VALUES (${req.params.ticketId}, "${req.body.comment}");`;
-      connection.query(sql, (err, results) => {
+      database.query(sql, (err, results) => {
         if (err) return res.status(500).json(err);
         return res.status(200).json({});
       });
@@ -236,7 +232,7 @@ router.get("/comments/:ticketId", (req, res) => {
 
   let sql = `SELECT comment, created FROM tickets_comments WHERE ticket_id = ${req.params.ticketId};`;
 
-  connection.query(sql, (err, rows) => {
+  database.query(sql, (err, rows) => {
     if (err) return res.status(500).json(err);
     if (rows.length === 0) return res.status(404).json([]);
     return res.status(200).json(rows);
@@ -266,7 +262,7 @@ router.post("/spareparts/:ticketId", (req, res) => {
   function checkIfPartExists(code) {
     return new Promise(function (resolve, reject) {
       let sql = `SELECT codes FROM spareparts_sn WHERE codes='${code}';`;
-      connection.query(sql, function (err, rows) {
+      database.query(sql, function (err, rows) {
         if (err) return reject(err);
         resolve(rows);
       });
@@ -286,7 +282,7 @@ router.post("/spareparts/:ticketId", (req, res) => {
               .json({ message: "Brak części o podanym SN" });
 
           let sql = `INSERT INTO tickets_spareparts (ticket_id, sparepart_sn) VALUES (${req.params.ticketId}, "${req.body.code}");`;
-          connection.query(sql, (err, results) => {
+          database.query(sql, (err, results) => {
             if (err) return res.status(500).json(err);
             return res.status(200).json({});
           });
@@ -317,7 +313,7 @@ router.get("/spareparts/:ticketId", (req, res) => {
   join spareparts_cat sc on s.cat_id = sc.part_cat_id
   WHERE ts.ticket_id = ${req.params.ticketId};`;
 
-  connection.query(sql, (err, rows) => {
+  database.query(sql, (err, rows) => {
     if (err) return res.status(500).json(err);
     if (rows.length === 0) return res.status(404).json([]);
     return res.status(200).json(rows);

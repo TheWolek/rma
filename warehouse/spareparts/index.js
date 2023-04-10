@@ -1,10 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const mysql = require("mysql");
-const creds = require("../../db_creds");
-const connection = mysql.createConnection(creds);
-
-connection.connect();
+const database = require("../../helpers/database");
 
 //removes specified amount of specified part
 router.post("/use", (req, res) => {
@@ -51,7 +47,7 @@ router.post("/use", (req, res) => {
     return new Promise(function (resolve, reject) {
       let sql = `select s.part_id, s.amount, ss.codes from spareparts s 
       join spareparts_sn ss on s.part_id = ss.part_id where ss.codes = ${sn} and ss.isUsed = 0;`;
-      connection.query(sql, function (err, rows) {
+      database.query(sql, function (err, rows) {
         if (err) return reject(err);
         resolve(rows);
       });
@@ -75,13 +71,13 @@ router.post("/use", (req, res) => {
 
     // if (newAmount == 0) {
     //   sql += `delete from spareparts where part_id = ${part_id};`;
-    //   connection.query(sql, (err, result) => {
+    //   database.query(sql, (err, result) => {
     //     if (err) return res.status(500).json(err);
     //     return res.status(200).json({});
     //   });
     // } else {
     sql += `update spareparts set amount = ${newAmount} where part_id = ${part_id};`;
-    connection.query(sql, (err, result) => {
+    database.query(sql, (err, result) => {
       if (err) return res.status(500).json(err);
       return res.status(200).json({});
     });
@@ -115,7 +111,7 @@ router.get("/stock", (req, res) => {
   let sql = `select cat_id, sum(amount) as 'totalAmount' 
     from spareparts s where cat_id = ${query.cat_id} group by cat_id;`;
 
-  connection.query(sql, (err, rows) => {
+  database.query(sql, (err, rows) => {
     if (err) return res.status(500).json(err);
     if (rows.length == 0)
       return res.status(404).json({
@@ -208,27 +204,10 @@ router.get("/", (req, res) => {
     conditions += 1;
   }
 
-  // if (query.amount || query.amount == 0) {
-  //     let reg = /^([0-9]{1,})$/
-  //     if (!reg.test(query.amount)) return res.status(400).json({ "message": "nieprawidłowy format pola amount" })
-
-  //     if (conditions > 0) {
-  //         statement += ` and spareparts.amount <= ${query.amount}`
-  //     } else {
-  //         statement += `spareparts.amount <= ${query.amount}`
-  //     }
-
-  //     conditions += 1
-  // }
-
   if (conditions == 0)
     return res
       .status(400)
       .json({ message: "podaj przynajmniej jedną wartość do wyszukania" });
-
-  // let sql_findPart = `select distinct category, producer, name, IFNULL(amount, 0) as 'amount', part_cat_id, part_id
-  //   from spareparts_cat left join spareparts on spareparts_cat.part_cat_id = spareparts.cat_id
-  //   where ${statement}`;
 
   let sql_findPart = `select distinct sc.category, sc.producer, sc.name, sc.part_cat_id, s.part_id, s.amount,
 	ss.codes, ss.shelve
@@ -237,7 +216,7 @@ router.get("/", (req, res) => {
     left join spareparts_sn ss on s.part_id = ss.part_id
    	where ${statement}`;
 
-  connection.query(sql_findPart, (err, rows) => {
+  database.query(sql_findPart, (err, rows) => {
     if (err) return res.status(500).json(err);
     if (rows.length == 0)
       return res
@@ -247,21 +226,8 @@ router.get("/", (req, res) => {
     let output = {};
     rows.forEach((el) => {
       if ("cat_" + el.part_cat_id in output) {
-        // if (
-        //   !output["cat_" + el.part_cat_id].warehouse.shelves.includes(el.shelve)
-        // ) {
         output["cat_" + el.part_cat_id].warehouse.shelves.push(el.shelve);
-        //}
-
-        // if (
-        //   !output["cat_" + el.part_cat_id].warehouse.parts_id.includes(
-        //     el.part_id
-        //   )
-        // ) {
         output["cat_" + el.part_cat_id].warehouse.parts_id.push(el.part_id);
-        //}
-
-        //output["cat_" + el.part_cat_id].warehouse.stock.push(el.amount);
         output["cat_" + el.part_cat_id].warehouse.totalAmount += el.amount;
         if (el.codes !== null) {
           output["cat_" + el.part_cat_id].warehouse.codes.push(el.codes);
@@ -273,17 +239,12 @@ router.get("/", (req, res) => {
           producer: el.producer,
           name: el.name,
         };
-        let partAmount = el.amount;
-        // let partAmount = 0;
-        // if (el.codes !== null) {
-        //   partAmount = 1;
-        // }
+        let partAmount = el.amount === null ? 0 : el.amount;
         let warehouse = {
-          shelves: [el.shelve],
+          shelves: el.shelve === null ? [] : [el.shelve],
           totalAmount: partAmount,
-          parts_id: [el.part_id],
-          codes: [el.codes],
-          // stock: [el.amount],
+          parts_id: el.part_id === null ? [] : [el.part_id],
+          codes: el.codes === null ? [] : [el.codes],
         };
         output["cat_" + el.part_cat_id] = {
           part: part,
@@ -318,7 +279,7 @@ router.get("/code", (req, res) => {
   on s.cat_id = sc.part_cat_id
   where ss.codes = '${req.query.codes}'`;
 
-  connection.query(sql, (err, rows) => {
+  database.query(sql, (err, rows) => {
     if (err) res.status(500).json(err);
 
     if (rows.length === 0)
@@ -354,7 +315,7 @@ router.get("/code", (req, res) => {
 router.get("/categories", (req, res) => {
   let sql = `SELECT part_cat_id, producer, category, name FROM spareparts_cat`;
 
-  connection.query(sql, function (err, rows) {
+  database.query(sql, function (err, rows) {
     if (err) res.status(500).json(err);
     res.status(200).json(rows);
   });
@@ -364,7 +325,7 @@ router.get("/categories", (req, res) => {
 router.get("/suppliers", (req, res) => {
   let sql = `SELECT id, name FROM suppliers`;
 
-  connection.query(sql, function (err, rows) {
+  database.query(sql, function (err, rows) {
     if (err) res.status(500).json(err);
     res.status(200).json(rows);
   });
@@ -374,7 +335,7 @@ router.get("/suppliers", (req, res) => {
 router.get("/statuses", (req, res) => {
   let sql = `SELECT id, name FROM spareparts_orders_statuses`;
 
-  connection.query(sql, function (err, rows) {
+  database.query(sql, function (err, rows) {
     if (err) res.status(500).json(err);
     res.status(200).json(rows);
   });

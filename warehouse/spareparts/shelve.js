@@ -1,10 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const mysql = require("mysql");
-const creds = require("../../db_creds");
-const connection = mysql.createConnection(creds);
-
-connection.connect();
+const database = require("../../helpers/database");
 
 //get all items in specific shelve
 router.get("/", (req, res) => {});
@@ -56,7 +52,7 @@ router.put("/", (req, res) => {
   function checkIfCodesExists(parts) {
     return new Promise(function (resolve, reject) {
       find_sql += find_sql_where;
-      connection.query(find_sql, function (err, rows) {
+      database.query(find_sql, function (err, rows) {
         if (err) return reject(err);
         resolve(rows);
       });
@@ -76,7 +72,7 @@ router.put("/", (req, res) => {
 
       let sql = `UPDATE spareparts_sn SET shelve = ${req.body.new_shelve} WHERE${find_sql_where}`;
 
-      connection.query(sql, (err, result) => {
+      database.query(sql, (err, result) => {
         if (err) return res.status(500).json(err);
         return res.status(200).json({});
       });

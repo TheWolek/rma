@@ -1,11 +1,7 @@
 const express = require("express");
 const router = express.Router();
-const mysql = require("mysql");
-const creds = require("../../db_creds");
-const connection = mysql.createConnection(creds);
+const database = require("../../helpers/database");
 const formatDate = require("../../utils/formatDate");
-
-connection.connect();
 
 //register new order of spareparts
 router.post("/", (req, res) => {
@@ -43,7 +39,7 @@ router.post("/", (req, res) => {
   let sql_insertOrder = `INSERT INTO spareparts_orders (expected_date, supplier_id, status) VALUES ("${date}", ${req.body.supplier_id},0)`;
 
   let findSupplier = new Promise((resolve, reject) => {
-    connection.query(sql_findSupplier, (err, rows) => {
+    database.query(sql_findSupplier, (err, rows) => {
       if (err) reject(err);
       resolve(rows);
     });
@@ -57,7 +53,7 @@ router.post("/", (req, res) => {
     if (data.length == 0)
       return res.status(404).json({ message: "wpisany dostawca nie istnieje" });
 
-    connection.query(sql_insertOrder, (err, result) => {
+    database.query(sql_insertOrder, (err, result) => {
       if (err) return res.status(500).json(err);
       res.status(200).json({ order_id: result.insertId });
     });
@@ -90,7 +86,7 @@ router.put("/", (req, res) => {
 
   let sql = `UPDATE spareparts_orders SET status = ${req.body.status} WHERE part_order_id = ${req.body.order_id}`;
 
-  connection.query(sql, (err, result) => {
+  database.query(sql, (err, result) => {
     if (err) return res.status(500).json(err);
     res.status(200).json({ message: "ok" });
   });
@@ -189,7 +185,7 @@ router.put("/edit", (req, res) => {
 
   function checkOrderStatus(order_id) {
     return new Promise(function (resolve, reject) {
-      connection.query(
+      database.query(
         `select part_order_id, status from spareparts_orders where part_order_id = ${order_id}`,
         function (err, rows) {
           if (err) return reject(err);
@@ -201,7 +197,7 @@ router.put("/edit", (req, res) => {
 
   function checkIfItemExists(itemId) {
     return new Promise(function (resolve, reject) {
-      connection.query(
+      database.query(
         `select order_item_id from spareparts_orders_items where order_item_id = ${itemId}`,
         function (err, rows) {
           if (err) return reject(err);
@@ -231,7 +227,7 @@ router.put("/edit", (req, res) => {
       let date = formatDate(orderData.expected_date);
       let sql = `update spareparts_orders set expected_date = "${date}", status = ${orderData.status}, supplier_id = ${orderData.supplier_id} where part_order_id = ${orderData.part_order_id}`;
 
-      connection.query(sql, (err, result) => {
+      database.query(sql, (err, result) => {
         if (err) Promise.reject(err);
         Promise.resolve();
         // res.status(200).json({ message: "ok" });
@@ -254,7 +250,7 @@ router.put("/edit", (req, res) => {
         }
       });
 
-      connection.query(queries, function (err, result) {
+      database.query(queries, function (err, result) {
         if (err) return res.status(500).json(err);
         res.status(200).json({ status: "ok" });
       });
@@ -317,7 +313,7 @@ router.get("/find", (req, res) => {
     sql += ` so.status = ${req.query.status}`;
   }
 
-  connection.query(sql, function (err, rows) {
+  database.query(sql, function (err, rows) {
     if (err) return res.status(500).json(err);
     if (rows.length == 0)
       return res

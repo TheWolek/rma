@@ -1,11 +1,7 @@
 const express = require("express");
 const router = express.Router();
-const mysql = require("mysql");
-const creds = require("../db_creds");
-const connection = mysql.createConnection(creds);
+const database = require("../helpers/database");
 const formatDateAndHours = require("../utils/formatDateAndHours");
-
-connection.connect();
 
 router.get("/", (req, res) => {
   //recive ticketId or waybilNumber in query
@@ -40,7 +36,7 @@ router.get("/", (req, res) => {
     sql += `waybill_number = ${req.query.waybillNumber}`;
   }
 
-  connection.query(sql, (err, rows) => {
+  database.query(sql, (err, rows) => {
     if (err) return res.status(500).json(err);
     if (rows.length === 0) return res.status(404).json([]);
     return res.status(200).json(rows);
@@ -86,7 +82,7 @@ router.post("/", (req, res) => {
     return res.status(400).json({ message: "Zły format pola ticketId" });
 
   let sql = `INSERT INTO waybills (waybill_number, ticket_id, status, type) VALUES ('${req.body.waybillNumber}', ${req.body.ticketId}, 'potwierdzony', '${req.body.type}')`;
-  connection.query(sql, (err, result) => {
+  database.query(sql, (err, result) => {
     if (err) return res.status(500).json(err);
     return res.status(200).json({});
   });
@@ -148,7 +144,7 @@ router.put("/:id", (req, res) => {
   function checkIfWaybillExists(id) {
     return new Promise(function (resolve, reject) {
       let sql = `SELECT id FROM waybills WHERE id=${id};`;
-      connection.query(sql, function (err, rows) {
+      database.query(sql, function (err, rows) {
         if (err) return reject(err);
         resolve(rows);
       });
@@ -162,7 +158,7 @@ router.put("/:id", (req, res) => {
     let currTimeStamp = formatDateAndHours(new Date());
     let sql = `UPDATE waybills SET waybill_number='${req.body.waybillNumber}', status='${req.body.status}', type='${req.body.type}', lastUpdate='${currTimeStamp}' WHERE id=${req.params.id};`;
 
-    connection.query(sql, (err, result) => {
+    database.query(sql, (err, result) => {
       if (err) return res.status(500).json(err);
       return res.status(200).json({});
     });
