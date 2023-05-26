@@ -18,6 +18,7 @@ const sparePartsShelve = require("./warehouse/spareparts/shelve");
 const rma = require("./rma");
 const rmaCreate = require("./rma/create");
 const waybills = require("./rma/waybills");
+const rmaDictionaries = require("./rma/dictionaries");
 
 app.use(cors());
 app.use(bodyParser.json());
@@ -31,6 +32,7 @@ app.use("/warehouse/spareparts", spareParts);
 app.use("/rma/", rma);
 app.use("/rma/create/", rmaCreate);
 app.use("/rma/waybills/", waybills);
+app.use("/rma/dictionary/", rmaDictionaries);
 
 app.get("/", (req, res) => {
   res.send("Welcome to RMA system");

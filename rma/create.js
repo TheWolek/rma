@@ -98,6 +98,13 @@ router.post("/", (req, res) => {
   ) {
     return res.status(400).json({ Message: "Pole city jest wymagane" });
   }
+  if (
+    req.body.damageType === undefined ||
+    req.body.damageType === null ||
+    req.body.damageType.length === 0
+  ) {
+    return res.status(400).json({ Message: "Pole damageType jest wymagane" });
+  }
 
   const regString = /^([a-żA-Ż0-9 ]){2,}$/;
   const regEmail = /^(.){1,}@(.){1,}\.([A-z]){1,}$/;
@@ -124,12 +131,24 @@ router.post("/", (req, res) => {
     return res.status(400).json({ Message: "zły format pola city" });
   }
 
-  let sql = `insert into tickets (email, name, phone, device_sn, device_name, device_cat, device_producer, type, device_accessories, issue, status, \`lines\`, postCode, city) VALUES \
-      ("${req.body.email}", "${req.body.name}", "${req.body.phone}", "${req.body.deviceSn}", "${req.body.deviceName}", "${req.body.deviceCat}", "${req.body.deviceProducer}", 1, "${req.body.deviceAccessories}", "${req.body.issue}", 1, "${req.body.lines}", "${req.body.postCode}", "${req.body.city}")`;
+  let sql = `insert into tickets (email, name, phone, device_sn, device_name, device_cat, device_producer, type, issue, status, \`lines\`, postCode, city, damage_type) VALUES \
+      ("${req.body.email}", "${req.body.name}", "${req.body.phone}", "${req.body.deviceSn}", "${req.body.deviceName}", "${req.body.deviceCat}", "${req.body.deviceProducer}", ${req.body.type}, "${req.body.issue}", 1, "${req.body.lines}", "${req.body.postCode}", "${req.body.city}", ${req.body.damageType})`;
+
+  let sql_accesories = `insert into tickets_additionalAccesories (ticket_id, type_id) VALUES `;
 
   database.query(sql, (err, result) => {
     if (err) return res.status(500).json(err);
-    return res.status(200).json({ ticketId: result.insertId });
+
+    const ticket_id = result.insertId;
+    req.body.deviceAccessories.forEach((el, index) => {
+      if (index > 0) sql_accesories += ",";
+      sql_accesories += `(${ticket_id}, ${el})`;
+    });
+
+    database.query(sql_accesories, (err, result) => {
+      if (err) return res.status(500).json(err);
+      return res.status(200).json({ ticketId: ticket_id });
+    });
   });
 });
 
