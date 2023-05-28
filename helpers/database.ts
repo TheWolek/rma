@@ -1,5 +1,8 @@
-const mysql = require("mysql");
-const creds = require("../db_creds");
+import mysql from "mysql";
+import creds from "../db_creds";
+
+// const mysql = require("mysql");
+// const creds = require("../db_creds");
 
 const pool = mysql.createPool(creds);
 
@@ -9,4 +12,4 @@ pool.getConnection((err, connection) => {
   connection.release();
 });
 
-module.exports = pool;
+export default pool;

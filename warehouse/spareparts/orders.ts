@@ -1,10 +1,16 @@
-const express = require("express");
+import express, { Express, Request, Response, Router } from "express";
+import database from "../../helpers/database";
+import formatDate from "../../utils/formatDate";
+// import { MysqlError } from "mysql";
 const router = express.Router();
-const database = require("../../helpers/database");
-const formatDate = require("../../utils/formatDate");
+
+interface add_reqBodyI {
+  exp_date: string;
+  supplier_id: number;
+}
 
 //register new order of spareparts
-router.post("/", (req, res) => {
+router.post("/", (req: Request<{}, {}, add_reqBodyI, {}>, res) => {
   // recive {"supplier_id": INT, "exp_date": DATE}
   // return 400 if any of parameters is missing OR empty OR does not match regEX
   // return 404 if cannot find supplied_id
@@ -24,7 +30,7 @@ router.post("/", (req, res) => {
     return res
       .status(400)
       .json({ message: "nieprawidłowy format pola exp_date" });
-  if (!regInt.test(req.body.supplier_id))
+  if (!regInt.test(req.body.supplier_id.toString()))
     return res
       .status(400)
       .json({ message: "nieprawidłowy format pola supplier_id" });
@@ -45,7 +51,7 @@ router.post("/", (req, res) => {
     return res.status(500).json(err);
   });
 
-  findSupplier.then((data) => {
+  findSupplier.then((data: any) => {
     if (data.length == 0)
       return res.status(404).json({ message: "wpisany dostawca nie istnieje" });
 
@@ -56,8 +62,13 @@ router.post("/", (req, res) => {
   });
 });
 
+interface editStatus_reqBodyI {
+  order_id: number;
+  status: number;
+}
+
 //change order status
-router.put("/", (req, res) => {
+router.put("/", (req: Request<{}, {}, editStatus_reqBodyI, {}>, res) => {
   // recive {"order_id": INT, "status": INT}
   // return 400 if any of parameters is missing OR empty OR does not match regEx
   // return 404 if cannot find specific order
@@ -66,16 +77,16 @@ router.put("/", (req, res) => {
 
   if (!req.body.order_id)
     return res.status(400).json({ message: "pole order_id jest wymagane" });
-  if (!req.body.status && !req.body.status == 0)
+  if (!req.body.status && req.body.status != 0)
     return res.status(400).json({ message: "pole status jest wymagane" });
 
   const reg = /^([0-9]{1,})$/;
 
-  if (!reg.test(req.body.order_id))
+  if (!reg.test(req.body.order_id.toString()))
     return res
       .status(400)
       .json({ message: "nieprawidłowy format pola order_id" });
-  if (!reg.test(req.body.status))
+  if (!reg.test(req.body.status.toString()))
     return res
       .status(400)
       .json({ message: "nieprawidłowy format pola status" });
@@ -88,8 +99,25 @@ router.put("/", (req, res) => {
   });
 });
 
+interface edit_itemsI {
+  part_cat_id: number;
+  amount: number;
+  order_item_id: number;
+  toRemove: boolean;
+}
+
+interface edit_reqBodyI {
+  orderData: {
+    part_order_id: number;
+    status: number;
+    expected_date: string;
+    supplier_id: number;
+  };
+  items: edit_itemsI[];
+}
+
 //edit order
-router.put("/edit", (req, res) => {
+router.put("/edit", (req: Request<{}, {}, edit_reqBodyI, {}>, res) => {
   // recive {"items": [{"amount": INT, "order_item_id": INT, "part_cat_id": 3}],
   // "orderData": {"expected_date": DATE, "part_order_id": INT, "status": INT, "supplier_id": INT}}
   // return 400 if part_order_id is missing
@@ -113,7 +141,7 @@ router.put("/edit", (req, res) => {
     return res
       .status(400)
       .json({ message: "pole part_order_id jest wymagane" });
-  if (!regInt.test(orderData.part_order_id))
+  if (!regInt.test(orderData.part_order_id.toString()))
     return res
       .status(400)
       .json({ message: "nieprawidłowy format pola part_order_id" });
@@ -135,7 +163,7 @@ router.put("/edit", (req, res) => {
   if (orderData.status === undefined || orderData.status === null) {
     return res.status(400).json({ message: "pole status jest wymagane" });
   }
-  if (!regStatus.test(orderData.status)) {
+  if (!regStatus.test(orderData.status.toString())) {
     return res
       .status(400)
       .json({ message: "nieprawidłowy format pola status" });
@@ -145,7 +173,7 @@ router.put("/edit", (req, res) => {
   if (!orderData.supplier_id || orderData.supplier_id === 0) {
     return res.status(400).json({ message: "pole supplier_id jest wymagane" });
   }
-  if (!regInt.test(orderData.supplier_id)) {
+  if (!regInt.test(orderData.supplier_id.toString())) {
     return res
       .status(400)
       .json({ message: "nieprawidłowy format pola supplier_id" });
@@ -160,7 +188,7 @@ router.put("/edit", (req, res) => {
       res.status(400).json({ message: "pole part_cat_id jest wymagane" });
       break;
     }
-    if (!regInt.test(item.part_cat_id)) {
+    if (!regInt.test(item.part_cat_id.toString())) {
       res
         .status(400)
         .json({ message: "nieprawidłowy format pola part_cat_id" });
@@ -172,13 +200,13 @@ router.put("/edit", (req, res) => {
       res.status(400).json({ message: "pole amount jest wymagane" });
       break;
     }
-    if (!regInt.test(item.amount)) {
+    if (!regInt.test(item.amount.toString())) {
       res.status(400).json({ message: "nieprawidłowy format pola amount" });
       break;
     }
   }
 
-  function checkOrderStatus(order_id) {
+  function checkOrderStatus(order_id: number) {
     return new Promise(function (resolve, reject) {
       database.query(
         `select part_order_id, status from spareparts_orders where part_order_id = ${order_id}`,
@@ -190,22 +218,22 @@ router.put("/edit", (req, res) => {
     });
   }
 
-  function checkIfItemExists(itemId) {
-    return new Promise(function (resolve, reject) {
-      database.query(
-        `select order_item_id from spareparts_orders_items where order_item_id = ${itemId}`,
-        function (err, rows) {
-          if (err) return reject(err);
-          resolve(rows);
-        }
-      );
-    });
-  }
+  // function checkIfItemExists(itemId) {
+  //   return new Promise(function (resolve, reject) {
+  //     database.query(
+  //       `select order_item_id from spareparts_orders_items where order_item_id = ${itemId}`,
+  //       function (err, rows) {
+  //         if (err) return reject(err);
+  //         resolve(rows);
+  //       }
+  //     );
+  //   });
+  // }
 
   let badOrder = false;
 
   checkOrderStatus(orderData.part_order_id)
-    .then(function (rows) {
+    .then(function (rows: any) {
       if (rows.length == 0) {
         badOrder = true;
         return res
@@ -232,7 +260,7 @@ router.put("/edit", (req, res) => {
 
       let queries = "";
 
-      orderItems.forEach(function (item) {
+      orderItems.forEach(function (item: edit_itemsI) {
         if (item.order_item_id === undefined || !item.order_item_id) {
           queries += `INSERT INTO spareparts_orders_items (part_cat_id, amount, order_id) VALUES (${item.part_cat_id}, ${item.amount}, ${orderData.part_order_id});`;
         } else if (item.toRemove !== undefined || item.toRemove) {
@@ -251,8 +279,14 @@ router.put("/edit", (req, res) => {
     .catch((err) => res.status(500).json(err));
 });
 
+interface find_reqQueryI {
+  partCatId: string;
+  expDate: string;
+  status: string;
+}
+
 //find order
-router.get("/find", (req, res) => {
+router.get("/find", (req: Request<{}, {}, {}, find_reqQueryI>, res) => {
   // recive any or all of params "partCatId": INT, "expDate": STRING, "status": INT
   // return 400 if none of params was passed
   // return 400 if any of passed params is in wrong format
@@ -316,4 +350,4 @@ router.get("/find", (req, res) => {
   });
 });
 
-module.exports = router;
+export default router;

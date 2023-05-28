@@ -1,9 +1,10 @@
-const express = require("express");
+import express, { Express, Request, Response, Router } from "express";
+import database from "../helpers/database";
+// import { MysqlError } from "mysql";
 const router = express.Router();
-const database = require("../helpers/database");
 
 //add shelve
-router.post("/add", (req, res) => {
+router.post("/add", (req: Request<{}, {}, { code: string }, {}>, res) => {
   let code = req.body.code;
   let sql = `INSERT INTO shelves (code) VALUES ("${code}")`;
 
@@ -13,7 +14,7 @@ router.post("/add", (req, res) => {
 });
 
 //get all shelves
-router.get("/", (req, res) => {
+router.get("/", (req: Request, res) => {
   let sql = `SELECT shelve_id, code FROM shelves`;
 
   database.query(sql, (err, rows) => {
@@ -21,4 +22,4 @@ router.get("/", (req, res) => {
   });
 });
 
-module.exports = router;
+export default router;

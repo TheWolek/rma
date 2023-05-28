@@ -1,12 +1,18 @@
-const express = require("express");
+import express, { Express, Request, Response, Router } from "express";
+import database from "../../helpers/database";
+// import { MysqlError } from "mysql";
 const router = express.Router();
-const database = require("../../helpers/database");
 
 //get all items in specific shelve
 router.get("/", (req, res) => {});
 
+interface edit_reqBodyI {
+  parts_sn: Array<string>;
+  new_shelve: number;
+}
+
 //change shelve of parts
-router.put("/", (req, res) => {
+router.put("/", (req: Request<{}, {}, edit_reqBodyI, {}>, res) => {
   // recive {"parts_sn": [STRING, ...], "new_shelve": INT}
   // return 400 if any of params is missing
   // return 400 if parts_sn array is empty
@@ -26,7 +32,7 @@ router.put("/", (req, res) => {
   const intReg = /^\d{1,}$/;
   const codeReg = /^((\w{1,})|(\d{1,})){3,}$/;
 
-  if (!intReg.test(req.body.new_shelve))
+  if (!intReg.test(req.body.new_shelve.toString()))
     return res.status(400).json({ message: "Zły format pola new_shelve" });
   if (!Array.isArray(req.body.parts_sn))
     return res.status(400).json({ message: "Zły format pola parts_sn" });
@@ -49,7 +55,7 @@ router.put("/", (req, res) => {
 
   if (error) return;
 
-  function checkIfCodesExists(parts) {
+  function checkIfCodesExists(parts: Array<string>) {
     return new Promise(function (resolve, reject) {
       find_sql += find_sql_where;
       database.query(find_sql, function (err, rows) {
@@ -60,7 +66,7 @@ router.put("/", (req, res) => {
   }
 
   checkIfCodesExists(parts)
-    .then(function (rows) {
+    .then(function (rows: any) {
       if (rows.length === 0)
         return res
           .status(404)
@@ -82,4 +88,4 @@ router.put("/", (req, res) => {
     });
 });
 
-module.exports = router;
+export default router;

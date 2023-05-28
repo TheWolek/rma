@@ -1,9 +1,10 @@
-const express = require("express");
+import express, { Express, Request, Response, Router } from "express";
+import database from "../../helpers/database";
+// import { MysqlError } from "mysql";
 const router = express.Router();
-const database = require("../../helpers/database");
 
 //removes specified amount of specified part
-router.post("/use", (req, res) => {
+router.post("/use", (req: Request<{}, {}, { sn: string }, {}>, res) => {
   // recive {"sn": STR}
   // return 400 if any of parameters is missing OR is empty OR does not match regEx
   // return 400 if registered amount is fewer than requested
@@ -19,7 +20,7 @@ router.post("/use", (req, res) => {
   if (!sn_reg.test(sn))
     return res.status(400).json({ message: "nieprawidłowy format pola sn" });
 
-  function checkPartAmount(sn) {
+  function checkPartAmount(sn: string) {
     return new Promise(function (resolve, reject) {
       let sql = `select s.part_id, s.amount, ss.codes from spareparts s 
       join spareparts_sn ss on s.part_id = ss.part_id where ss.codes = ${sn} and ss.isUsed = 0;`;
@@ -30,7 +31,7 @@ router.post("/use", (req, res) => {
     });
   }
 
-  checkPartAmount(sn).then(function (rows) {
+  checkPartAmount(sn).then(function (rows: any) {
     if (rows.length == 0)
       return res
         .status(404)
@@ -54,7 +55,7 @@ router.post("/use", (req, res) => {
 });
 
 //find data about stock of specific parts
-router.get("/stock", (req, res) => {
+router.get("/stock", (req: Request<{}, {}, {}, { cat_id: string }>, res) => {
   //recive parameter "cat_id": INT
   // return 400 if no parameters is passed OR is empty
   // return 400 if any of parameters does not match regEx
@@ -65,7 +66,7 @@ router.get("/stock", (req, res) => {
 
   let query = req.query;
 
-  if (!query.cat_id || query.cat_id == 0)
+  if (!query.cat_id)
     return res
       .status(400)
       .json({ message: "podaj id kategorii do wyszukania" });
@@ -93,8 +94,15 @@ router.get("/stock", (req, res) => {
   });
 });
 
+interface getData_reqQueryI {
+  cat_id: string;
+  producer: string;
+  category: string;
+  name: string;
+}
+
 // find all data about specific part
-router.get("/", (req, res) => {
+router.get("/", (req: Request<{}, {}, {}, getData_reqQueryI>, res) => {
   // recive one or more of parameters "producer": STRING, "category": STRING, "name": STRING, "cat_id": INT
   // return 400 if no parameter is passed OR is empty
   // return 400 if any of parameters does not match regEx
@@ -191,8 +199,8 @@ router.get("/", (req, res) => {
         .status(404)
         .json({ message: "nieznaleziono części dla podanych kryteriów" });
 
-    let output = {};
-    rows.forEach((el) => {
+    let output: any = {};
+    rows.forEach((el: any) => {
       if ("cat_" + el.part_cat_id in output) {
         output["cat_" + el.part_cat_id].warehouse.shelves.push(el.shelve);
         output["cat_" + el.part_cat_id].warehouse.parts_id.push(el.part_id);
@@ -226,7 +234,7 @@ router.get("/", (req, res) => {
 });
 
 //find all data about specific part by SN
-router.get("/code", (req, res) => {
+router.get("/code", (req: Request<{}, {}, {}, { codes: string }>, res) => {
   // recive one parameter "codes": STR
   // return 400 if no parameter is passed OR is empty
   // return 404 if cannot find anything
@@ -257,7 +265,7 @@ router.get("/code", (req, res) => {
 
     let part = rows[0];
 
-    let output = {};
+    let output: any = {};
 
     let item = {
       part: {
@@ -280,7 +288,7 @@ router.get("/code", (req, res) => {
 });
 
 //get all categories
-router.get("/categories", (req, res) => {
+router.get("/categories", (req: Request<{}, {}, {}, {}>, res) => {
   let sql = `SELECT part_cat_id, producer, category, name FROM spareparts_cat`;
 
   database.query(sql, function (err, rows) {
@@ -290,7 +298,7 @@ router.get("/categories", (req, res) => {
 });
 
 //get all suppliers
-router.get("/suppliers", (req, res) => {
+router.get("/suppliers", (req: Request<{}, {}, {}, {}>, res) => {
   let sql = `SELECT id, name FROM suppliers`;
 
   database.query(sql, function (err, rows) {
@@ -300,7 +308,7 @@ router.get("/suppliers", (req, res) => {
 });
 
 //get all order statuses
-router.get("/statuses", (req, res) => {
+router.get("/statuses", (req: Request<{}, {}, {}, {}>, res) => {
   let sql = `SELECT id, name FROM spareparts_orders_statuses`;
 
   database.query(sql, function (err, rows) {
@@ -309,4 +317,4 @@ router.get("/statuses", (req, res) => {
   });
 });
 
-module.exports = router;
+export default router;

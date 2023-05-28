@@ -1,4 +1,4 @@
-const formatDateAndHours = (dateIn) => {
+const formatDateAndHours = (dateIn: string | Date): string => {
   const d = new Date(dateIn);
   return (
     d.getFullYear() +
@@ -13,4 +13,4 @@ const formatDateAndHours = (dateIn) => {
   );
 };
 
-module.exports = formatDateAndHours;
+export default formatDateAndHours;

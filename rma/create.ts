@@ -1,10 +1,25 @@
-const express = require("express");
+import express, { Express, Request, Response, Router } from "express";
+import database from "../helpers/database";
 const router = express.Router();
-const database = require("../helpers/database");
 
-const formatDate = require("../utils/formatDateAndHours");
+interface create_reqBodyI {
+  email: string;
+  name: string;
+  phone: string;
+  type: string;
+  deviceSn: string;
+  deviceName: string;
+  deviceProducer: string;
+  deviceCat: string;
+  deviceAccessories: Array<number>;
+  issue: string;
+  lines: string;
+  postCode: string;
+  city: string;
+  damageType: number;
+}
 
-router.post("/", (req, res) => {
+router.post("/", (req: Request<{}, {}, create_reqBodyI, {}>, res) => {
   //recive {email: STR, name: STR, phone: STR, deviceSn: STR, deviceName: STR, deviceCat: STR, deviceProducer: STR, deviceAccessories: STR (optional), issue: STR, lines: STR, postCode: STR, city: STR}
   //return 400 if any of required params are missing
   //return 400 if any of passed params is in wrong format
@@ -98,11 +113,7 @@ router.post("/", (req, res) => {
   ) {
     return res.status(400).json({ Message: "Pole city jest wymagane" });
   }
-  if (
-    req.body.damageType === undefined ||
-    req.body.damageType === null ||
-    req.body.damageType.length === 0
-  ) {
+  if (req.body.damageType === undefined || req.body.damageType === null) {
     return res.status(400).json({ Message: "Pole damageType jest wymagane" });
   }
 
@@ -140,7 +151,7 @@ router.post("/", (req, res) => {
     if (err) return res.status(500).json(err);
 
     const ticket_id = result.insertId;
-    req.body.deviceAccessories.forEach((el, index) => {
+    req.body.deviceAccessories.forEach((el: number, index: number) => {
       if (index > 0) sql_accesories += ",";
       sql_accesories += `(${ticket_id}, ${el})`;
     });
@@ -152,4 +163,4 @@ router.post("/", (req, res) => {
   });
 });
 
-module.exports = router;
+export default router;

@@ -9,9 +9,10 @@ EXPOSE 3000
 
 COPY ["package.json", "package-lock.json", "./"]
 
-RUN npm install --production
+RUN npm install
 
 COPY . .
 
-CMD ["node", "index.js"]
+RUN npm run build
 
+CMD [ "npm", "run", "start" ]

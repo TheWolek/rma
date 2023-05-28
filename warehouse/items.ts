@@ -1,15 +1,28 @@
-const express = require("express");
+import express, { Express, Request, Response, Router } from "express";
+import database from "../helpers/database";
+// import { MysqlError } from "mysql";
 const router = express.Router();
 
-const database = require("../helpers/database");
+interface reqQueryI {
+  barcode: string;
+  shelve: string;
+}
 
-function checkBarcode(barcode) {
+interface reqBodyI {
+  barcode: string;
+  sn: string;
+  barcodes: Array<string>;
+  new_shelve: number;
+  shelve: number;
+}
+
+function checkBarcode(barcode: any): Boolean {
   const reg = /^(\d{1,})-([A-ż(),. 0-9]{1,})-([A-z(),. 0-9]{1,})$/;
   return reg.test(barcode);
 }
 
 // register new item in warehouse
-router.post("/", (req, res) => {
+router.post("/", (req: Request<{}, {}, reqBodyI, reqQueryI>, res) => {
   // recive barcode in format "ticket_id-name-category" and sn (String)
   // return 400 if barcode is empty OR barcode does not match regEx OR ticket_id already exists in items table
   // return 500 if there was DB error
@@ -44,7 +57,7 @@ router.post("/", (req, res) => {
 });
 
 //check if item with specific ticket_id is registered in warehouse
-router.get("/exists", (req, res) => {
+router.get("/exists", (req: Request<{}, {}, reqBodyI, reqQueryI>, res) => {
   // recive barcode in format "ticket-id-name-category"
   // return 400 if barcode is empty OR barcode does not match regEx
   // return 404 with {found: false} if nothing was found
@@ -68,7 +81,7 @@ router.get("/exists", (req, res) => {
 });
 
 //find item by ticket_id
-router.get("/", (req, res) => {
+router.get("/", (req: Request<{}, {}, reqBodyI, reqQueryI>, res) => {
   // recive barcode in format "ticket_id-name-category"
   // return 400 if barcode is empty OR barcode does not match regEx
   // return 404 if nothing was found
@@ -110,7 +123,7 @@ router.get("/countall", (req, res) => {
 });
 
 //find items in specific shelve
-router.get("/shelve", (req, res) => {
+router.get("/shelve", (req: Request<{}, {}, reqBodyI, reqQueryI>, res) => {
   // recive shelve id in req.query INT
   // return 400 if shelve is empty OR shelve does not match regEx
   // return 404 if nothing was found
@@ -138,81 +151,85 @@ router.get("/shelve", (req, res) => {
 });
 
 //change shelve of registered item
-router.put("/changeshelve", (req, res) => {
-  // recive barcodes in format ["ticket_id-name-category",...], destination shelve id INT and current shelve id INT
-  // return 400 if barcode OR new_shelve OR shelve is empty
-  // return 400 if barcode OR new_shelve OR shelve does not match regEx
-  // return 400 if current and destiantion sheleve are equal
-  // return 404 if no rows were changes
-  // return 404 with message {} if number of rows changed is diffrent from number of barcodes
-  // reutrn 500 if there was DB error
-  // returns 200 with {ticket_id_arr: [], new_shelve id}
-  if (!req.body.barcodes)
-    return res.status(400).json({ message: "pole barcode jest wymagane" });
-  if (!req.body.new_shelve && req.body.new_shelve != 0)
-    return res.status(400).json({ message: "pole new_shelve jest wymagane" });
-  if (!req.body.shelve && req.body.shelve != 0)
-    return res.status(400).json({ message: "pole shelve jest wymagane" });
+router.put(
+  "/changeshelve",
+  (req: Request<{}, {}, reqBodyI, reqQueryI>, res) => {
+    // recive barcodes in format ["ticket_id-name-category",...], destination shelve id INT and current shelve id INT
+    // return 400 if barcode OR new_shelve OR shelve is empty
+    // return 400 if barcode OR new_shelve OR shelve does not match regEx
+    // return 400 if current and destiantion sheleve are equal
+    // return 404 if no rows were changes
+    // return 404 with message {} if number of rows changed is diffrent from number of barcodes
+    // reutrn 500 if there was DB error
+    // returns 200 with {ticket_id_arr: [], new_shelve id}
+    if (!req.body.barcodes)
+      return res.status(400).json({ message: "pole barcode jest wymagane" });
+    if (!req.body.new_shelve && req.body.new_shelve != 0)
+      return res.status(400).json({ message: "pole new_shelve jest wymagane" });
+    if (!req.body.shelve && req.body.shelve != 0)
+      return res.status(400).json({ message: "pole shelve jest wymagane" });
 
-  const reg = /^(\d{1,})$/;
-  if (!reg.test(req.body.new_shelve))
-    return res
-      .status(400)
-      .json({ message: "nieprawidłowy format pola new_shelve" });
-  if (!reg.test(req.body.shelve))
-    return res
-      .status(400)
-      .json({ message: "nieprawidłowy format pola shelve" });
+    const reg = /^(\d{1,})$/;
 
-  let err = false;
-  req.body.barcodes.forEach((el) => {
-    if (!checkBarcode(el)) {
-      err = true;
+    if (!reg.test(req.body.new_shelve.toString()))
       return res
         .status(400)
-        .json({ message: "nieprawidłowy format pola barcode", value: el });
-    }
-  });
+        .json({ message: "nieprawidłowy format pola new_shelve" });
+    if (!reg.test(req.body.shelve.toString()))
+      return res
+        .status(400)
+        .json({ message: "nieprawidłowy format pola shelve" });
 
-  if (err) return;
+    let err = false;
+    req.body.barcodes.forEach((el: string) => {
+      if (!checkBarcode(el)) {
+        err = true;
+        return res
+          .status(400)
+          .json({ message: "nieprawidłowy format pola barcode", value: el });
+      }
+    });
 
-  let dest = req.body.new_shelve;
-  let current = req.body.shelve;
-  if (dest == current)
-    return res
-      .status(400)
-      .json({ message: "wybrana półka docelowa jest identyczna jak aktualna" });
+    if (err) return;
 
-  let ticket_id_arr = req.body.barcodes.map((el) => {
-    return el.split("-")[0];
-  });
-
-  let ticket_idParsed = "(";
-  ticket_id_arr.forEach((el, index) => {
-    ticket_idParsed += el;
-    if (index != ticket_id_arr.length - 1) ticket_idParsed += ", ";
-  });
-  ticket_idParsed += ")";
-
-  let sql = `UPDATE items SET shelve = ${dest} WHERE ticket_id in ${ticket_idParsed} AND shelve = ${current}`;
-  database.query(sql, function (err, result) {
-    if (err) return res.status(500).json(err);
-    if (result.changedRows == 0)
-      return res.status(404).json({
-        message:
-          "nie przesunięto żadnych przedmiotów. Sprawdź poprawność kodów kreskowych",
+    let dest = req.body.new_shelve;
+    let current = req.body.shelve;
+    if (dest == current)
+      return res.status(400).json({
+        message: "wybrana półka docelowa jest identyczna jak aktualna",
       });
-    if (result.changedRows != ticket_id_arr.length)
-      return res.status(404).json({
-        message:
-          "ilość przesuniętych produktów różni się od zeskanowanych kodów kreskowych",
-      });
-    res.status(200).json({ ticket_id_arr: ticket_id_arr, new_shelve: dest });
-  });
-});
+
+    let ticket_id_arr = req.body.barcodes.map((el: string) => {
+      return el.split("-")[0];
+    });
+
+    let ticket_idParsed = "(";
+    ticket_id_arr.forEach((el: string, index: number) => {
+      ticket_idParsed += el;
+      if (index != ticket_id_arr.length - 1) ticket_idParsed += ", ";
+    });
+    ticket_idParsed += ")";
+
+    let sql = `UPDATE items SET shelve = ${dest} WHERE ticket_id in ${ticket_idParsed} AND shelve = ${current}`;
+    database.query(sql, function (err, result) {
+      if (err) return res.status(500).json(err);
+      if (result.changedRows == 0)
+        return res.status(404).json({
+          message:
+            "nie przesunięto żadnych przedmiotów. Sprawdź poprawność kodów kreskowych",
+        });
+      if (result.changedRows != ticket_id_arr.length)
+        return res.status(404).json({
+          message:
+            "ilość przesuniętych produktów różni się od zeskanowanych kodów kreskowych",
+        });
+      res.status(200).json({ ticket_id_arr: ticket_id_arr, new_shelve: dest });
+    });
+  }
+);
 
 //delete specific item by ticket_id
-router.delete("/", (req, res) => {
+router.delete("/", (req: Request<{}, {}, reqBodyI, reqQueryI>, res) => {
   // recive barcode in format "ticket_id-name-category" and current shelve INT
   // return 400 if barcode OR shelve is empty
   // return 400 if barcode OR shelve does not match regEx
@@ -244,4 +261,4 @@ router.delete("/", (req, res) => {
   });
 });
 
-module.exports = router;
+export default router;

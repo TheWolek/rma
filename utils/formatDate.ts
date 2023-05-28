@@ -1,4 +1,4 @@
-const formatDate = (dateIn) => {
+const formatDate = (dateIn: string | Date) => {
   const d = new Date(dateIn);
   return (
     d.getFullYear() +
@@ -9,4 +9,4 @@ const formatDate = (dateIn) => {
   );
 };
 
-module.exports = formatDate;
+export default formatDate;

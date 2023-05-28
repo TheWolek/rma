@@ -1,9 +1,10 @@
-const express = require("express");
+import express, { Express, Request, Response, Router } from "express";
+import database from "../../helpers/database";
+// import { MysqlError } from "mysql";
 const router = express.Router();
-const database = require("../../helpers/database");
 
 //get order items details
-router.get("/", (req, res) => {
+router.get("/", (req: Request<{}, {}, {}, { order_id: string }>, res) => {
   // recive {"order_id": INT}
   // return 400 if no params were passed OR param is empty OR does not match regEx
   // return 404 if cannot find specified order
@@ -27,10 +28,12 @@ router.get("/", (req, res) => {
   database.query(sql, (err, rows) => {
     if (err) return res.status(500).json(err);
 
-    let output = [];
+    let output: any = [];
 
-    rows.forEach((el, index) => {
-      let findItem = output.find((o) => o.order_item_id == el.order_item_id);
+    rows.forEach((el: any, index: number) => {
+      let findItem = output.find(
+        (o: any) => o.order_item_id == el.order_item_id
+      );
 
       if (findItem !== undefined) {
         findItem.codes.push(el.codes);
@@ -47,8 +50,14 @@ router.get("/", (req, res) => {
   });
 });
 
+interface addParts_reqBodyI {
+  order_id: number;
+  part_cat_id: number;
+  amount: number;
+}
+
 //add parts into order
-router.post("/add", (req, res) => {
+router.post("/add", (req: Request<{}, {}, addParts_reqBodyI, {}>, res) => {
   // recive {"order_id": INT, "part_cat_id": INT, "amount": INT}
   // return 400 if any of parameters is missing OR empty OR does not match regEx
   // return 404 if cannot find category
@@ -64,15 +73,15 @@ router.post("/add", (req, res) => {
 
   const regInt = /^([1-9]{1,})([0-9]*)$/;
 
-  if (!regInt.test(req.body.order_id))
+  if (!regInt.test(req.body.order_id.toString()))
     return res
       .status(400)
       .json({ message: "nieprawidłowy format pola order_id" });
-  if (!regInt.test(req.body.part_cat_id))
+  if (!regInt.test(req.body.part_cat_id.toString()))
     return res
       .status(400)
       .json({ message: "nieprawidłowy format pola part_cat_id" });
-  if (!regInt.test(req.body.amount))
+  if (!regInt.test(req.body.amount.toString()))
     return res
       .status(400)
       .json({ message: "nieprawidłowy format pola amount" });
@@ -103,13 +112,13 @@ router.post("/add", (req, res) => {
     return res.status(500).json(err);
   });
 
-  findCategory.then((catData) => {
+  findCategory.then((catData: any) => {
     if (catData.length == 0)
       return res
         .status(404)
         .json({ message: "wpisana kategoria nie istnieje" });
 
-    findOrder.then((orderData) => {
+    findOrder.then((orderData: any) => {
       if (orderData.length == 0)
         return res
           .status(400)
@@ -124,7 +133,7 @@ router.post("/add", (req, res) => {
 });
 
 //remove parts from order
-router.delete("/remove", (req, res) => {
+router.delete("/remove", (req: Request<{}, {}, { toDel: [] }, {}>, res) => {
   // recive {"toDel": [INT, INT...]}
   // return 400 if no param was passed OR it was empty OR any of params in array does not match regEx
   // return 404 if cannot find any part
@@ -134,9 +143,9 @@ router.delete("/remove", (req, res) => {
   if (!req.body.toDel) {
     return res.status(400).json({ message: "pole toDel jest wymagane" });
   }
-  if (!typeof req.body.toDel in [Array, Object]) {
-    return res.status(400).json({ message: "nieprawidłowy format pola toDel" });
-  }
+  // if (![Array, Object].includes(typeof req.body.toDel)) {
+  //   return res.status(400).json({ message: "nieprawidłowy format pola toDel" });
+  // }
   if (req.body.toDel.length === 0) {
     return res.status(400).json({ message: "pole toDel nie może być puste" });
   }
@@ -163,8 +172,14 @@ router.delete("/remove", (req, res) => {
   });
 });
 
+interface itemI {
+  item_id: number;
+  codes: Array<string>;
+  part_id: number;
+}
+
 //set items codes
-router.post("/codes", (req, res) => {
+router.post("/codes", (req: Request<{}, {}, itemI[], {}>, res) => {
   // recive [{"item_id": INT, "codes": [STR, STR, ...], part_id: INT}, ...]
   // return 400 if any param is missing
   // return 400 if any param does not match regEx
@@ -178,21 +193,21 @@ router.post("/codes", (req, res) => {
       .json({ message: "podaj prznajmniej jeden przedmiot" });
   }
 
-  req.body.forEach((el) => {
+  req.body.forEach((el: itemI) => {
     if (!el.item_id) {
       return res.status(400).json({ message: "pole item_id jest wymagane" });
     }
     if (!el.codes) {
       return res.status(400).json({ message: "pole codes jest wymagane" });
     }
-    if (!regInt.test(el.item_id)) {
+    if (!regInt.test(el.item_id.toString())) {
       return res
         .status(400)
         .json({ message: "nieprawidłowy format pola item_id" });
     }
   });
 
-  req.body.forEach((el) => {
+  req.body.forEach((el: itemI) => {
     for (let i = 0; i < el.codes.length; i++) {
       database.query(
         `INSERT INTO spareparts_sn (codes, item_id, part_id, shelve) values ('${el.codes[i]}', ${el.item_id}, ${el.part_id}, 0);`,
@@ -205,4 +220,4 @@ router.post("/codes", (req, res) => {
   res.status(200).json({ message: "ok" });
 });
 
-module.exports = router;
+export default router;

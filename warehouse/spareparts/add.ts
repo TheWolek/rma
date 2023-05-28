@@ -1,9 +1,22 @@
-const express = require("express");
+import express, { Express, Request, Response, Router } from "express";
+import database from "../../helpers/database";
+// import { MysqlError } from "mysql";
 const router = express.Router();
-const database = require("../../helpers/database");
+
+interface create_reqBodyI {
+  name: string;
+  category: string;
+  producer: string;
+}
+
+interface add_reqBodyI {
+  cat_id: number;
+  amount: number;
+  shelve: number;
+}
 
 // register new category of sparepart
-router.post("/new", (req, res) => {
+router.post("/new", (req: Request<{}, {}, create_reqBodyI, {}>, res) => {
   // recive {"name": string, "category": string, "producer": string}
   // return 400 if any of parameters is missig OR is empty OR does not match regEx
   // return 500 if there was DB error
@@ -41,14 +54,14 @@ router.post("/new", (req, res) => {
 });
 
 // add part to warehouse
-router.post("/", (req, res) => {
+router.post("/", (req: Request<{}, {}, Array<add_reqBodyI>, {}>, res) => {
   // recive [{"cat_id": INT, "amount": INT}, ...]
   // return 400 if array is empty
   // return 400 if any of parameters is missing OR is empty OR does not match regEx
   // return 500 if there was DB error
   // return 200 with {"part_id": INT}
 
-  if (!req.body.length > 0)
+  if (req.body.length === 0)
     return res.status(400).json({ message: "nie podano przedmiotów" });
 
   req.body.forEach((el) => {
@@ -60,18 +73,18 @@ router.post("/", (req, res) => {
 
   const reg = /^([1-9]{1,}[0-9]{0,})$/;
 
-  req.body.forEach((el) => {
-    if (!reg.test(el.cat_id))
+  req.body.forEach((el: add_reqBodyI) => {
+    if (!reg.test(el.cat_id.toString()))
       return res
         .status(400)
         .json({ message: "nieprawidłowy format pola cat_id" });
-    if (!reg.test(el.amount))
+    if (!reg.test(el.amount.toString()))
       return res
         .status(400)
         .json({ message: "nieprawidłowy format pola amount" });
   });
 
-  let output = [];
+  let output: Array<any> = [];
   let sql = `insert into spareparts (cat_id, amount) values `;
 
   req.body.forEach((el, index, arr) => {
@@ -96,4 +109,4 @@ router.post("/", (req, res) => {
   });
 });
 
-module.exports = router;
+export default router;

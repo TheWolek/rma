@@ -1,4 +1,7 @@
-module.exports = {
+import dotenv from "dotenv";
+dotenv.config();
+
+export default {
   connectionLimit: 100,
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
