@@ -118,6 +118,59 @@ router.get("/", (req, res) => {
   });
 });
 
+router.get("/accessories/:ticketId", (req, res) => {
+  //recive ticketId in query
+  //return 500 on DB error
+  //return 200 with array of accessories on success
+
+  let sql = `SELECT taa.id, taa.ticket_id, taat.id, taat.name FROM tickets_additionalAccessories taa JOIN tickets_aditionalAccessories_types taat on taa.type_id = taat.id
+  WHERE taa.ticket_id = ${req.params.ticketId};`;
+
+  database.query(sql, (err, rows) => {
+    if (err) return res.status(500).json(err);
+    return res.status(200).json(rows);
+  });
+});
+
+router.put("/accessories/:ticketId", (req, res) => {
+  //recive ticketId in query and {deviceAccessories: [number, number, ...]}
+  //return 500 on DB error
+  //return 200 on success
+
+  if (
+    req.body.deviceAccessories === null ||
+    req.body.deviceAccessories === undefined
+  )
+    return res
+      .status(400)
+      .json({ message: "Pole deviceAccessories jest wymagane" });
+
+  let sql_delete = `DELETE FROM tickets_additionalAccessories WHERE ticket_id = ${req.params.ticketId}`;
+  let sql_update = `INSERT INTO tickets_additionalAccessories (ticket_id, type_id) VALUES `;
+  let sql_select = `SELECT taa.id, taa.ticket_id, taat.id, taat.name FROM tickets_additionalAccessories taa JOIN tickets_aditionalAccessories_types taat on taa.type_id = taat.id
+  WHERE taa.ticket_id = ${req.params.ticketId}; `;
+
+  req.body.deviceAccessories.forEach((el, index) => {
+    if (index > 0) sql_update += ",";
+    sql_update += `(${req.params.ticketId}, ${el})`;
+  });
+
+  database.query(sql_delete, (err, result) => {
+    if (err) return res.status(500).json(err);
+
+    if (req.body.deviceAccessories.length > 0) {
+      database.query(sql_update, (err, result) => {
+        if (err) return res.status(500).json(err);
+
+        database.query(sql_select, (err, rows) => {
+          if (err) return res.status(500).json(err);
+          return res.status(200).json(rows);
+        });
+      });
+    }
+  });
+});
+
 router.put("/register/:ticketId", (req, res) => {
   //recive ticketId in url
   //return 400 if ticketId does not match regEx
