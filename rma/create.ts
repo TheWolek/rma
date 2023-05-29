@@ -145,7 +145,7 @@ router.post("/", (req: Request<{}, {}, create_reqBodyI, {}>, res) => {
   let sql = `insert into tickets (email, name, phone, device_sn, device_name, device_cat, device_producer, type, issue, status, \`lines\`, postCode, city, damage_type) VALUES \
       ("${req.body.email}", "${req.body.name}", "${req.body.phone}", "${req.body.deviceSn}", "${req.body.deviceName}", "${req.body.deviceCat}", "${req.body.deviceProducer}", ${req.body.type}, "${req.body.issue}", 1, "${req.body.lines}", "${req.body.postCode}", "${req.body.city}", ${req.body.damageType})`;
 
-  let sql_accesories = `insert into tickets_additionalAccesories (ticket_id, type_id) VALUES `;
+  let sql_accesories = `insert into tickets_additionalAccessories (ticket_id, type_id) VALUES `;
 
   database.query(sql, (err, result) => {
     if (err) return res.status(500).json(err);

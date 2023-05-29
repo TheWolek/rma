@@ -23,7 +23,7 @@ router.post("/use", (req: Request<{}, {}, { sn: string }, {}>, res) => {
   function checkPartAmount(sn: string) {
     return new Promise(function (resolve, reject) {
       let sql = `select s.part_id, s.amount, ss.codes from spareparts s 
-      join spareparts_sn ss on s.part_id = ss.part_id where ss.codes = ${sn} and ss.isUsed = 0;`;
+      join spareparts_sn ss on s.part_id = ss.part_id where ss.codes = '${sn}' and ss.isUsed = 0;`;
       database.query(sql, function (err, rows) {
         if (err) return reject(err);
         resolve(rows);
@@ -44,9 +44,9 @@ router.post("/use", (req: Request<{}, {}, { sn: string }, {}>, res) => {
 
     let part_id = rows[0].part_id;
     let newAmount = rows[0].amount - 1;
-    let sql = `update spareparts_sn set isUsed = 1 where codes = '${sn}' and part_id = ${part_id};`;
+    let sql = `update spareparts set amount = ${newAmount} where part_id = ${part_id};`;
+    sql += `update spareparts_sn set isUsed = 1 where codes = '${sn}' and part_id = ${part_id};`;
 
-    sql += `update spareparts set amount = ${newAmount} where part_id = ${part_id};`;
     database.query(sql, (err, result) => {
       if (err) return res.status(500).json(err);
       return res.status(200).json({});
@@ -190,7 +190,7 @@ router.get("/", (req: Request<{}, {}, {}, getData_reqQueryI>, res) => {
     from spareparts_cat sc 
     left join spareparts s on sc.part_cat_id = s.cat_id
     left join spareparts_sn ss on s.part_id = ss.part_id
-   	where ${statement}`;
+   	where ${statement} and ss.isUsed = 0`;
 
   database.query(sql_findPart, (err, rows) => {
     if (err) return res.status(500).json(err);
@@ -204,7 +204,7 @@ router.get("/", (req: Request<{}, {}, {}, getData_reqQueryI>, res) => {
       if ("cat_" + el.part_cat_id in output) {
         output["cat_" + el.part_cat_id].warehouse.shelves.push(el.shelve);
         output["cat_" + el.part_cat_id].warehouse.parts_id.push(el.part_id);
-        output["cat_" + el.part_cat_id].warehouse.totalAmount += el.amount;
+        //output["cat_" + el.part_cat_id].warehouse.totalAmount += el.amount;
         if (el.codes !== null) {
           output["cat_" + el.part_cat_id].warehouse.codes.push(el.codes);
         }
@@ -215,10 +215,10 @@ router.get("/", (req: Request<{}, {}, {}, getData_reqQueryI>, res) => {
           producer: el.producer,
           name: el.name,
         };
-        let partAmount = el.amount === null ? 0 : el.amount;
+        //let partAmount = el.amount === null ? 0 : el.amount;
         let warehouse = {
           shelves: el.shelve === null ? [] : [el.shelve],
-          totalAmount: partAmount,
+          //totalAmount: partAmount,
           parts_id: el.part_id === null ? [] : [el.part_id],
           codes: el.codes === null ? [] : [el.codes],
         };
@@ -227,6 +227,10 @@ router.get("/", (req: Request<{}, {}, {}, getData_reqQueryI>, res) => {
           warehouse: warehouse,
         };
       }
+    });
+
+    Object.keys(output).forEach((el: any) => {
+      output[el].warehouse.totalAmount = output[el].warehouse.codes.length;
     });
 
     res.status(200).json(output);
