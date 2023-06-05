@@ -139,12 +139,13 @@ router.get(
     //return 500 on DB error
     //return 200 with array of accessories on success
 
-    let sql = `SELECT taa.id, taa.ticket_id, taat.id, taat.name FROM tickets_additionalAccessories taa JOIN tickets_aditionalAccessories_types taat on taa.type_id = taat.id
+    let sql = `SELECT taat.id FROM tickets_additionalAccessories taa JOIN tickets_aditionalAccessories_types taat on taa.type_id = taat.id
   WHERE taa.ticket_id = ${req.params.ticketId};`;
 
     database.query(sql, (err, rows) => {
       if (err) return res.status(500).json(err);
-      return res.status(200).json(rows);
+      const output = rows.map((o: { id: number }) => o.id);
+      return res.status(200).json(output);
     });
   }
 );
