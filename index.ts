@@ -16,7 +16,7 @@ import rmaDictionaries from "./rma/dictionaries";
 import rmaWaybills from "./rma/waybills";
 
 const app: Express = express();
-const port = 3000;
+const port = 3001;
 dotenv.config();
 
 app.use(cors());

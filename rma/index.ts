@@ -4,6 +4,11 @@ import { MysqlError } from "mysql";
 import formatDateAndHours from "../utils/formatDateAndHours";
 const router = express.Router();
 
+import editAccessories from "../helpers/rma/accessories/editAccessories";
+import accessoriesArrayValidator from "../helpers/rma/accessories/validator";
+import editTicketValidator from "../helpers/rma/validator";
+import { updateTicket_reqBodyI } from "../utils/constants/rma/interfaces";
+
 interface getData_reqQueryI {
   ticketId: string;
   status: string;
@@ -132,6 +137,64 @@ router.get("/", (req: Request<{}, {}, {}, getData_reqQueryI>, res) => {
   });
 });
 
+router.put(
+  "/:ticketId",
+  (
+    req: Request<{ ticketId: string }, {}, updateTicket_reqBodyI, {}>,
+    res: Response
+  ) => {
+    //recive ticketId in query
+    //recive {type: INT, deviceSn: STR, issue: STR,
+    // name: STR, email: STR, phone: STR,
+    // lines: STR, postCode: STR, city: STR, deviceAccessories: [INT, INT, ...]}
+    //return 500 on DB error
+    //return 400 if any field is missing
+    //return 400 if any field is not matching regEx
+    //return 200 on success
+
+    const ticketValidatorStatus = editTicketValidator(
+      req.params.ticketId,
+      req.body
+    );
+    const accessoriesValidatorStatus = accessoriesArrayValidator(
+      req.body.deviceAccessories
+    );
+
+    if (!ticketValidatorStatus[0]) {
+      return res.status(400).json(ticketValidatorStatus[1]);
+    }
+    if (!accessoriesValidatorStatus[0]) {
+      return res.status(400).json(accessoriesValidatorStatus[1]);
+    }
+
+    const sql_tickets = `UPDATE tickets SET type = ?, email = ?, name = ?, phone = ?, device_sn = ?, issue = ?, \`lines\` = ?, postCode = ?, city = ? WHERE ticket_id = ?`;
+    const params_tickets = [
+      req.body.type,
+      req.body.email,
+      req.body.name,
+      req.body.phone,
+      req.body.deviceSn,
+      req.body.issue,
+      req.body.lines,
+      req.body.postCode,
+      req.body.city,
+      req.params.ticketId,
+    ];
+
+    database.query(sql_tickets, params_tickets, (err) => {
+      if (err) return res.status(500).json(err);
+
+      editAccessories(req.params.ticketId, req.body.deviceAccessories)
+        .then(() => {
+          return res.status(200).json({});
+        })
+        .catch((err) => {
+          return res.status(500).json(err);
+        });
+    });
+  }
+);
+
 router.get(
   "/accessories/:ticketId",
   (req: Request<{ ticketId: string }, {}, {}, {}>, res) => {
@@ -164,39 +227,20 @@ router.put(
     //recive ticketId in query and {deviceAccessories: [number, number, ...]}
     //return 500 on DB error
     //return 200 on success
+    const validatorStatus = accessoriesArrayValidator(
+      req.body.deviceAccessories
+    );
+    if (!validatorStatus[0]) {
+      return res.status(400).json(validatorStatus[1]);
+    }
 
-    if (
-      req.body.deviceAccessories === null ||
-      req.body.deviceAccessories === undefined
-    )
-      return res
-        .status(400)
-        .json({ message: "Pole deviceAccessories jest wymagane" });
-
-    let sql_delete = `DELETE FROM tickets_additionalAccessories WHERE ticket_id = ${req.params.ticketId}`;
-    let sql_update = `INSERT INTO tickets_additionalAccessories (ticket_id, type_id) VALUES `;
-    let sql_select = `SELECT taa.id, taa.ticket_id, taat.id, taat.name FROM tickets_additionalAccessories taa JOIN tickets_aditionalAccessories_types taat on taa.type_id = taat.id
-  WHERE taa.ticket_id = ${req.params.ticketId}; `;
-
-    req.body.deviceAccessories.forEach((el: number, index: number) => {
-      if (index > 0) sql_update += ",";
-      sql_update += `(${req.params.ticketId}, ${el})`;
-    });
-
-    database.query(sql_delete, (err, result) => {
-      if (err) return res.status(500).json(err);
-
-      if (req.body.deviceAccessories.length > 0) {
-        database.query(sql_update, (err, result) => {
-          if (err) return res.status(500).json(err);
-
-          database.query(sql_select, (err, rows) => {
-            if (err) return res.status(500).json(err);
-            return res.status(200).json(rows);
-          });
-        });
-      }
-    });
+    editAccessories(req.params.ticketId, req.body.deviceAccessories)
+      .then(() => {
+        return res.status(200).json({});
+      })
+      .catch((err) => {
+        return res.status(500).json(err);
+      });
   }
 );
 
