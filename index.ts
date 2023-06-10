@@ -15,9 +15,9 @@ import rmaCreate from "./rma/create";
 import rmaDictionaries from "./rma/dictionaries";
 import rmaWaybills from "./rma/waybills";
 
-const app: Express = express();
-const port = 3001;
 dotenv.config();
+const app: Express = express();
+const port = process.env.port || 3000;
 
 app.use(cors());
 app.use(bodyParser.json());

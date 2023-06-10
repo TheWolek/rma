@@ -277,7 +277,7 @@ router.put(
   "/changeState/:ticketId",
   (req: Request<{ ticketId: string }, {}, { status: number }, {}>, res) => {
     //recive ticketId in URL
-    //recive body {status: INT [1-9]}
+    //recive body {status: INT [1-11]}
     //return 400 if ticketId does not match regEx
     //return 400 if status does not match regEx
     //return 404 if no ticket was found
@@ -290,10 +290,13 @@ router.put(
     if (req.body.status === undefined || req.body.status === null)
       return res.status(400).json({ message: "Pole status jest wymagane" });
 
-    const statusReg = /^[1-9]$/;
-
-    if (!statusReg.test(req.body.status.toString()))
+    if (!Number.isInteger(req.body.status))
       return res.status(400).json({ message: "Zły format pola status" });
+
+    if (req.body.status < 1 || req.body.status > 11)
+      return res
+        .status(400)
+        .json({ message: "Podany status jest spoza zakresu" });
 
     checkIfTicketExists(req.params.ticketId)
       .then(function (rows: any) {

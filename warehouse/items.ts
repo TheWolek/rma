@@ -249,7 +249,7 @@ router.delete("/", (req: Request<{}, {}, reqBodyI, reqQueryI>, res) => {
   let ticket_id = req.body.barcode.split("-")[0];
   let current = req.body.shelve;
 
-  let sql = `DELETE FROM items WHERE ticket_id = ${ticket_id} AND shelve = ${current}`;
+  let sql = `DELETE FROM items WHERE ticket_id = ${ticket_id} AND shelve = ${current}; UPDATE tickets SET inWarehouse = 0 WHERE ticket_id = ${ticket_id}`;
   database.query(sql, function (err, result) {
     if (err) return res.status(500).json(err);
     if (result.affectedRows == 0)
