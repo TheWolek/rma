@@ -121,7 +121,7 @@ router.get("/", (req: Request<{}, {}, {}, getData_reqQueryI>, res) => {
 
   let sql = `SELECT t.ticket_id, t.email, t.name, t.phone, t.device_sn, t.device_name, t.device_producer, t.type, 
   t.device_accessories, t.issue, t.status, t.created, t.lines, t.postCode, t.city, t.device_cat, 
-  t.lastStatusUpdate, t.inWarehouse, i.item_id, s.shelve_id, s.code, t.damage_description, t.damage_type
+  t.lastStatusUpdate, t.inWarehouse, i.item_id, s.shelve_id, s.code, t.damage_description, t.damage_type, t.result_type, t.result_description
   FROM tickets t left join items i on t.ticket_id = i.ticket_id
   left join shelves s on i.shelve = s.shelve_id `;
 
@@ -167,7 +167,7 @@ router.put(
       return res.status(400).json(accessoriesValidatorStatus[1]);
     }
 
-    const sql_tickets = `UPDATE tickets SET type = ?, email = ?, name = ?, phone = ?, device_sn = ?, issue = ?, \`lines\` = ?, postCode = ?, city = ?, damage_type = ?, damage_description = ? WHERE ticket_id = ?`;
+    const sql_tickets = `UPDATE tickets SET type = ?, email = ?, name = ?, phone = ?, device_sn = ?, issue = ?, \`lines\` = ?, postCode = ?, city = ?, damage_type = ?, damage_description = ?, result_type = ?, result_description = ? WHERE ticket_id = ?`;
     const params_tickets = [
       req.body.type,
       req.body.email,
@@ -180,6 +180,8 @@ router.put(
       req.body.city,
       req.body.damage_type,
       req.body.damage_description,
+      req.body.result_type,
+      req.body.result_description,
       req.params.ticketId,
     ];
 

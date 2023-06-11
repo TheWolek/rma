@@ -98,6 +98,16 @@ const editTicketValidator = (
   if (!regNumber.test(body.damage_type)) {
     return [false, "zły format pola damage_type"];
   }
+  if (body.result_type) {
+    if (!regNumber.test(body.result_type)) {
+      return [false, "zły format pola result_type"];
+    }
+  }
+  if (body.result_description) {
+    if (!regString.test(body.result_description)) {
+      return [false, "zły format pola result_description"];
+    }
+  }
 
   return [true, ""];
 };

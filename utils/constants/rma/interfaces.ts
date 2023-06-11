@@ -11,4 +11,6 @@ export interface updateTicket_reqBodyI {
   city: string;
   damage_type: string;
   damage_description: string | null;
+  result_type: null | string;
+  result_description: null | string;
 }
