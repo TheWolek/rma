@@ -120,7 +120,7 @@ router.post("/", (req: Request<{}, {}, create_reqBodyI, {}>, res) => {
 
   const regString = /^([a-żA-Ż0-9 ]){2,}$/;
   const regEmail = /^(.){1,}@(.){1,}\.([A-z]){1,}$/;
-  const regNumber = /^([0-9]{9})$/;
+  const regNumber = /^(\d{3}) (\d{3}) (\d{3})$/;
   const regLines = /^([a-żA-Ż0-9/. ]){2,}([1-9]){0,}([0-9]){1,}$/;
   const regPostCode = /^([0-9]){2}-([0-9]){3}$/;
 
