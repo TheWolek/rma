@@ -67,6 +67,9 @@ const editTicketValidator = (
   if (body.city === undefined || body.city === null || body.city.length === 0) {
     return [false, "Pole city jest wymagane"];
   }
+  if (body.damage_type === undefined || body.damage_type === null) {
+    return [false, "Pole damage_type jest wymagane"];
+  }
 
   if (!regNumber.test(ticketId)) {
     return [false, "zły format pola ticketId"];
@@ -91,6 +94,9 @@ const editTicketValidator = (
   }
   if (!regString.test(body.city)) {
     return [false, "zły format pola city"];
+  }
+  if (!regNumber.test(body.damage_type)) {
+    return [false, "zły format pola damage_type"];
   }
 
   return [true, ""];

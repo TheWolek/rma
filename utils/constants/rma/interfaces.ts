@@ -9,4 +9,6 @@ export interface updateTicket_reqBodyI {
   lines: string;
   postCode: string;
   city: string;
+  damage_type: string;
+  damage_description: string | null;
 }
