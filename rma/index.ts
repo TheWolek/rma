@@ -129,6 +129,7 @@ router.get("/", (req: Request<{}, {}, {}, getData_reqQueryI>, res) => {
     sql += ` JOIN waybills w ON t.ticket_id = w.ticket_id`;
 
   if (filters.length > 0) sql += ` WHERE ${filters}`;
+  sql += "ORDER BY t.created desc";
 
   database.query(sql, (err, rows) => {
     if (err) return res.status(500).json(err);
