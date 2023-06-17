@@ -298,7 +298,7 @@ router.put(
     if (!Number.isInteger(req.body.status))
       return res.status(400).json({ message: "Zły format pola status" });
 
-    if (req.body.status < 1 || req.body.status > 11)
+    if (req.body.status < 1 || req.body.status > 12)
       return res
         .status(400)
         .json({ message: "Podany status jest spoza zakresu" });
