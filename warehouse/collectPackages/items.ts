@@ -2,7 +2,8 @@ import express, { Request, Response } from "express";
 import database from "../../helpers/database";
 const router = express.Router();
 
-import checkIfCollectExists from "../../helpers/collectPackages/checkIfCollectExists";
+import checkIfCollectExists from "../../helpers/warehouse/collectPackages/checkIfCollectExists";
+import { addCollectItemValidator } from "../../helpers/warehouse/collectPackages/validators";
 
 router.post(
   "/:id/add",
@@ -18,34 +19,26 @@ router.post(
     //return 500 on DB error
     //return 200 with {ticket_id: INT, barcode: STR, wabill: STR}
 
-    if (
-      req.body.waybill === undefined ||
-      req.body.waybill === null ||
-      req.body.waybill === ""
-    ) {
-      return res.status(404).json({ message: "Pole waybill jest wymagane" });
-    }
+    const validatorStatus = addCollectItemValidator(req.body.waybill);
 
-    if (typeof req.body.waybill !== "string")
-      return res.status(404).json({ message: "błędny format pola waybill" });
+    if (!validatorStatus[0]) {
+      return res.status(400).json(validatorStatus[1]);
+    }
 
     checkIfCollectExists(req.params.id)
       .then(function (rows: any) {
         if (rows.length === 0)
           return res.status(404).json({ message: "Brak odbioru o podanym ID" });
 
-        if (rows[0].status === 3)
+        if (rows[0].status === 2)
           return res
             .status(404)
-            .json({ message: "Podany odbiór został odebrany" });
+            .json({ message: "Podany odbiór został już odebrany" });
 
         let sql_select = `SELECT t.ticket_id, concat(t.ticket_id, '-', t.device_producer, '-', t.device_cat) as 'barcode', w.waybill_number 
         from waybills w join tickets t on t.ticket_id = w.ticket_id where w.waybill_number = ${database.escape(
           req.body.waybill
         )} and w.type = 'przychodzący' and w.status = 'potwierdzony';`;
-        let sql_insert = `INSERT INTO packageCollect_items (collect_id, waybill) VALUES (${database.escape(
-          req.params.id
-        )}, ${database.escape(req.body.waybill)})`;
 
         database.query(sql_select, (err, rows) => {
           if (err) return res.status(500).json(err);
@@ -53,6 +46,12 @@ router.post(
             return res.status(404).json({
               message: "Nie znaleziono zgłoszenia z podanym listem przewozowym",
             });
+
+          let sql_insert = `INSERT INTO packageCollect_items (collect_id, waybill, ticket_id) VALUES (${database.escape(
+            req.params.id
+          )}, ${database.escape(req.body.waybill)}, ${database.escape(
+            rows[0].ticket_id
+          )})`;
 
           database.query(sql_insert, (err) => {
             if (err) return res.status(500).json(err);
@@ -68,12 +67,18 @@ router.post(
   }
 );
 
+interface itemI {
+  waybill: string;
+  ticket_id: number;
+}
+
+interface editItem_reqBodyI {
+  items: itemI[];
+}
+
 router.put(
   "/:id",
-  (
-    req: Request<{ id: string }, {}, { items: Array<string> }, {}>,
-    res: Response
-  ) => {
+  (req: Request<{ id: string }, {}, editItem_reqBodyI, {}>, res: Response) => {
     //recive id in params
     //recive body {items: [STR, STR]}
     //return 400 if items is missing or wrong type
@@ -91,9 +96,11 @@ router.put(
 
     let good = true;
 
-    req.body.items.forEach((el: string) => {
-      if (el.length <= 0) good = false;
-      if (typeof el !== "string") good = false;
+    req.body.items.forEach(({ waybill, ticket_id }) => {
+      if (waybill.length <= 0) good = false;
+      if (typeof waybill !== "string") good = false;
+      if (typeof ticket_id !== "number") good = false;
+      if (ticket_id < 1) good = false;
     });
 
     if (!good) {
@@ -106,25 +113,25 @@ router.put(
           return res.status(404).json({ message: "Brak odbioru o podanym ID" });
         }
 
-        if (rows[0].status === 3)
+        if (rows[0].status === 2)
           return res
             .status(404)
-            .json({ message: "Podany odbiór został odebrany" });
+            .json({ message: "Podany odbiór został już odebrany" });
 
         let sql_delete = `DELETE FROM packageCollect_items WHERE collect_id = ${database.escape(
           req.params.id
         )};`;
-        let sql_insert = `INSERT INTO packageCollect_items (collect_id, waybill) VALUES `;
+        let sql_insert = `INSERT INTO packageCollect_items (collect_id, waybill, ticket_id) VALUES `;
         let sql_select = `SELECT waybill from packageCollect_items WHERE collect_id = ${database.escape(
           req.params.id
         )};`;
 
         if (req.body.items.length > 0) {
-          req.body.items.forEach((el: string, index: number) => {
+          req.body.items.forEach((el: itemI, index: number) => {
             if (index > 0) sql_insert += ", ";
             sql_insert += `(${database.escape(req.params.id)},${database.escape(
-              el
-            )})`;
+              el.waybill
+            )}, ${database.escape(el.ticket_id)})`;
           });
 
           sql_insert += ";";

@@ -2,14 +2,8 @@ import express, { Request, Response } from "express";
 import database from "../../helpers/database";
 const router = express.Router();
 
-import {
-  addCollect_reqBodyI,
-  addCollectItem_reqBodyI,
-} from "../../utils/constants/collectPackages/interfaces";
-import {
-  addCollectValidator,
-  addCollectItemValidator,
-} from "../../helpers/collectPackages/validators";
+import { addCollect_reqBodyI } from "../../utils/constants/collectPackages/interfaces";
+import { addCollectValidator } from "../../helpers/warehouse/collectPackages/validators";
 
 router.post(
   "/",
@@ -34,16 +28,6 @@ router.post(
 
       return res.status(200).json({ collectId: result.insertedId });
     });
-  }
-);
-
-router.post(
-  "/item",
-  (req: Request<{}, {}, addCollectItem_reqBodyI, {}>, res: Response) => {
-    //recive
-    //return 400
-    //return 500 on DB error
-    //return 200 with
   }
 );
 

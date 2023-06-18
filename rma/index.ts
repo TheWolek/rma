@@ -1,13 +1,13 @@
 import express, { Express, Request, Response, Router } from "express";
 import database from "../helpers/database";
 import { MysqlError } from "mysql";
-import formatDateAndHours from "../utils/formatDateAndHours";
 const router = express.Router();
 
 import editAccessories from "../helpers/rma/accessories/editAccessories";
 import accessoriesArrayValidator from "../helpers/rma/accessories/validator";
 import editTicketValidator from "../helpers/rma/validator";
 import { updateTicket_reqBodyI } from "../utils/constants/rma/interfaces";
+import changeTicketStaus from "../helpers/rma/status/changeStatus";
 
 interface getData_reqQueryI {
   ticketId: string;
@@ -310,12 +310,11 @@ router.put(
             .status(404)
             .json({ message: "Brak zlecenia o podanym ID" });
 
-        const updateDate = formatDateAndHours(new Date());
-        let sql = `UPDATE tickets SET status=${req.body.status}, lastStatusUpdate="${updateDate}" WHERE ticket_id=${req.params.ticketId};`;
-        database.query(sql, (err, results) => {
-          if (err) return res.status(500).json(err);
-          return res.status(200).json({});
-        });
+        changeTicketStaus(parseInt(req.params.ticketId), req.body.status)
+          .then(() => {
+            return res.status(200).json({});
+          })
+          .catch((error) => res.status(error[0]).json(error[1]));
       })
       .catch((e) => res.status(500).json(e));
   }

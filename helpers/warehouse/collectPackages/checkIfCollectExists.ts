@@ -1,4 +1,4 @@
-import database from "../database";
+import database from "../../database";
 
 function checkIfCollectExists(id: string) {
   return new Promise(function (resolve, reject) {

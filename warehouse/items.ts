@@ -1,6 +1,6 @@
 import express, { Express, Request, Response, Router } from "express";
 import database from "../helpers/database";
-// import { MysqlError } from "mysql";
+import registerNewItem from "../helpers/warehouse/items/registerNewItem";
 const router = express.Router();
 
 interface reqQueryI {
@@ -41,19 +41,15 @@ router.post("/", (req: Request<{}, {}, reqBodyI, reqQueryI>, res) => {
 
   let data = req.body.barcode.split("-");
 
-  let sql = `INSERT INTO items (name, category, ticket_id, shelve, sn) VALUES ("${data[1]}", "${data[2]}", ${data[0]}, 0, "${req.body.sn}")`;
-  database.query(sql, function (err, result) {
-    if (err) {
-      if (err.code == "ER_DUP_ENTRY")
-        return res.status(400).json({
-          message: "produkt z podanym ticket id został już zarejestrowany",
-        });
-      return res.status(500).json(err);
-    }
-    res
-      .status(200)
-      .json({ id: result.insertId, ticket_id: data[0], shelve: 0 });
-  });
+  registerNewItem(parseInt(data[0]), data[1], data[2], req.body.sn)
+    .then((result: any) => {
+      res.status(200).json({
+        id: result.inserted,
+        ticket_id: data[0],
+        shelve: 0,
+      });
+    })
+    .catch((error) => res.status(error[0]).json(error[1]));
 });
 
 //check if item with specific ticket_id is registered in warehouse

@@ -2,13 +2,19 @@ import express, { Request, Response } from "express";
 import database from "../../helpers/database";
 const router = express.Router();
 
-import checkIfCollectExists from "../../helpers/collectPackages/checkIfCollectExists";
+import checkIfCollectExists from "../../helpers/warehouse/collectPackages/checkIfCollectExists";
+import changeWaybillStatus from "../../helpers/rma/waybills/changeStatus";
+import getWaybillsFromCollect from "../../helpers/warehouse/collectPackages/getWaybillsFromCollect";
+import changeTicketStaus from "../../helpers/rma/status/changeStatus";
+import endCollect from "../../helpers/warehouse/collectPackages/endCollect";
+import registerNewItem from "../../helpers/warehouse/items/registerNewItem";
 
 interface findCollect_reqQueryI {
   refName: string;
   created: string;
 }
 
+//get list of collects with optional filters
 router.get(
   "/",
   (req: Request<{}, {}, {}, findCollect_reqQueryI>, res: Response) => {
@@ -40,6 +46,7 @@ router.get(
   }
 );
 
+//get details of one collect
 router.get(
   "/:id",
   (req: Request<{ id: string }, {}, {}, {}>, res: Response) => {
@@ -54,7 +61,7 @@ router.get(
           return res.status(404).json({ message: "Brak odbioru o podanym ID" });
         }
 
-        let sql = `SELECT pc.id, pc.ref_name, pc.created, pcs.name as 'status', pci.waybill 
+        let sql = `SELECT pc.id, pc.ref_name, pc.created, pcs.name as 'status', pci.waybill, pci.ticket_id 
       from packageCollect pc 
       join packageCollect_statuses pcs on pc.status = pcs.id
       left join packageCollect_items pci on pc.id = pci.collect_id
@@ -74,8 +81,10 @@ router.get(
             status: result[0].status,
           };
 
-          let itemsData = result.map((o: any) => o.waybill);
-          if (itemsData[0] === null) itemsData = [];
+          let itemsData = result.map((o: any) => {
+            return { waybill: o.waybill, ticket_id: o.ticket_id };
+          });
+          if (itemsData[0].waybill === null) itemsData = [];
 
           return res.status(200).json({
             ...collectData,
@@ -87,48 +96,64 @@ router.get(
   }
 );
 
+//Change waybills statuses.
+//ChangeStatus of collect.
+//Change tickets statuses.
+//Register products in warehouse
 router.put(
   "/:id",
-  (
-    req: Request<{ id: string }, {}, { newStatus: string }, {}>,
-    res: Response
-  ) => {
+  (req: Request<{ id: string }, {}, {}, {}>, res: Response) => {
     //recive id in params
     //recive body {newStatus: INT}
     //return 400 if newStatus is missing
+    //return 404 if collection does not exitst
     //return 500 on DB error
     //return 200 on success
 
-    if (
-      req.body.newStatus === undefined ||
-      req.body.newStatus === null ||
-      req.body.newStatus === ""
-    ) {
-      return res.status(404).json({ message: "Pole newStatus jest wymagane" });
-    }
-
-    if (parseInt(req.body.newStatus) < 1 || parseInt(req.body.newStatus) > 3) {
-      return res
-        .status(404)
-        .json({ message: "Pole newStatus jest spoza zakresu" });
-    }
-
+    //check if collect exists
     checkIfCollectExists(req.params.id)
       .then(function (rows: any) {
+        //collect does not exits, return 404
         if (rows.length === 0) {
           return res.status(404).json({ message: "Brak odbioru o podanym ID" });
         }
+        if (rows[0].status === 2) {
+          return res
+            .status(400)
+            .json({ message: "Podany odbiór został już odebrany" });
+        }
 
-        let sql = `update packageCollect set status = ${database.escape(
-          req.body.newStatus
-        )} where id = ${database.escape(req.params.id)};`;
-
-        database.query(sql, (err) => {
-          if (err) return res.status(500).json(err);
-          return res.status(200).json({});
+        //getAllWaybills for collect
+        getWaybillsFromCollect(req.params.id).then(function (items: any) {
+          for (let {
+            id,
+            waybill,
+            ticket_id,
+            device_producer,
+            device_cat,
+            device_sn,
+          } of items) {
+            //change waybill status foreach waybill
+            changeWaybillStatus(waybill, "odebrany").then(function () {
+              //change collect status
+              endCollect(req.params.id).then(function () {
+                //change ticket status for each waybill
+                changeTicketStaus(ticket_id, 3).then(function () {
+                  //register item in warehouse foreach ticket
+                  registerNewItem(
+                    ticket_id,
+                    device_producer,
+                    device_cat,
+                    device_sn
+                  );
+                });
+              });
+            });
+          }
+          res.status(200).json({});
         });
       })
-      .catch((e) => res.status(500).json(e));
+      .catch((error) => res.status(error[0]).json(error[1]));
   }
 );
 
