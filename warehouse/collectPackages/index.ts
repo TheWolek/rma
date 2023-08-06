@@ -35,7 +35,7 @@ router.get(
       filters += `created = ${database.escape(req.query.created)}`;
     }
 
-    let sql = `SELECT pc.id, pc.ref_name, pc.created, pcs.name from packageCollect pc join packageCollect_statuses pcs on pc.status = pcs.id`;
+    let sql = `SELECT pc.id, pc.ref_name, pc.created, pcs.name as 'status' from packageCollect pc join packageCollect_statuses pcs on pc.status = pcs.id`;
     if (filters.length > 0) sql += ` WHERE ` + filters;
 
     database.query(sql, (err, rows) => {
@@ -61,10 +61,12 @@ router.get(
           return res.status(404).json({ message: "Brak odbioru o podanym ID" });
         }
 
-        let sql = `SELECT pc.id, pc.ref_name, pc.created, pcs.name as 'status', pci.waybill, pci.ticket_id 
+        let sql = `SELECT pc.id, pc.ref_name, pc.created, pcs.name as 'status', pci.waybill, pci.ticket_id, 
+        concat(t.ticket_id, '-', t.device_producer, '-', t.device_cat) as 'barcode'
       from packageCollect pc 
       join packageCollect_statuses pcs on pc.status = pcs.id
       left join packageCollect_items pci on pc.id = pci.collect_id
+      left join tickets t on pci.ticket_id = t.ticket_id
       WHERE pc.id = ${database.escape(req.params.id)}`;
 
         // console.log(sql);
@@ -82,7 +84,11 @@ router.get(
           };
 
           let itemsData = result.map((o: any) => {
-            return { waybill: o.waybill, ticket_id: o.ticket_id };
+            return {
+              waybill: o.waybill,
+              ticket_id: o.ticket_id,
+              barcode: o.barcode,
+            };
           });
           if (itemsData[0].waybill === null) itemsData = [];
 

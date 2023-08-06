@@ -44,7 +44,7 @@ router.post("/", (req: Request<{}, {}, reqBodyI, reqQueryI>, res) => {
   registerNewItem(parseInt(data[0]), data[1], data[2], req.body.sn)
     .then((result: any) => {
       res.status(200).json({
-        id: result.inserted,
+        id: result.insertId,
         ticket_id: data[0],
         shelve: 0,
       });
