@@ -3,11 +3,7 @@ import cors from "cors"
 import express from "express"
 
 //TEMP old controllers
-import sparePartsAdd from "../warehouse/spareparts/add"
-import spareParts from "../warehouse/spareparts/index"
 import sparePartsShelve from "../warehouse/spareparts/shelve"
-import sparePartsOrders from "../warehouse/spareparts/orders"
-import sparePartsOrdersItems from "../warehouse/spareparts/ordersItems"
 import tasks from "../warehouse/tasks"
 import collectPackages from "../warehouse/collectPackages"
 import collectPackagesAdd from "../warehouse/collectPackages/add"
@@ -42,11 +38,7 @@ class App {
   }
 
   private initOldControllers() {
-    this.app.use("/warehouse/spareparts/add", sparePartsAdd)
-    this.app.use("/warehouse/spareparts/orders", sparePartsOrders)
-    this.app.use("/warehouse/spareparts/orders/items", sparePartsOrdersItems)
     this.app.use("/warehouse/spareparts/shelve", sparePartsShelve)
-    this.app.use("/warehouse/spareparts", spareParts)
     this.app.use("/warehouse/tasks/", tasks)
     this.app.use("/warehouse/collect/", collectPackages)
     this.app.use("/warehouse/collect/add", collectPackagesAdd)
