@@ -5,12 +5,14 @@ import shelvesController from "./app/controllers/warehouse/shelves/shelvesContro
 import sparepartsController from "./app/controllers/warehouse/spareparts/sparepartsController"
 import sparePartsOrdersController from "./app/controllers/warehouse/spareparts/orders/sparepartsOrdersController"
 import sparePartsOrdersItemsController from "./app/controllers/warehouse/spareparts/orders/items/sparepartsOrdersItemsController"
+import AuthController from "./app/controllers/auth/authController"
 
 dotenv.config()
 
 const port = process.env.PORT || "3000"
 
 const controllers = [
+  new AuthController(),
   new warehouseItemController(),
   new shelvesController(),
   new sparepartsController(),

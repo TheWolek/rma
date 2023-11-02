@@ -10,6 +10,7 @@ import {
   orderData,
 } from "../../../../types/warehouse/spareparts/sparepartsTypes"
 import validators from "./validators"
+import auth, { Roles } from "../../../../middlewares/auth"
 
 class sparePartsOrdersController {
   public path = "/warehouse/spareparts/orders"
@@ -21,10 +22,22 @@ class sparePartsOrdersController {
   }
 
   public initRoutes() {
-    this.router.post(this.path, this.createOrder)
-    this.router.put(this.path, this.changeOrderStatus)
-    this.router.put(`${this.path}/edit`, this.editOrder)
-    this.router.get(`${this.path}/find`, this.findOrder)
+    this.router.post(this.path, auth(Roles.SparepartsOrders), this.createOrder)
+    this.router.put(
+      this.path,
+      auth(Roles.SparepartsOrders),
+      this.changeOrderStatus
+    )
+    this.router.put(
+      `${this.path}/edit`,
+      auth(Roles.SparepartsOrders),
+      this.editOrder
+    )
+    this.router.get(
+      `${this.path}/find`,
+      auth(Roles.SparepartsOrders),
+      this.findOrder
+    )
   }
 
   private Model = new sparePartsOrdersModel()

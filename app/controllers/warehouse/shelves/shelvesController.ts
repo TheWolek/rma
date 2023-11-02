@@ -2,6 +2,7 @@ import express, { Request, Response } from "express"
 import throwGenericError from "../../../helpers/throwGenericError"
 import shelvesModel from "../../../models/warehouse/shelves/shelvesModel"
 import { MysqlError, OkPacket } from "mysql"
+import auth, { Roles } from "../../../middlewares/auth"
 
 class shelvesController {
   public path = "/warehouse/shelve"
@@ -13,8 +14,8 @@ class shelvesController {
   }
 
   public initRoutes() {
-    this.router.post("${this.path}/add", this.addShelve)
-    this.router.get(this.path, this.getAll)
+    this.router.post(`${this.path}/add`, auth(Roles.Admin), this.addShelve)
+    this.router.get(this.path, auth(Roles.Common), this.getAll)
   }
 
   private ShelveModel = new shelvesModel()

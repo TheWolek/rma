@@ -9,6 +9,7 @@ import {
   removePart,
   setCodesItem,
 } from "../../../../../types/warehouse/spareparts/sparepartsTypes"
+import auth, { Roles } from "../../../../../middlewares/auth"
 
 class sparePartsOrdersItemsController {
   public path = "/warehouse/spareparts/orders/items"
@@ -20,10 +21,26 @@ class sparePartsOrdersItemsController {
   }
 
   public initRoutes() {
-    this.router.get(this.path, this.getItemsFromOrder)
-    this.router.post(`${this.path}/add`, this.addItemsToOrder)
-    this.router.delete(`${this.path}/remove`, this.removePartsFromOrder)
-    this.router.post(`${this.path}/codes`, this.setCodes)
+    this.router.get(
+      this.path,
+      auth(Roles.SparepartsOrders),
+      this.getItemsFromOrder
+    )
+    this.router.post(
+      `${this.path}/add`,
+      auth(Roles.SparepartsOrders),
+      this.addItemsToOrder
+    )
+    this.router.delete(
+      `${this.path}/remove`,
+      auth(Roles.SparepartsOrders),
+      this.removePartsFromOrder
+    )
+    this.router.post(
+      `${this.path}/codes`,
+      auth(Roles.SparepartsOrders),
+      this.setCodes
+    )
   }
 
   private Model = new sparepartsOrdersItemsModel()

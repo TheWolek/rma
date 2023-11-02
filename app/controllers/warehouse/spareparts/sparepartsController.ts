@@ -7,12 +7,9 @@ import {
   newCategoryBody,
   partToWarehouse,
 } from "../../../types/warehouse/spareparts/sparepartsTypes"
-import {
-  regCatProd,
-  regNumber,
-  regSN,
-  regSparepartName,
-} from "../../../helpers/regEx"
+
+import validators from "./validators"
+import auth, { Roles } from "../../../middlewares/auth"
 
 class sparepartsController {
   public path = "/warehouse/spareparts"
@@ -24,14 +21,42 @@ class sparepartsController {
   }
 
   public initRoutes() {
-    this.router.post(`${this.path}/new`, this.addCategory)
-    this.router.post(this.path, this.addPartToWarehouse)
-    this.router.get(this.path, this.find)
-    this.router.post(`${this.path}/use`, this.usePart)
-    this.router.get(`${this.path}/stock`, this.getStock)
-    this.router.get(`${this.path}/categories`, this.getCategories)
-    this.router.get(`${this.path}/suppliers`, this.getSuppliers)
-    this.router.get(`${this.path}/statuses`, this.getStatuses)
+    this.router.post(
+      `${this.path}/new`,
+      auth(Roles.SparepartsCatalog),
+      this.addCategory
+    )
+    this.router.post(
+      this.path,
+      auth(Roles.SparepartsCatalog),
+      this.addPartToWarehouse
+    )
+    this.router.get(this.path, auth(Roles.SparepartsCatalog), this.find)
+    this.router.post(
+      `${this.path}/use`,
+      auth(Roles.SparepartsCatalog),
+      this.usePart
+    )
+    this.router.get(
+      `${this.path}/stock`,
+      auth(Roles.SparepartsCatalog),
+      this.getStock
+    )
+    this.router.get(
+      `${this.path}/categories`,
+      auth(Roles.SparepartsCatalog),
+      this.getCategories
+    )
+    this.router.get(
+      `${this.path}/suppliers`,
+      auth(Roles.SparepartsCatalog),
+      this.getSuppliers
+    )
+    this.router.get(
+      `${this.path}/statuses`,
+      auth(Roles.SparepartsCatalog),
+      this.getStatuses
+    )
   }
 
   private SparepartsModel = new sparepartsModel()
@@ -42,19 +67,11 @@ class sparepartsController {
     // return 500 if there was DB error
     // return 200 with {"id": INT}
 
-    if (!req.body.name)
-      return throwGenericError(res, 400, "Pole name jest wymagane")
-    if (!req.body.category)
-      return throwGenericError(res, 400, "Pole category jest wymagane")
-    if (!req.body.producer)
-      return throwGenericError(res, 400, "Pole producer jest wymagane")
+    const { error } = validators.addCategory.validate(req.body)
 
-    if (!regSparepartName.test(req.body.name))
-      return throwGenericError(res, 400, "Nieprawidłowy format pola name")
-    if (!regCatProd.test(req.body.category))
-      return throwGenericError(res, 400, "Nieprawidłowy format pola category")
-    if (!regCatProd.test(req.body.producer))
-      return throwGenericError(res, 400, "Nieprawidłowy format pola producer")
+    if (error !== undefined) {
+      return throwGenericError(res, 400, error?.details[0].message)
+    }
 
     this.SparepartsModel.addNewCategory(
       req.body.name,
@@ -77,20 +94,11 @@ class sparepartsController {
     // return 500 if there was DB error
     // return 200 with {"part_id": INT}
 
-    if (req.body.length === 0)
-      return throwGenericError(res, 400, "Nie podano przedmiotów")
+    const { error } = validators.addToWarehouse.validate(req.body)
 
-    req.body.forEach((el: partToWarehouse) => {
-      if (!el.cat_id)
-        return throwGenericError(res, 400, "Pole cat_id jest wymagane")
-      if (!el.amount)
-        return throwGenericError(res, 400, "Pole amount jest wymagane")
-
-      if (!regNumber.test(el.cat_id.toString()))
-        return throwGenericError(res, 400, "Nieprawidłowy format pola cat_id")
-      if (!regNumber.test(el.amount.toString()))
-        return throwGenericError(res, 400, "Nieprawidłowy format pola amount")
-    })
+    if (error !== undefined) {
+      return throwGenericError(res, 400, error?.details[0].message)
+    }
 
     this.SparepartsModel.addPartToWarehouse(
       req.body,
@@ -104,43 +112,49 @@ class sparepartsController {
   find = (req: Request<{}, {}, {}, findQuery>, res: Response) => {
     let query = req.query
 
-    if (Object.keys(query).length === 0)
-      return throwGenericError(
-        res,
-        400,
-        "Podaj przynajmniej jedną wartość do wyszukania"
-      )
+    const { error } = validators.findPart.validate(query)
 
-    let conditions = 0
-    let onlyOneStatement = false
-
-    if (query.cat_id) {
-      if (!regNumber.test(query.cat_id.toString()))
-        return throwGenericError(res, 400, "Nieprawidłowy format pola cat_id")
-      conditions++
-    }
-    if (query.producer) {
-      if (!regCatProd.test(query.producer))
-        return throwGenericError(res, 400, "Nieprawidłowy format pola producer")
-      conditions++
-    }
-    if (query.category) {
-      if (!regCatProd.test(query.category))
-        return throwGenericError(res, 400, "Nieprawidłowy format pola category")
-      conditions++
-    }
-    if (query.name) {
-      if (!regCatProd.test(query.name))
-        return throwGenericError(res, 400, "Nieprawidłowy format pola name")
-      conditions++
+    if (error !== undefined) {
+      return throwGenericError(res, 400, error?.details[0].message)
     }
 
-    if (conditions === 0)
-      return throwGenericError(
-        res,
-        400,
-        "Podaj przynajmniej jedną wartość do wyszukania"
-      )
+    // if (Object.keys(query).length === 0)
+    //   return throwGenericError(
+    //     res,
+    //     400,
+    //     "Podaj przynajmniej jedną wartość do wyszukania"
+    //   )
+
+    // let conditions = 0
+    // let onlyOneStatement = false
+
+    // if (query.cat_id) {
+    //   if (!regNumber.test(query.cat_id.toString()))
+    //     return throwGenericError(res, 400, "Nieprawidłowy format pola cat_id")
+    //   conditions++
+    // }
+    // if (query.producer) {
+    //   if (!regCatProd.test(query.producer))
+    //     return throwGenericError(res, 400, "Nieprawidłowy format pola producer")
+    //   conditions++
+    // }
+    // if (query.category) {
+    //   if (!regCatProd.test(query.category))
+    //     return throwGenericError(res, 400, "Nieprawidłowy format pola category")
+    //   conditions++
+    // }
+    // if (query.name) {
+    //   if (!regCatProd.test(query.name))
+    //     return throwGenericError(res, 400, "Nieprawidłowy format pola name")
+    //   conditions++
+    // }
+
+    // if (conditions === 0)
+    //   return throwGenericError(
+    //     res,
+    //     400,
+    //     "Podaj przynajmniej jedną wartość do wyszukania"
+    //   )
 
     this.SparepartsModel.find(
       (err: MysqlError, rows: any) => {
@@ -155,12 +169,11 @@ class sparepartsController {
   }
 
   findByCode = (req: Request<{}, {}, {}, { code: string }>, res: Response) => {
-    if (!req.query.code || req.query.code === "")
-      return throwGenericError(
-        res,
-        400,
-        "Podaj przynajmniej jedną wartość do wyszukania"
-      )
+    const { error } = validators.findByCode.validate(req.query)
+
+    if (error !== undefined) {
+      return throwGenericError(res, 400, error?.details[0].message)
+    }
 
     this.SparepartsModel.findBySn(
       req.query.code,
@@ -179,11 +192,11 @@ class sparepartsController {
     // return 500 if there was DB error
     // return 200 on success
 
-    if (!req.body.sn || req.body.sn === undefined)
-      return throwGenericError(res, 400, "Pole sn jest wymagane")
+    const { error } = validators.usePart.validate(req.body)
 
-    if (!regSN.test(req.body.sn))
-      return throwGenericError(res, 400, "Nieprawidłowy format pola sn")
+    if (error !== undefined) {
+      return throwGenericError(res, 400, error?.details[0].message)
+    }
 
     this.SparepartsModel.usePart(req.body.sn, (err: any, dbResult: any) => {
       if (err) {
@@ -203,11 +216,11 @@ class sparepartsController {
     // return 200 with
     // {"cat_id": INT, "totalAmount": INT}
 
-    if (!req.query.cat_id)
-      return throwGenericError(res, 400, "Podaj id kategorii do wyszukania")
+    const { error } = validators.getStock.validate(req.query)
 
-    if (!regNumber.test(req.query.cat_id.toString()))
-      return throwGenericError(res, 400, "Nieprawidłowy format pola cat_id")
+    if (error !== undefined) {
+      return throwGenericError(res, 400, error?.details[0].message)
+    }
 
     this.SparepartsModel.getStock(
       req.query.cat_id,

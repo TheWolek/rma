@@ -9,7 +9,8 @@ import {
   deleteItemBody,
   newItemReqBody,
 } from "../../../types/warehouse/items/itemsTypes"
-import { regShelveId } from "../../../helpers/regEx"
+import validators from "./validators"
+import auth, { Roles } from "../../../middlewares/auth"
 
 class warehouseItemController {
   public path = "/warehouse/items"
@@ -21,13 +22,29 @@ class warehouseItemController {
   }
 
   public initRoutes() {
-    this.router.post(this.path, this.createNewItem)
-    this.router.get(`${this.path}/exists`, this.checkIfItemExists)
-    this.router.get(this.path, this.findItemByTicketId)
-    this.router.get(`${this.path}/countall`, this.countAllItems)
-    this.router.get(`${this.path}/shelve`, this.findItemsInShelve)
-    this.router.put(`${this.path}/changeshelve`, this.changeShelve)
-    this.router.delete(this.path, this.deleteItem)
+    this.router.post(this.path, auth(Roles.ItemsCommon), this.createNewItem)
+    this.router.get(
+      `${this.path}/exists`,
+      auth(Roles.ItemsCommon),
+      this.checkIfItemExists
+    )
+    this.router.get(this.path, auth(Roles.ItemsCommon), this.findItemByTicketId)
+    this.router.get(
+      `${this.path}/countall`,
+      auth(Roles.ItemsCommon),
+      this.countAllItems
+    )
+    this.router.get(
+      `${this.path}/shelve`,
+      auth(Roles.ItemsCommon),
+      this.findItemsInShelve
+    )
+    this.router.put(
+      `${this.path}/changeshelve`,
+      auth(Roles.ItemsLs),
+      this.changeShelve
+    )
+    this.router.delete(this.path, auth(Roles.ItemsLs), this.deleteItem)
   }
 
   private ItemModel = new warehouseItemsModel()
@@ -37,6 +54,13 @@ class warehouseItemController {
     // return 400 if barcode is empty OR barcode does not match regEx OR ticket_id already exists in items table
     // return 500 if there was DB error
     // return 200 {inserted id, ticket id, shelve id}
+
+    const { error } = validators.itemBarcode.validate(req.body)
+
+    if (error !== undefined) {
+      return throwGenericError(res, 400, error?.details[0].message)
+    }
+
     const barcodeData = req.body.barcode.split("-")
     this.ItemModel.createNewItem(
       {
@@ -75,11 +99,11 @@ class warehouseItemController {
     // return 500 if there was DB error
     // return 200 with {founmax_line_lengthd: true}
 
-    if (!req.query.barcode)
-      return throwGenericError(res, 400, "Pole barcode jest wymagane")
+    const { error } = validators.itemBarcode.validate(req.body)
 
-    if (!checkBarcode(req.query.barcode))
-      return throwGenericError(res, 400, "Nieprawidłowy format pola barcode")
+    if (error !== undefined) {
+      return throwGenericError(res, 400, error?.details[0].message)
+    }
 
     let ticket_id = parseInt(req.query.barcode.split("-")[0])
     this.ItemModel.checkIfItemExists(
@@ -103,8 +127,11 @@ class warehouseItemController {
     // returns 200 with first row object {item_id: int, name: string, shelve: int, category: string, ticket_id: int}
 
     if (req.query.barcode) {
-      if (!checkBarcode(req.query.barcode))
-        return throwGenericError(res, 400, "Nieprawidłowy format pola barcode")
+      const { error } = validators.itemBarcode.validate(req.body)
+
+      if (error !== undefined) {
+        return throwGenericError(res, 400, error?.details[0].message)
+      }
 
       let ticket_id = parseInt(req.query.barcode.split("-")[0])
       this.ItemModel.findItems((err: MysqlError, rows: any) => {
@@ -128,11 +155,11 @@ class warehouseItemController {
     // return 404 if nothing was found
     // return 500 if there was DB error
     // reutns 200 with array of all items in shelve [{ticket_id: int, name: string, category: string}, ...]
-    if (!req.query.shelve)
-      return throwGenericError(res, 400, "Pole shelve jest wymagane")
+    const { error } = validators.shevlveId.validate(req.body)
 
-    if (!regShelveId.test(req.query.shelve.toString()))
-      return throwGenericError(res, 400, "Nieprawidłowy format pola shelve")
+    if (error !== undefined) {
+      return throwGenericError(res, 400, error?.details[0].message)
+    }
 
     this.ItemModel.findItems(
       (err: MysqlError, rows: any) => {
@@ -169,29 +196,11 @@ class warehouseItemController {
     // reutrn 500 if there was DB error
     // returns 200 with {ticket_id_arr: [], new_shelve id}
 
-    if (!req.body.barcodes)
-      return throwGenericError(res, 400, "Pole barcodes jest wymagane")
-    if (!req.body.new_shelve || req.body.new_shelve === 0)
-      return throwGenericError(res, 400, "Pole new_shelve jest wymagane")
-    if (!req.body.shelve)
-      return throwGenericError(res, 400, "Pole shelve jest wymagane")
+    const { error } = validators.changeShelve.validate(req.body)
 
-    if (!regShelveId.test(req.body.new_shelve.toString()))
-      return throwGenericError(res, 400, "Nieprawidłowy format pola new_shelve")
-    if (!regShelveId.test(req.body.shelve.toString()))
-      return throwGenericError(res, 400, "Nieprawidłowy format pola shelve")
-
-    let err = false
-    req.body.barcodes.forEach((el: string) => {
-      if (!checkBarcode(el)) {
-        err = true
-        return res
-          .status(400)
-          .json({ message: "nieprawidłowy format pola barcode", value: el })
-      }
-    })
-
-    if (err) return
+    if (error !== undefined) {
+      return throwGenericError(res, 400, error?.details[0].message)
+    }
 
     if (req.body.new_shelve === req.body.shelve)
       return throwGenericError(
@@ -238,13 +247,11 @@ class warehouseItemController {
     // return 500 if there was DB error
     // return 200 with {ticket_id: INT, shelve: INT}
 
-    if (!req.body.barcode)
-      return throwGenericError(res, 400, "Pole barcode jest wymagane")
-    if (!req.body.shelve)
-      return throwGenericError(res, 400, "Pole shelve jest wymagane")
+    const { error } = validators.deleteItem.validate(req.body)
 
-    if (!checkBarcode(req.body.barcode))
-      return throwGenericError(res, 400, "Nieprawidłowy format pola barcode")
+    if (error !== undefined) {
+      return throwGenericError(res, 400, error?.details[0].message)
+    }
 
     const ticket_id = parseInt(req.body.barcode.split("-")[0])
     this.ItemModel.deleteItem(
