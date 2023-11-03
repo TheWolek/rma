@@ -6,6 +6,8 @@ import sparepartsController from "./app/controllers/warehouse/spareparts/sparepa
 import sparePartsOrdersController from "./app/controllers/warehouse/spareparts/orders/sparepartsOrdersController"
 import sparePartsOrdersItemsController from "./app/controllers/warehouse/spareparts/orders/items/sparepartsOrdersItemsController"
 import AuthController from "./app/controllers/auth/authController"
+import DictionariesController from "./app/controllers/rma/dictionaires/dictionariesController"
+import RmaController from "./app/controllers/rma"
 
 dotenv.config()
 
@@ -18,6 +20,8 @@ const controllers = [
   new sparepartsController(),
   new sparePartsOrdersController(),
   new sparePartsOrdersItemsController(),
+  new DictionariesController(),
+  new RmaController(),
 ]
 
 const app = new App(controllers, port)

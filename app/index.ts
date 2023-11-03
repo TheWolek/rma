@@ -9,8 +9,6 @@ import collectPackages from "../warehouse/collectPackages"
 import collectPackagesAdd from "../warehouse/collectPackages/add"
 import collectPackagesItems from "../warehouse/collectPackages/items"
 import rma from "../rma/index"
-import rmaCreate from "../rma/create"
-import rmaDictionaries from "../rma/dictionaries"
 import rmaWaybills from "../rma/waybills"
 
 class App {
@@ -44,9 +42,7 @@ class App {
     this.app.use("/warehouse/collect/add", collectPackagesAdd)
     this.app.use("/warehouse/collect/items", collectPackagesItems)
     this.app.use("/rma/", rma)
-    this.app.use("/rma/create/", rmaCreate)
     this.app.use("/rma/waybills/", rmaWaybills)
-    this.app.use("/rma/dictionary/", rmaDictionaries)
   }
 
   public listen() {
