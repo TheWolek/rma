@@ -42,4 +42,12 @@ export default {
   postComment: Joi.object({
     comment: Joi.string().required(),
   }),
+
+  changeState: Joi.object({
+    status: Joi.number().required().min(1).max(12),
+  }),
+
+  usePart: Joi.object({
+    code: Joi.string().required(),
+  }),
 }

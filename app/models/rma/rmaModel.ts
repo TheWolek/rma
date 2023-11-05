@@ -5,9 +5,11 @@ import {
   CommentRow,
   CreateReqBody,
   Filters,
+  PartRow,
   UpdateTicketReqBody,
 } from "../../types/rma/rmaTypes"
 import { fields } from "./constants"
+import formatDateAndHours from "../../../utils/formatDateAndHours"
 
 class RmaModel {
   create = (ticketData: CreateReqBody, result: Function) => {
@@ -250,6 +252,51 @@ class RmaModel {
       }
 
       return result(null, dbResult)
+    })
+  }
+
+  changeState = (ticketId: number, status: number, result: Function) => {
+    const updateDate = formatDateAndHours(new Date())
+    const sql = `UPDATE tickets SET status = ?, lastStatusUpdate = ? WHERE ticket_id = ?`
+    const params = [status, updateDate, ticketId]
+
+    db.query(sql, params, (err) => {
+      if (err) {
+        return result(err, null)
+      }
+
+      return result(null, true)
+    })
+  }
+
+  usePart = (ticketId: number, code: string, result: Function) => {
+    const sql = `INSERT INTO tickets_spareparts (ticket_id, sparepart_sn) VALUES (${db.escape(
+      ticketId
+    )}, ${db.escape(code)});`
+
+    db.query(sql, (err: MysqlError, dbResult: OkPacket) => {
+      if (err) {
+        return result(err, null)
+      }
+
+      return result(null, dbResult)
+    })
+  }
+
+  getParts = (ticketId: number, result: Function) => {
+    const sql = `SELECT ts.id, ts.sparepart_sn, sc.category, sc.producer, sc.name 
+    from tickets_spareparts ts 
+    join spareparts_sn ss on ts.sparepart_sn = ss.codes
+    join spareparts s on ss.part_id = s.part_id
+    join spareparts_cat sc on s.cat_id = sc.part_cat_id
+    WHERE ts.ticket_id = ${db.escape(ticketId)};`
+
+    db.query(sql, (err: MysqlError, rows: PartRow[]) => {
+      if (err) {
+        return result(err, null)
+      }
+
+      return result(null, rows)
     })
   }
 }

@@ -83,3 +83,5 @@ export interface CommentRow {
   comment: string
   created: string
 }
+
+export interface PartRow {}

@@ -41,6 +41,12 @@ class RmaController {
       auth(Roles["RmaCommon"]),
       this.register
     )
+
+    this.router.put(
+      `${this.path}/changeState/:ticketId`,
+      auth(Roles["RmaCommon"]),
+      this.changeState
+    )
   }
 
   private Model = new RmaModel()
@@ -112,6 +118,41 @@ class RmaController {
         this.Model.register(
           Number(req.params.ticketId),
           (err: MysqlError, dbResult: OkPacket) => {
+            if (err) {
+              return throwGenericError(res, 500, err, err)
+            }
+
+            return res.status(200).json({})
+          }
+        )
+      })
+      .catch((e) => throwGenericError(res, 500, e, e))
+  }
+
+  changeState = (
+    req: Request<{ ticketId: string }, {}, { status: number }>,
+    res: Response
+  ) => {
+    if (isNaN(parseInt(req.params.ticketId))) {
+      return throwGenericError(res, 400, "Nieprawidłowy format pola ticketId")
+    }
+
+    const { error } = validators.changeState.validate(req.body)
+
+    if (error !== undefined) {
+      return throwGenericError(res, 400, error?.details[0].message)
+    }
+
+    checkIfTicketExists(Number(req.params.ticketId))
+      .then((rows) => {
+        if (rows.length === 0) {
+          return throwGenericError(res, 404, "Brak zlecenia o podanym ID")
+        }
+
+        this.Model.changeState(
+          Number(req.params.ticketId),
+          req.body.status,
+          (err: MysqlError, dbResult: boolean) => {
             if (err) {
               return throwGenericError(res, 500, err, err)
             }

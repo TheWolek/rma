@@ -9,6 +9,8 @@ import AuthController from "./app/controllers/auth/authController"
 import DictionariesController from "./app/controllers/rma/dictionaires/dictionariesController"
 import RmaController from "./app/controllers/rma"
 import RmaAccessoriesController from "./app/controllers/rma/accessoriesController"
+import RmaCommentsController from "./app/controllers/rma/commentsController"
+import RmaSparepartsController from "./app/controllers/rma/sparepartsController"
 
 dotenv.config()
 
@@ -22,8 +24,10 @@ const controllers = [
   new sparePartsOrdersController(),
   new sparePartsOrdersItemsController(),
   new DictionariesController(),
-  new RmaController(),
   new RmaAccessoriesController(),
+  new RmaCommentsController(),
+  new RmaSparepartsController(),
+  new RmaController(),
 ]
 
 const app = new App(controllers, port)

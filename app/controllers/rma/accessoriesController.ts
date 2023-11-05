@@ -17,13 +17,13 @@ class RmaAccessoriesController {
 
   public initRoutes() {
     this.router.get(
-      `${this.path}/accessories/:ticketId`,
+      `${this.path}/:ticketId`,
       auth(Roles["RmaCommon"]),
       this.getAccessories
     )
 
     this.router.put(
-      `${this.path}/accessories/:ticketId`,
+      `${this.path}/:ticketId`,
       auth(Roles["RmaCommon"]),
       this.editAccessories
     )
