@@ -50,4 +50,18 @@ export default {
   usePart: Joi.object({
     code: Joi.string().required(),
   }),
+
+  createWaybill: Joi.object({
+    waybillNumber: Joi.string().required(),
+    ticketId: Joi.number().required(),
+    type: Joi.string().required().valid("przychodzący", "wychodzący"),
+  }),
+
+  editWaybill: Joi.object({
+    waybillNumber: Joi.string().required(),
+    type: Joi.string().required().valid("przychodzący", "wychodzący"),
+    status: Joi.string()
+      .required()
+      .valid("potwierdzony", "odebrany", "anulowany"),
+  }),
 }

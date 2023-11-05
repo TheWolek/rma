@@ -81,7 +81,41 @@ export interface AccessoriesRow {
 
 export interface CommentRow {
   comment: string
-  created: string
+  created: Date
 }
 
-export interface PartRow {}
+export interface PartRow {
+  id: number
+  sparepart_sn: string
+  category: string
+  producer: string
+  name: string
+}
+
+export interface FindWaybillReqQuery {
+  ticketId: string
+  waybillNumber: string
+}
+
+export type WaybillType = "przychodzący" | "wychodzący"
+export type WaybillStatus = "potwierdzony" | "odebrany" | "anulowany"
+
+export interface CreateWaybillBody {
+  waybillNumber: string
+  ticketId: number
+  type: WaybillType
+}
+
+export interface EditWaybillBody extends CreateWaybillBody {
+  status: WaybillStatus
+}
+
+export interface WaybillRow {
+  id: number
+  waybill_number: string
+  ticket_id: number
+  status: WaybillStatus
+  type: WaybillType
+  created: Date
+  lastUpdate: Date
+}

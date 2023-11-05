@@ -8,7 +8,6 @@ import tasks from "../warehouse/tasks"
 import collectPackages from "../warehouse/collectPackages"
 import collectPackagesAdd from "../warehouse/collectPackages/add"
 import collectPackagesItems from "../warehouse/collectPackages/items"
-import rmaWaybills from "../rma/waybills"
 
 class App {
   public app: express.Application
@@ -40,7 +39,6 @@ class App {
     this.app.use("/warehouse/collect/", collectPackages)
     this.app.use("/warehouse/collect/add", collectPackagesAdd)
     this.app.use("/warehouse/collect/items", collectPackagesItems)
-    this.app.use("/rma/waybills/", rmaWaybills)
   }
 
   public listen() {
