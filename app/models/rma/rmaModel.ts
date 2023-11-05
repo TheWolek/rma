@@ -1,6 +1,12 @@
 import db from "../db"
 import { MysqlError, OkPacket } from "mysql"
-import { CreateReqBody, Filters } from "../../types/rma/rmaTypes"
+import {
+  AccessoriesRow,
+  CommentRow,
+  CreateReqBody,
+  Filters,
+  UpdateTicketReqBody,
+} from "../../types/rma/rmaTypes"
 import { fields } from "./constants"
 
 class RmaModel {
@@ -119,6 +125,131 @@ class RmaModel {
       }
 
       return result(null, rows)
+    })
+  }
+
+  editTicket = (
+    ticketId: number,
+    ticketData: UpdateTicketReqBody,
+    result: Function
+  ) => {
+    const sql_tickets = `UPDATE tickets SET type = ?, email = ?, name = ?, phone = ?, device_sn = ?, issue = ?, \`lines\` = ?, postCode = ?, city = ?, damage_type = ?, damage_description = ?, result_type = ?, result_description = ? WHERE ticket_id = ?`
+    const params_tickets = [
+      ticketData.type,
+      ticketData.email,
+      ticketData.name,
+      ticketData.phone,
+      ticketData.deviceSn,
+      ticketData.issue,
+      ticketData.lines,
+      ticketData.postCode,
+      ticketData.city,
+      ticketData.damage_type,
+      ticketData.damage_description,
+      ticketData.result_type,
+      ticketData.result_description,
+      ticketId,
+    ]
+
+    db.query(sql_tickets, params_tickets, (err, dbResult) => {
+      if (err) {
+        return result(err, null)
+      }
+
+      return result(null, dbResult)
+    })
+  }
+
+  getAccessories = (ticketId: number, result: Function) => {
+    const sql = `SELECT taat.id, taat.name FROM tickets_additionalAccessories taa JOIN tickets_aditionalAccessories_types taat on taa.type_id = taat.id
+    WHERE taa.ticket_id = ${db.escape(ticketId)};`
+
+    db.query(sql, (err: MysqlError, rows: AccessoriesRow[]) => {
+      if (err) {
+        return result(err, null)
+      }
+
+      return result(null, rows)
+    })
+  }
+
+  editAccessories = (
+    ticketId: number,
+    accessories: number[],
+    result: Function
+  ) => {
+    const sql_delete = `DELETE FROM tickets_additionalAccessories WHERE ticket_id = ${db.escape(
+      ticketId
+    )}`
+    let sql_update = `INSERT INTO tickets_additionalAccessories (ticket_id, type_id) VALUES `
+    let placeholders: string[] = []
+    let params: (number | string)[] = []
+
+    accessories.forEach((el) => {
+      placeholders.push("(?,?)")
+      params.push(ticketId, el)
+    })
+
+    sql_update += placeholders.join(",")
+
+    db.query(sql_delete, (err) => {
+      if (err) {
+        return result(err, null)
+      }
+
+      if (accessories.length > 0) {
+        return db.query(sql_update, params, (err) => {
+          if (err) {
+            return result(err, null)
+          }
+
+          return result(null, true)
+        })
+      } else {
+        return result(null, true)
+      }
+    })
+  }
+
+  addComment = (ticketId: number, comment: string, result: Function) => {
+    const sql = `INSERT INTO tickets_comments (ticket_id, comment) VALUES (${db.escape(
+      ticketId
+    )}, "${db.escape(comment)}");`
+
+    db.query(sql, (err: MysqlError, dbResult: OkPacket) => {
+      if (err) {
+        return result(err, null)
+      }
+
+      return result(null, dbResult)
+    })
+  }
+
+  getComments = (ticketId: number, result: Function) => {
+    const sql = `SELECT comment, created FROM tickets_comments WHERE ticket_id = ${db.escape(
+      ticketId
+    )};`
+
+    db.query(sql, (err: MysqlError, rows: CommentRow[]) => {
+      if (err) {
+        return result(err, null)
+      }
+
+      return result(null, rows)
+    })
+  }
+
+  register = (ticketId: number, result: Function) => {
+    const sql = `UPDATE tickets SET inWarehouse=1 WHERE ticket_id=${db.escape(
+      ticketId
+    )};`
+
+    db.query(sql, (err: MysqlError, dbResult: OkPacket) => {
+      if (err) {
+        return result(err, null)
+      }
+
+      return result(null, dbResult)
     })
   }
 }

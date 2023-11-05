@@ -19,4 +19,27 @@ export default {
     damageDescription: Joi.string(),
     type: Joi.number().required(),
   }),
+
+  edit: Joi.object({
+    type: Joi.number().required(),
+    email: Joi.string().required().email(),
+    name: Joi.string().required(),
+    phone: Joi.string().required().regex(regPhoneNumber),
+    deviceSn: Joi.string().required(),
+    issue: Joi.string().required(),
+    lines: Joi.string().required().regex(regLines),
+    postCode: Joi.string().required().regex(regPostCode),
+    city: Joi.string().required(),
+    damage_type: Joi.number().required(),
+    result_type: Joi.number().optional(),
+    deviceAccessories: Joi.array().items(Joi.number()).required(),
+  }),
+
+  editAccessories: Joi.object({
+    deviceAccessories: Joi.array().items(Joi.number()).required(),
+  }),
+
+  postComment: Joi.object({
+    comment: Joi.string().required(),
+  }),
 }

@@ -8,6 +8,7 @@ import sparePartsOrdersItemsController from "./app/controllers/warehouse/sparepa
 import AuthController from "./app/controllers/auth/authController"
 import DictionariesController from "./app/controllers/rma/dictionaires/dictionariesController"
 import RmaController from "./app/controllers/rma"
+import RmaAccessoriesController from "./app/controllers/rma/accessoriesController"
 
 dotenv.config()
 
@@ -22,6 +23,7 @@ const controllers = [
   new sparePartsOrdersItemsController(),
   new DictionariesController(),
   new RmaController(),
+  new RmaAccessoriesController(),
 ]
 
 const app = new App(controllers, port)

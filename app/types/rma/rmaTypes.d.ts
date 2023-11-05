@@ -16,6 +16,23 @@ export interface CreateReqBody {
   damageDescription: string
 }
 
+export interface UpdateTicketReqBody {
+  email: string
+  name: string
+  phone: string
+  type: string
+  deviceSn: string
+  deviceAccessories: number[]
+  issue: string
+  lines: string
+  postCode: string
+  city: string
+  damage_type: string
+  damage_description: string | null
+  result_type: null | string
+  result_description: null | string
+}
+
 export interface Filters {
   ticketId: number
   status: number
@@ -55,4 +72,14 @@ export interface FilteredRow {
   damage_type: nunber
   result_type: number
   result_description: string
+}
+
+export interface AccessoriesRow {
+  id: number
+  name: string
+}
+
+export interface CommentRow {
+  comment: string
+  created: string
 }
