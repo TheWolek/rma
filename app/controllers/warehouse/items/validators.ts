@@ -1,9 +1,9 @@
 import Joi from "joi"
-import { regBarcode } from "../../../helpers/regEx"
+import RegEx from "../../../helpers/regEx"
 
 export default {
   itemBarcode: Joi.object({
-    barcode: Joi.string().required().regex(regBarcode),
+    barcode: Joi.string().required().regex(RegEx.barcode),
   }).required(),
 
   shevlveId: Joi.object({
@@ -11,13 +11,13 @@ export default {
   }).required(),
 
   changeShelve: Joi.object({
-    barcodes: Joi.array().items(Joi.string().required().regex(regBarcode)),
+    barcodes: Joi.array().items(Joi.string().required().regex(RegEx.barcode)),
     new_shelve: Joi.number().required(),
     shelve: Joi.number().required(),
   }).required(),
 
   deleteItem: Joi.object({
-    barcode: Joi.string().required().regex(regBarcode),
+    barcode: Joi.string().required().regex(RegEx.barcode),
     shelve: Joi.number().required(),
   }).required(),
 }

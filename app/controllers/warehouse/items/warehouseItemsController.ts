@@ -2,7 +2,7 @@ import express, { Request, Response } from "express"
 
 import throwGenericError from "../../../helpers/throwGenericError"
 import warehouseItemsModel from "../../../models/warehouse/items/warehouseItemsModel"
-import checkBarcode from "../../../helpers/checkBarcode"
+import checkBarcode from "../../../helpers/items/checkBarcode"
 import { MysqlError, OkPacket } from "mysql"
 import {
   changeShelveBody,

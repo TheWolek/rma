@@ -1,5 +1,5 @@
-import formatDate from "../../../../../utils/formatDate"
-import findSupplier from "../../../../helpers/findSupplier"
+import formatDate from "../../../../helpers/formatDate"
+import findSupplier from "../../../../helpers/spareparts/findSupplier"
 import {
   find_reqQuery,
   itemData,

@@ -1,9 +1,7 @@
-// import formatDateAndHours from "../../utils/formatDateAndHours"
-import db from "../models/db"
+import db from "../../models/db"
 
 export default (ticket_id: number, newStatus: number) => {
   return new Promise((resolve, reject) => {
-    // const updateDate = formatDateAndHours(new Date())
     const sql = `UPDATE tickets SET status = ?, lastStatusUpdate = NOW() WHERE ticket_id = ?`
     const params = [newStatus, ticket_id]
 

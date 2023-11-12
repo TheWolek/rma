@@ -6,8 +6,8 @@ import RmaModel from "../../models/rma/rmaModel"
 import sparepartsModel from "../../models/warehouse/spareparts/sparepartsModel"
 import validators from "./validators"
 import { PartRow } from "../../types/rma/rmaTypes"
-import checkIfPartExists from "../../helpers/checkIfPartExists"
-import checkIfTicketExists from "../../helpers/checkIfTicketExists"
+import checkIfPartExists from "../../helpers/spareparts/checkIfPartExists"
+import checkIfTicketExists from "../../helpers/rma/checkIfTicketExists"
 
 class RmaSparepartsController {
   public path = "/rma/spareparts"

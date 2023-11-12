@@ -1,5 +1,5 @@
 import { MysqlError } from "mysql"
-import db from "../models/db"
+import db from "../../models/db"
 
 export default (ticketId: number): Promise<number[]> => {
   return new Promise(function (resolve, reject) {

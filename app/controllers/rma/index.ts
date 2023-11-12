@@ -10,7 +10,7 @@ import {
   Filters,
   UpdateTicketReqBody,
 } from "../../types/rma/rmaTypes"
-import checkIfTicketExists from "../../helpers/checkIfTicketExists"
+import checkIfTicketExists from "../../helpers/rma/checkIfTicketExists"
 
 class RmaController {
   public path = "/rma"

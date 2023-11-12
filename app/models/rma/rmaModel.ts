@@ -9,7 +9,6 @@ import {
   UpdateTicketReqBody,
 } from "../../types/rma/rmaTypes"
 import { fields } from "./constants"
-import formatDateAndHours from "../../../utils/formatDateAndHours"
 
 class RmaModel {
   create = (ticketData: CreateReqBody, result: Function) => {
@@ -256,9 +255,8 @@ class RmaModel {
   }
 
   changeState = (ticketId: number, status: number, result: Function) => {
-    const updateDate = formatDateAndHours(new Date())
-    const sql = `UPDATE tickets SET status = ?, lastStatusUpdate = ? WHERE ticket_id = ?`
-    const params = [status, updateDate, ticketId]
+    const sql = `UPDATE tickets SET status = ?, lastStatusUpdate = NOW() WHERE ticket_id = ?`
+    const params = [status, ticketId]
 
     db.query(sql, params, (err) => {
       if (err) {

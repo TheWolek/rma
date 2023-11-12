@@ -1,5 +1,5 @@
-import checkPartAmount from "../../../helpers/checkPartAmount"
-import sparepartsResponse from "../../../helpers/sparepartsResponse"
+import checkPartAmount from "../../../helpers/spareparts/checkPartAmount"
+import sparepartsResponse from "../../../helpers/spareparts/sparepartsResponse"
 import { partToWarehouse } from "../../../types/warehouse/spareparts/sparepartsTypes"
 import db from "../../db"
 import { MysqlError, OkPacket } from "mysql"

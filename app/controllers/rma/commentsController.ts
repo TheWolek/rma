@@ -3,7 +3,7 @@ import throwGenericError from "../../helpers/throwGenericError"
 import RmaModel from "../../models/rma/rmaModel"
 import auth, { Roles } from "../../middlewares/auth"
 import validators from "./validators"
-import checkIfTicketExists from "../../helpers/checkIfTicketExists"
+import checkIfTicketExists from "../../helpers/rma/checkIfTicketExists"
 import { MysqlError, OkPacket } from "mysql"
 import { CommentRow } from "../../types/rma/rmaTypes"
 

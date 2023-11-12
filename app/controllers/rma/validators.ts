@@ -1,5 +1,5 @@
 import Joi from "joi"
-import { regPhoneNumber, regLines, regPostCode } from "../../helpers/regEx"
+import RegEx from "../../helpers/regEx"
 
 export default {
   create: Joi.object({
@@ -12,8 +12,8 @@ export default {
     deviceProducer: Joi.string().required(),
     deviceAccessories: Joi.array().items(Joi.number().required()).required(),
     issue: Joi.string().required(),
-    lines: Joi.string().required().regex(regLines),
-    postCode: Joi.string().required().regex(regPostCode),
+    lines: Joi.string().required().regex(RegEx.lines),
+    postCode: Joi.string().required().regex(RegEx.postCode),
     city: Joi.string().required(),
     damageType: Joi.number().required(),
     damageDescription: Joi.string(),
@@ -24,11 +24,11 @@ export default {
     type: Joi.number().required(),
     email: Joi.string().required().email(),
     name: Joi.string().required(),
-    phone: Joi.string().required().regex(regPhoneNumber),
+    phone: Joi.string().required().regex(RegEx.phoneNumber),
     deviceSn: Joi.string().required(),
     issue: Joi.string().required(),
-    lines: Joi.string().required().regex(regLines),
-    postCode: Joi.string().required().regex(regPostCode),
+    lines: Joi.string().required().regex(RegEx.lines),
+    postCode: Joi.string().required().regex(RegEx.postCode),
     city: Joi.string().required(),
     damage_type: Joi.number().required(),
     result_type: Joi.number().optional(),

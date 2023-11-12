@@ -1,4 +1,4 @@
-import db from "../../app/models/db"
+import db from "../../models/db"
 
 export default function (sn: string) {
   return new Promise(function (resolve, reject) {

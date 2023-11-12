@@ -6,7 +6,6 @@ import {
   WaybillRow,
 } from "../../types/rma/rmaTypes"
 import db from "../db"
-import formatDateAndHours from "../../../utils/formatDateAndHours"
 
 class WaybillsModel {
   find = (params: FindWaybillReqQuery, result: Function) => {
@@ -50,14 +49,12 @@ class WaybillsModel {
     waybillData: EditWaybillBody,
     result: Function
   ) => {
-    const currentTimeStamp = formatDateAndHours(new Date())
-    const sql = `UPDATE waybills SET waybill_number = ?, status = ?, type = ?, lastUpdate = ?
+    const sql = `UPDATE waybills SET waybill_number = ?, status = ?, type = ?, lastUpdate = NOW()
     WHERE id = ?`
     const params = [
       waybillData.waybillNumber,
       waybillData.status,
       waybillData.type,
-      currentTimeStamp,
       waybillId,
     ]
 

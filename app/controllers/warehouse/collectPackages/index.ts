@@ -15,8 +15,8 @@ import checkIfCollectExists from "../../../helpers/collectPackages/checkIfCollec
 import getWaybillsFromCollect from "../../../helpers/collectPackages/getWaybillsFromCollect"
 import changeWaybillStatus from "../../../helpers/waybills/changeStatus"
 import endCollect from "../../../helpers/collectPackages/endCollect"
-import changeTicketStaus from "../../../helpers/changeTicketStatus"
-import registerNewItem from "../../../helpers/registerNewItem"
+import changeTicketStaus from "../../../helpers/rma/changeTicketStatus"
+import registerNewItem from "../../../helpers/items/registerNewItem"
 
 class CollectPackagesController {
   public path = "/warehouse/collect"

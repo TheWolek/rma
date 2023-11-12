@@ -118,44 +118,6 @@ class sparepartsController {
       return throwGenericError(res, 400, error?.details[0].message)
     }
 
-    // if (Object.keys(query).length === 0)
-    //   return throwGenericError(
-    //     res,
-    //     400,
-    //     "Podaj przynajmniej jedną wartość do wyszukania"
-    //   )
-
-    // let conditions = 0
-    // let onlyOneStatement = false
-
-    // if (query.cat_id) {
-    //   if (!regNumber.test(query.cat_id.toString()))
-    //     return throwGenericError(res, 400, "Nieprawidłowy format pola cat_id")
-    //   conditions++
-    // }
-    // if (query.producer) {
-    //   if (!regCatProd.test(query.producer))
-    //     return throwGenericError(res, 400, "Nieprawidłowy format pola producer")
-    //   conditions++
-    // }
-    // if (query.category) {
-    //   if (!regCatProd.test(query.category))
-    //     return throwGenericError(res, 400, "Nieprawidłowy format pola category")
-    //   conditions++
-    // }
-    // if (query.name) {
-    //   if (!regCatProd.test(query.name))
-    //     return throwGenericError(res, 400, "Nieprawidłowy format pola name")
-    //   conditions++
-    // }
-
-    // if (conditions === 0)
-    //   return throwGenericError(
-    //     res,
-    //     400,
-    //     "Podaj przynajmniej jedną wartość do wyszukania"
-    //   )
-
     this.SparepartsModel.find(
       (err: MysqlError, rows: any) => {
         if (err) return throwGenericError(res, 500, err, err)
