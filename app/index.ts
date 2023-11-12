@@ -2,10 +2,6 @@ import bodyParser from "body-parser"
 import cors from "cors"
 import express from "express"
 
-//TEMP old controllers
-import sparePartsShelve from "../warehouse/spareparts/shelve"
-import tasks from "../warehouse/tasks"
-
 class App {
   public app: express.Application
   public port: string
@@ -16,7 +12,6 @@ class App {
 
     this.initMiddlewares()
     this.initControllers(controllers)
-    this.initOldControllers()
   }
 
   private initMiddlewares() {
@@ -28,11 +23,6 @@ class App {
     controllers.forEach((controller: any) => {
       this.app.use("/", controller.router)
     })
-  }
-
-  private initOldControllers() {
-    this.app.use("/warehouse/spareparts/shelve", sparePartsShelve)
-    this.app.use("/warehouse/tasks/", tasks)
   }
 
   public listen() {
