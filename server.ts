@@ -12,6 +12,7 @@ import RmaAccessoriesController from "./app/controllers/rma/accessoriesControlle
 import RmaCommentsController from "./app/controllers/rma/commentsController"
 import RmaSparepartsController from "./app/controllers/rma/sparepartsController"
 import RmaWaybillsController from "./app/controllers/rma/waybillsController"
+import CollectPackagesController from "./app/controllers/warehouse/collectPackages"
 
 dotenv.config()
 
@@ -30,6 +31,7 @@ const controllers = [
   new RmaSparepartsController(),
   new RmaController(),
   new RmaWaybillsController(),
+  new CollectPackagesController(),
 ]
 
 const app = new App(controllers, port)

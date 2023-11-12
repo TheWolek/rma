@@ -5,9 +5,6 @@ import express from "express"
 //TEMP old controllers
 import sparePartsShelve from "../warehouse/spareparts/shelve"
 import tasks from "../warehouse/tasks"
-import collectPackages from "../warehouse/collectPackages"
-import collectPackagesAdd from "../warehouse/collectPackages/add"
-import collectPackagesItems from "../warehouse/collectPackages/items"
 
 class App {
   public app: express.Application
@@ -36,9 +33,6 @@ class App {
   private initOldControllers() {
     this.app.use("/warehouse/spareparts/shelve", sparePartsShelve)
     this.app.use("/warehouse/tasks/", tasks)
-    this.app.use("/warehouse/collect/", collectPackages)
-    this.app.use("/warehouse/collect/add", collectPackagesAdd)
-    this.app.use("/warehouse/collect/items", collectPackagesItems)
   }
 
   public listen() {

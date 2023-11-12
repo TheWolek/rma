@@ -10,7 +10,7 @@ import {
   EditWaybillBody,
 } from "../../types/rma/rmaTypes"
 import validators from "./validators"
-import checkIfWaybillExists from "../../helpers/checkIfWaybillExists"
+import { checkIfWaybillExists } from "../../helpers/waybills/checkIfWaybillExists"
 
 class RmaWaybillsController {
   public path = "/rma/waybills"

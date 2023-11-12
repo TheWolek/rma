@@ -9,6 +9,7 @@ export const Roles = {
   ItemsCommon: ["Admin", "LS", "TECH"],
   ItemsLs: ["Admin", "LS"],
   RmaCommon: ["Admin", "TECH", "CC"],
+  CollectPackages: ["Admin", "LS"],
 }
 
 function auth(roles: string[]) {

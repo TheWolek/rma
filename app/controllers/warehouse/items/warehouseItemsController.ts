@@ -155,7 +155,7 @@ class warehouseItemController {
     // return 404 if nothing was found
     // return 500 if there was DB error
     // reutns 200 with array of all items in shelve [{ticket_id: int, name: string, category: string}, ...]
-    const { error } = validators.shevlveId.validate(req.body)
+    const { error } = validators.shevlveId.validate(req.query)
 
     if (error !== undefined) {
       return throwGenericError(res, 400, error?.details[0].message)
