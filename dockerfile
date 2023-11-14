@@ -1,18 +1,15 @@
-# syntax=docker/dockerfile:1
-
-FROM node:12.18.1
-
-ENV NODE_ENV=production
-
+FROM node:18 AS builder
 WORKDIR /app
-EXPOSE 3000
-
-COPY ["package.json", "package-lock.json", "./"]
-
+COPY package*.json ./
 RUN npm install
-
 COPY . .
-
 RUN npm run build
+ENV DB_CONNECTION_STRING=${DB_CONNECTION_STRING}
 
-CMD [ "npm", "run", "start" ]
+FROM node:18 AS server
+WORKDIR /app
+COPY package* ./
+RUN npm install --production
+COPY --from=builder ./app/dist ./dist
+EXPOSE 3000
+CMD ["npm", "run", "start"]

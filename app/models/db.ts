@@ -1,5 +1,5 @@
-import mysql from "mysql";
-import dbConfig from "../config/db.config";
+import mysql from "mysql"
+import dbConfig from "../config/db.config"
 
 const connection = mysql.createPool({
   connectionLimit: 10,
@@ -8,6 +8,6 @@ const connection = mysql.createPool({
   password: dbConfig.password,
   database: dbConfig.DB,
   multipleStatements: true,
-});
+})
 
-export default connection;
+export default connection
