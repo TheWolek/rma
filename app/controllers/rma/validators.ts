@@ -16,7 +16,7 @@ export default {
     postCode: Joi.string().required().regex(RegEx.postCode),
     city: Joi.string().required(),
     damageType: Joi.number().required(),
-    damageDescription: Joi.string(),
+    damageDescription: Joi.string().optional().allow(""),
     type: Joi.number().required(),
   }),
 
