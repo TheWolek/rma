@@ -4,11 +4,13 @@ import {
   AccessoriesRow,
   CommentRow,
   CreateReqBody,
+  DetailsRow,
+  FilteredRow,
   Filters,
   PartRow,
   UpdateTicketReqBody,
 } from "../../types/rma/rmaTypes"
-import { fields } from "./constants"
+import { detailsFields, listFields } from "./constants"
 
 class RmaModel {
   create = (ticketData: CreateReqBody, result: Function) => {
@@ -109,8 +111,7 @@ class RmaModel {
       params.push(`%${filters.waybill}%`)
     }
 
-    let sql = `SELECT ${fields} FROM tickets t LEFT JOIN items i ON t.ticket_id = i.ticket_id
-    LEFT JOIN shelves s ON i.shelve = s.shelve_id`
+    let sql = `SELECT ${listFields} FROM tickets t`
 
     if (filters.waybill) {
       sql += ` JOIN waybills w ON t.ticket_id = w.ticket_id `
@@ -121,6 +122,20 @@ class RmaModel {
     } ${queryFilters.join(" AND ")} ORDER BY t.created desc`
 
     db.query(sql, params, (err, rows) => {
+      if (err) {
+        return result(err, null)
+      }
+
+      return result(null, rows)
+    })
+  }
+
+  getOne = (ticketId: number, result: Function) => {
+    const sql = `SELECT ${detailsFields} FROM tickets t LEFT JOIN items i ON t.ticket_id = i.ticket_id
+    LEFT JOIN shelves s ON i.shelve = s.shelve_id JOIN waybills w ON t.ticket_id = w.ticket_id
+    WHERE t.ticket_id = ${db.escape(ticketId)}`
+
+    db.query(sql, (err: MysqlError, rows: DetailsRow) => {
       if (err) {
         return result(err, null)
       }

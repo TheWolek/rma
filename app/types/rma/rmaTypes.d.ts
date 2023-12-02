@@ -74,6 +74,8 @@ export interface FilteredRow {
   result_description: string
 }
 
+export interface DetailsRow {}
+
 export interface AccessoriesRow {
   id: number
   name: string

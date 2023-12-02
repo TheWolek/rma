@@ -6,6 +6,7 @@ import RmaModel from "../../models/rma/rmaModel"
 import auth, { Roles } from "../../middlewares/auth"
 import {
   CreateReqBody,
+  DetailsRow,
   FilteredRow,
   Filters,
   UpdateTicketReqBody,
@@ -29,6 +30,12 @@ class RmaController {
     )
 
     this.router.get(this.path, auth(Roles["RmaCommon"]), this.find)
+
+    this.router.get(
+      `${this.path}/details`,
+      auth(Roles["RmaCommon"]),
+      this.findOne
+    )
 
     this.router.put(
       `${this.path}/:ticketId`,
@@ -75,6 +82,23 @@ class RmaController {
 
       return res.status(200).json(rows)
     })
+  }
+
+  findOne = (req: Request<{}, {}, {}, { ticketId: string }>, res: Response) => {
+    if (isNaN(parseInt(req.query.ticketId))) {
+      return throwGenericError(res, 400, "Nieprawidłowy format pola ticketId")
+    }
+
+    this.Model.getOne(
+      Number(req.query.ticketId),
+      (err: MysqlError, row: DetailsRow) => {
+        if (err) {
+          return throwGenericError(res, 500, err, err)
+        }
+
+        return res.status(200).json(row)
+      }
+    )
   }
 
   editTicket = (
