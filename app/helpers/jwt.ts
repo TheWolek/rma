@@ -28,11 +28,12 @@ function getUserRole(userId: number, result: Function) {
   })
 }
 
-export const generateToken = (userId: number): string => {
+export const generateToken = (userId: number, roleId: number): string => {
   const expTime = "1h"
 
   const payload = {
     userId: userId,
+    userRole: roleId,
   }
 
   const token = jwt.sign(payload, secret, { expiresIn: expTime })
