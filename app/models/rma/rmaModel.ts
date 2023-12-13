@@ -132,7 +132,7 @@ class RmaModel {
 
   getOne = (ticketId: number, result: Function) => {
     const sql = `SELECT ${detailsFields} FROM tickets t LEFT JOIN items i ON t.ticket_id = i.ticket_id
-    LEFT JOIN shelves s ON i.shelve = s.shelve_id JOIN waybills w ON t.ticket_id = w.ticket_id
+    LEFT JOIN shelves s ON i.shelve = s.shelve_id LEFT JOIN waybills w ON t.ticket_id = w.ticket_id
     WHERE t.ticket_id = ${db.escape(ticketId)}`
 
     db.query(sql, (err: MysqlError, rows: DetailsRow) => {

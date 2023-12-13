@@ -9,11 +9,13 @@ const secret: Secret = process.env.JWT_secret || "932137128937127378917289"
 declare module "jsonwebtoken" {
   export interface UserIdJwtPayload extends jwt.JwtPayload {
     userId: number
+    userRole: string
   }
 }
 
 export interface userData {
   userId: number
+  userRole: string
   rolesArray: string[]
 }
 
@@ -28,12 +30,12 @@ function getUserRole(userId: number, result: Function) {
   })
 }
 
-export const generateToken = (userId: number, roleId: number): string => {
+export const generateToken = (userId: number, role: string): string => {
   const expTime = "1h"
 
   const payload = {
     userId: userId,
-    userRole: roleId,
+    userRole: role,
   }
 
   const token = jwt.sign(payload, secret, { expiresIn: expTime })
@@ -43,14 +45,14 @@ export const generateToken = (userId: number, roleId: number): string => {
 
 export const verifyJWT = (token: string, result: Function) => {
   try {
-    const { userId } = <jwt.UserIdJwtPayload>jwt.verify(token, secret)
+    const { userId, userRole } = <jwt.UserIdJwtPayload>jwt.verify(token, secret)
     getUserRole(
       userId,
       (err: MysqlError | string, roles: { role: string }[]) => {
         if (err) return result(err)
         let rolesArray = roles.map((role) => role.role)
 
-        return result(null, { userId, rolesArray })
+        return result(null, { userId, userRole, rolesArray })
       }
     )
   } catch (error) {

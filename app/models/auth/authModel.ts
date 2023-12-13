@@ -71,7 +71,7 @@ class AuthModel {
   }
 
   login(loginData: loginData, result: Function) {
-    const sql = `SELECT u.user_id, u.login, u.password, ur.user_role_id from users u JOIN user_roles ur ON u.user_id = ur.user_id WHERE u.login = ${db.escape(
+    const sql = `SELECT u.user_id, u.login, u.password, ur.role FROM users u JOIN user_roles ur ON u.user_id = ur.user_id WHERE u.login = ${db.escape(
       loginData.login
     )}`
 
@@ -86,10 +86,7 @@ class AuthModel {
 
       if (isPasswordValid) {
         this.logLastLogin(rows[0].user_id)
-        return result(
-          null,
-          generateToken(rows[0].user_id, rows[0].user_role_id)
-        )
+        return result(null, generateToken(rows[0].user_id, rows[0].role))
       } else {
         return result("Błędne hasło lub login", null)
       }
