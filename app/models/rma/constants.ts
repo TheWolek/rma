@@ -7,7 +7,6 @@ export const detailsFields = [
   "t.device_name",
   "t.device_producer",
   "t.type",
-  "t.device_accessories",
   "t.issue",
   "t.status",
   "t.created",
