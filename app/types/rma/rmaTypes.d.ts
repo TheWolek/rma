@@ -22,7 +22,6 @@ export interface UpdateTicketReqBody {
   phone: string
   type: string
   deviceSn: string
-  deviceAccessories: number[]
   issue: string
   lines: string
   postCode: string
