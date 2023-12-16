@@ -15,21 +15,21 @@ import { detailsFields, listFields } from "./constants"
 class RmaModel {
   create = (ticketData: CreateReqBody, result: Function) => {
     const sqlTicket = `insert into tickets (email, name, phone, device_sn, device_name, device_cat, device_producer, type, issue, status, \`lines\`, postCode, city, damage_type, damage_description) VALUES \ 
-        (${db.escape(ticketData.email)}, ${db.escape(
-      ticketData.name
-    )}, ${db.escape(ticketData.phone)}, ${db.escape(
-      ticketData.deviceSn
-    )}, ${db.escape(ticketData.deviceName)}, ${db.escape(
-      ticketData.deviceCat
-    )}, ${db.escape(ticketData.deviceProducer)}, ${db.escape(
-      ticketData.type
-    )}, ${db.escape(ticketData.lines)}, 1, ${db.escape(
-      ticketData.issue
-    )}, ${db.escape(ticketData.postCode)}, ${db.escape(
-      ticketData.city
-    )}, ${db.escape(ticketData.damageType)}, ${db.escape(
-      ticketData.damageDescription
-    )})`
+        (${db.escape(ticketData.email)}, 
+        ${db.escape(ticketData.name)}, 
+        ${db.escape(ticketData.phone)}, 
+        ${db.escape(ticketData.deviceSn)}, 
+        ${db.escape(ticketData.deviceName)}, 
+        ${db.escape(ticketData.deviceCat)}, 
+        ${db.escape(ticketData.deviceProducer)}, 
+        ${db.escape(ticketData.type)}, 
+        ${db.escape(ticketData.issue)}, 
+        1, 
+        ${db.escape(ticketData.lines)}, 
+        ${db.escape(ticketData.postCode)}, 
+        ${db.escape(ticketData.city)}, 
+        ${db.escape(ticketData.damageType)}, 
+        ${db.escape(ticketData.damageDescription)})`
 
     db.query(sqlTicket, (err, dbResult) => {
       if (err) {
