@@ -73,7 +73,35 @@ export interface FilteredRow {
   result_description: string
 }
 
-export interface DetailsRow {}
+export type TicketType = 1 | 2
+export type TicketStatus = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12
+
+export interface DetailsRow {
+  ticket_id: number
+  email: string
+  name: string
+  phone: string
+  device_sn: string
+  device_name: string
+  device_producer: string
+  device_cat: string
+  type: TicketType
+  issue: string
+  status: TicketStatus
+  created: Date
+  lastStatusUpdate: null | Date
+  lines: string
+  postCode: string
+  city: string
+  inWarehouse: 0 | 1 | boolean
+  item_id: null | number
+  shelve_id: null | number
+  code: null | string
+  damage_description: null | string
+  damage_type: number
+  result_type: null | number
+  result_description: null | string
+}
 
 export interface AccessoriesRow {
   id: number

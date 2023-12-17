@@ -131,16 +131,18 @@ class RmaModel {
   }
 
   getOne = (ticketId: number, result: Function) => {
-    const sql = `SELECT ${detailsFields} FROM tickets t LEFT JOIN items i ON t.ticket_id = i.ticket_id
+    const sql = `SELECT DISTINCT ${detailsFields} FROM tickets t LEFT JOIN items i ON t.ticket_id = i.ticket_id
     LEFT JOIN shelves s ON i.shelve = s.shelve_id LEFT JOIN waybills w ON t.ticket_id = w.ticket_id
     WHERE t.ticket_id = ${db.escape(ticketId)}`
 
-    db.query(sql, (err: MysqlError, rows: DetailsRow) => {
+    db.query(sql, (err: MysqlError, rows: DetailsRow[]) => {
       if (err) {
         return result(err, null)
       }
 
-      return result(null, rows)
+      rows[0].inWarehouse = rows[0].inWarehouse === 1 ? true : false
+
+      return result(null, rows[0])
     })
   }
 
