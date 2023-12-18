@@ -127,7 +127,7 @@ class warehouseItemController {
     // returns 200 with first row object {item_id: int, name: string, shelve: int, category: string, ticket_id: int}
 
     if (req.query.barcode) {
-      const { error } = validators.itemBarcode.validate(req.body)
+      const { error } = validators.itemBarcode.validate(req.query)
 
       if (error !== undefined) {
         return throwGenericError(res, 400, error?.details[0].message)

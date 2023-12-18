@@ -38,7 +38,7 @@ class warehouseItemsModel {
   }
 
   findItems(result: Function, ticket_id?: number, shelve_id?: number) {
-    let sql = `SELECT item_id, name, shelve, category, ticket_id, sn FROM items`
+    let sql = `SELECT i.item_id, i.name, i.shelve, i.category, i.ticket_id, i.sn, s.code FROM items i JOIN shelves s ON i.shelve = s.shelve_id`
     if (ticket_id) {
       sql += ` WHERE ticket_id = ${db.escape(ticket_id)}`
     }
