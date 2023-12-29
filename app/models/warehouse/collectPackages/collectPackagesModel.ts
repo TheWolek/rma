@@ -27,13 +27,18 @@ class CollectPackagesModel {
     const params = []
 
     if (filters.refName) {
-      queryFilters.push("ref_name like ?")
+      queryFilters.push("pc.ref_name like ?")
       params.push(`%${filters.refName}%`)
     }
 
     if (filters.created) {
-      queryFilters.push("created = ?")
+      queryFilters.push("DATE(pc.created) = ?")
       params.push(filters.created)
+    }
+
+    if (filters.status) {
+      queryFilters.push("pcs.name = ?")
+      params.push(filters.status)
     }
 
     const sql = `SELECT pc.id, pc.ref_name, pc.created, pcs.name AS 'status' 

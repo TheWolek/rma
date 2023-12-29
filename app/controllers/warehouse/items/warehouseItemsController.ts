@@ -28,16 +28,11 @@ class warehouseItemController {
       auth(Roles.ItemsCommon),
       this.checkIfItemExists
     )
-    this.router.get(this.path, auth(Roles.ItemsCommon), this.findItemByTicketId)
+    this.router.get(this.path, auth(Roles.ItemsCommon), this.findItem)
     this.router.get(
       `${this.path}/countall`,
       auth(Roles.ItemsCommon),
       this.countAllItems
-    )
-    this.router.get(
-      `${this.path}/shelve`,
-      auth(Roles.ItemsCommon),
-      this.findItemsInShelve
     )
     this.router.put(
       `${this.path}/changeshelve`,
@@ -116,8 +111,8 @@ class warehouseItemController {
     )
   }
 
-  findItemByTicketId = (
-    req: Request<{}, {}, {}, { barcode: string }>,
+  findItem = (
+    req: Request<{}, {}, {}, { barcode: string; shelve: number }>,
     res: Response
   ) => {
     // recive barcode in format "ticket_id-name-category"
@@ -126,47 +121,17 @@ class warehouseItemController {
     // return 500 if there was DB error
     // returns 200 with first row object {item_id: int, name: string, shelve: int, category: string, ticket_id: int}
 
-    if (req.query.barcode) {
-      const { error } = validators.itemBarcode.validate(req.query)
-
-      if (error !== undefined) {
-        return throwGenericError(res, 400, error?.details[0].message)
-      }
-
-      let ticket_id = parseInt(req.query.barcode.split("-")[0])
-      this.ItemModel.findItems((err: MysqlError, rows: any) => {
-        if (err) return throwGenericError(res, 500, err, err)
-        return res.status(200).json(rows)
-      }, ticket_id)
-    } else {
-      this.ItemModel.findItems((err: MysqlError, rows: any) => {
-        if (err) return throwGenericError(res, 500, err, err)
-        return res.status(200).json(rows)
-      })
-    }
-  }
-
-  findItemsInShelve = (
-    req: Request<{}, {}, {}, { shelve: number }>,
-    res: Response
-  ) => {
-    // recive shelve id in req.query INT
-    // return 400 if shelve is empty OR shelve does not match regEx
-    // return 404 if nothing was found
-    // return 500 if there was DB error
-    // reutns 200 with array of all items in shelve [{ticket_id: int, name: string, category: string}, ...]
-    const { error } = validators.shevlveId.validate(req.query)
-
-    if (error !== undefined) {
-      return throwGenericError(res, 400, error?.details[0].message)
-    }
+    const ticketId = parseInt(req.query.barcode?.split("-")[0])
 
     this.ItemModel.findItems(
       (err: MysqlError, rows: any) => {
-        if (err) throwGenericError(res, 500, err, err)
-        res.status(200).json(rows)
+        if (err) {
+          return throwGenericError(res, 500, err, err)
+        }
+
+        return res.status(200).json(rows)
       },
-      undefined,
+      ticketId,
       req.query.shelve
     )
   }

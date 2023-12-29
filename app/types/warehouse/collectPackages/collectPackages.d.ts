@@ -1,13 +1,16 @@
+export type CollectStatus = "W trakcie" | "Odebrany"
+
 export interface CollectFilters {
   refName: string
   created: string
+  status: CollectStatus
 }
 
 export interface CollectRow {
   id: number
   ref_name: string
   created: Date
-  status: string
+  status: CollectStatus
 }
 
 export interface CollectDetailsRow extends CollectRow {

@@ -38,13 +38,20 @@ class warehouseItemsModel {
   }
 
   findItems(result: Function, ticket_id?: number, shelve_id?: number) {
-    let sql = `SELECT i.item_id, i.name, i.shelve, i.category, i.ticket_id, i.sn, s.code FROM items i JOIN shelves s ON i.shelve = s.shelve_id`
+    let sql = `SELECT i.item_id, i.name, i.shelve, i.category, i.ticket_id, i.sn, s.code as shelve_code FROM items i JOIN shelves s ON i.shelve = s.shelve_id`
+
+    if (ticket_id || shelve_id) {
+      sql += ` WHERE `
+    }
     if (ticket_id) {
-      sql += ` WHERE ticket_id = ${db.escape(ticket_id)}`
+      sql += `ticket_id = ${db.escape(ticket_id)}`
     }
 
     if (shelve_id) {
-      sql += ` WHERE shelve = ${db.escape(shelve_id)}`
+      if (ticket_id) {
+        sql += " AND "
+      }
+      sql += `shelve = ${db.escape(shelve_id)}`
     }
 
     db.query(sql, (err, rows) => {
