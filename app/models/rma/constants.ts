@@ -1,5 +1,6 @@
 export const detailsFields = [
   "t.ticket_id",
+  "t.barcode",
   "t.email",
   "t.name",
   "t.phone",

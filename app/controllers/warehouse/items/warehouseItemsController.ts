@@ -11,6 +11,8 @@ import {
 } from "../../../types/warehouse/items/itemsTypes"
 import validators from "./validators"
 import auth, { Roles } from "../../../middlewares/auth"
+import RmaModel from "../../../models/rma/rmaModel"
+import { WarehouseDetailsRow } from "../../../types/rma/rmaTypes"
 
 class warehouseItemController {
   public path = "/warehouse/items"
@@ -43,12 +45,13 @@ class warehouseItemController {
   }
 
   private ItemModel = new warehouseItemsModel()
+  private RmaModel = new RmaModel()
 
   createNewItem = (req: Request<{}, {}, newItemReqBody>, res: Response) => {
-    // recive barcode in format "ticket_id-name-category" and sn (String)
+    // recive barcode in format "RMA/YYYYMMDD/1234" and sn (String)
     // return 400 if barcode is empty OR barcode does not match regEx OR ticket_id already exists in items table
     // return 500 if there was DB error
-    // return 200 {inserted id, ticket id, shelve id}
+    // return 200 {inserted id, barcode, shelve id}
 
     const { error } = validators.itemBarcode.validate(req.body)
 
@@ -56,30 +59,39 @@ class warehouseItemController {
       return throwGenericError(res, 400, error?.details[0].message)
     }
 
-    const barcodeData = req.body.barcode.split("-")
-    this.ItemModel.createNewItem(
-      {
-        ticket_id: parseInt(barcodeData[0]),
-        producer: barcodeData[1],
-        category: barcodeData[2],
-        sn: req.body.sn,
-      },
-      (err: MysqlError | string, dbRes: OkPacket) => {
+    this.RmaModel.getOneForWarehouse(
+      req.body.barcode,
+      (err: MysqlError, row: WarehouseDetailsRow) => {
         if (err) {
-          if (err === "ER_DUP_ENTRY")
-            return throwGenericError(
-              res,
-              400,
-              "produkt z podanym ticket id został już zarejestrowany"
-            )
-          throwGenericError(res, 500, err, err)
+          return throwGenericError(res, 500, err, err)
         }
 
-        return res.status(200).json({
-          id: dbRes.insertId,
-          ticket_id: barcodeData[0],
-          shelve: 0,
-        })
+        this.ItemModel.createNewItem(
+          {
+            ticket_id: row.ticket_id,
+            barcode: req.body.barcode,
+            producer: row.device_producer,
+            category: row.device_cat,
+            sn: req.body.sn,
+          },
+          (err: MysqlError | string, dbRes: OkPacket) => {
+            if (err) {
+              if (err === "ER_DUP_ENTRY")
+                return throwGenericError(
+                  res,
+                  400,
+                  "produkt z podanym ticket id został już zarejestrowany"
+                )
+              throwGenericError(res, 500, err, err)
+            }
+
+            return res.status(200).json({
+              id: dbRes.insertId,
+              barcode: req.body.barcode,
+              shelve: 0,
+            })
+          }
+        )
       }
     )
   }
@@ -88,7 +100,7 @@ class warehouseItemController {
     req: Request<{}, {}, {}, { barcode: string }>,
     res: Response
   ) => {
-    // recive barcode in format "ticket-id-name-category"
+    // recive barcode in format "RMA/YYYYMMDD/1234"
     // return 400 if barcode is empty OR barcode does not match regEx
     // return 404 with {found: false} if nothing was found
     // return 500 if there was DB error
@@ -100,9 +112,8 @@ class warehouseItemController {
       return throwGenericError(res, 400, error?.details[0].message)
     }
 
-    let ticket_id = parseInt(req.query.barcode.split("-")[0])
     this.ItemModel.checkIfItemExists(
-      ticket_id,
+      req.query.barcode,
       (err: MysqlError, rows: any) => {
         if (err) return throwGenericError(res, 500, err, err)
         if (rows.length === 0) return res.status(404).json({ found: false })
@@ -115,13 +126,11 @@ class warehouseItemController {
     req: Request<{}, {}, {}, { barcode: string; shelve: number }>,
     res: Response
   ) => {
-    // recive barcode in format "ticket_id-name-category"
+    // recive barcode in format "RMA/YYYYMMDD/1234"
     // return 400 if barcode is empty OR barcode does not match regEx
     // return 404 if nothing was found
     // return 500 if there was DB error
-    // returns 200 with first row object {item_id: int, name: string, shelve: int, category: string, ticket_id: int}
-
-    const ticketId = parseInt(req.query.barcode?.split("-")[0])
+    // returns 200 with first row object {item_id: int, name: string, shelve: int, category: string, barcode: string}
 
     this.ItemModel.findItems(
       (err: MysqlError, rows: any) => {
@@ -131,7 +140,7 @@ class warehouseItemController {
 
         return res.status(200).json(rows)
       },
-      ticketId,
+      req.query.barcode,
       req.query.shelve
     )
   }
@@ -152,14 +161,14 @@ class warehouseItemController {
   }
 
   changeShelve = (req: Request<{}, {}, changeShelveBody>, res: Response) => {
-    // recive barcodes in format ["ticket_id-name-category",...], destination shelve id INT and current shelve id INT
+    // recive barcodes in format ["RMA/YYYYMMDD/1234",...], destination shelve id INT and current shelve id INT
     // return 400 if barcode OR new_shelve OR shelve is empty
     // return 400 if barcode OR new_shelve OR shelve does not match regEx
     // return 400 if current and destiantion sheleve are equal
     // return 404 if no rows were changes
     // return 404 with message {} if number of rows changed is diffrent from number of barcodes
     // reutrn 500 if there was DB error
-    // returns 200 with {ticket_id_arr: [], new_shelve id}
+    // returns 200 with {barcodes: [], new_shelve id}
 
     const { error } = validators.changeShelve.validate(req.body)
 
@@ -174,14 +183,10 @@ class warehouseItemController {
         "Wybrana półka docelowa jest identczna jak aktualna"
       )
 
-    let ticket_id_arr = req.body.barcodes.map((el: string) =>
-      parseInt(el.split("-")[0])
-    )
-
     this.ItemModel.changeShelve(
       req.body.new_shelve,
       req.body.shelve,
-      ticket_id_arr,
+      req.body.barcodes,
       (err: MysqlError, dbResult: OkPacket) => {
         if (err) return throwGenericError(res, 500, err, err)
         if (dbResult.changedRows === 0)
@@ -190,14 +195,14 @@ class warehouseItemController {
             404,
             "Nie przesunięto żadnych przedmiotów. Sprawdź poprawność kodów kreskowych"
           )
-        if (dbResult.changedRows != ticket_id_arr.length)
+        if (dbResult.changedRows != req.body.barcodes.length)
           return throwGenericError(
             res,
             404,
             "Ilość przesuniętych produktów różni się od zeskanowanych kodów kreskowych"
           )
         return res.status(200).json({
-          ticket_id_arr: ticket_id_arr,
+          barcodes: req.body.barcodes,
           new_shelve: req.body.new_shelve,
         })
       }
@@ -205,12 +210,12 @@ class warehouseItemController {
   }
 
   deleteItem = (req: Request<{}, {}, deleteItemBody>, res: Response) => {
-    // recive barcode in format "ticket_id-name-category" and current shelve INT
+    // recive barcode in format "RMA/YYYYMMDD/1234" and current shelve INT
     // return 400 if barcode OR shelve is empty
     // return 400 if barcode OR shelve does not match regEx
     // return 404 if nothing was deleted = cannot find specific item
     // return 500 if there was DB error
-    // return 200 with {ticket_id: INT, shelve: INT}
+    // return 200 with {barcode: string, shelve: INT}
 
     const { error } = validators.deleteItem.validate(req.body)
 
@@ -218,21 +223,26 @@ class warehouseItemController {
       return throwGenericError(res, 400, error?.details[0].message)
     }
 
-    const ticket_id = parseInt(req.body.barcode.split("-")[0])
     this.ItemModel.deleteItem(
-      ticket_id,
+      req.body.barcode,
       req.body.shelve,
       (err: MysqlError, dbResult: OkPacket) => {
         if (err) return throwGenericError(res, 500, err, err)
-        if (dbResult.affectedRows === 0)
+        if (dbResult.affectedRows === 0) {
           return throwGenericError(
             res,
             404,
             "nie można znaleźć wskazanego produktu na magazynie. Nic nie zostało usunięte"
           )
-        return res
-          .status(200)
-          .json({ ticket_id: ticket_id, shelve: req.body.shelve })
+        }
+
+        this.RmaModel.unregister(req.body.ticket_id, (err: MysqlError) => {
+          if (err) return throwGenericError(res, 500, err, err)
+
+          return res
+            .status(200)
+            .json({ barcode: req.body.barcode, shelve: req.body.shelve })
+        })
       }
     )
   }

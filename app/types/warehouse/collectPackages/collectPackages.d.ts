@@ -23,6 +23,7 @@ export interface CollectWaybilRow {
   id: number
   waybill: string
   ticket_id: number
+  barcode: string
   device_producer: string
   device_cat: string
   device_sn: string
@@ -37,6 +38,7 @@ export interface CollectTicketRow {
 export interface CollectItemRow {
   waybill: string
   ticket_id: number
+  barcode: string
 }
 
 export interface CollectEditItemReqBody {

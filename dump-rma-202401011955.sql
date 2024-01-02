@@ -19,6 +19,8 @@
 -- Temporary table structure for view `NewView`
 --
 
+DROP TABLE IF EXISTS `NewView`;
+/*!50001 DROP VIEW IF EXISTS `NewView`*/;
 SET @saved_cs_client     = @@character_set_client;
 SET character_set_client = utf8;
 /*!50001 CREATE TABLE `NewView` (
@@ -35,6 +37,7 @@ SET character_set_client = @saved_cs_client;
 -- Table structure for table `items`
 --
 
+DROP TABLE IF EXISTS `items`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `items` (
@@ -46,13 +49,14 @@ CREATE TABLE `items` (
   `sn` varchar(100) NOT NULL,
   PRIMARY KEY (`item_id`),
   UNIQUE KEY `items_un` (`ticket_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=118 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=121 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
 -- Table structure for table `packageCollect`
 --
 
+DROP TABLE IF EXISTS `packageCollect`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `packageCollect` (
@@ -63,13 +67,14 @@ CREATE TABLE `packageCollect` (
   PRIMARY KEY (`id`),
   KEY `packageCollect_FK` (`status`),
   CONSTRAINT `packageCollect_FK` FOREIGN KEY (`status`) REFERENCES `packageCollect_statuses` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
 -- Table structure for table `packageCollect_items`
 --
 
+DROP TABLE IF EXISTS `packageCollect_items`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `packageCollect_items` (
@@ -80,13 +85,14 @@ CREATE TABLE `packageCollect_items` (
   PRIMARY KEY (`id`),
   KEY `packageCollect_items_FK` (`collect_id`),
   CONSTRAINT `packageCollect_items_FK` FOREIGN KEY (`collect_id`) REFERENCES `packageCollect` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=41 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=44 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
 -- Table structure for table `packageCollect_statuses`
 --
 
+DROP TABLE IF EXISTS `packageCollect_statuses`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `packageCollect_statuses` (
@@ -100,6 +106,7 @@ CREATE TABLE `packageCollect_statuses` (
 -- Table structure for table `shelves`
 --
 
+DROP TABLE IF EXISTS `shelves`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `shelves` (
@@ -113,6 +120,7 @@ CREATE TABLE `shelves` (
 -- Table structure for table `spareparts`
 --
 
+DROP TABLE IF EXISTS `spareparts`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `spareparts` (
@@ -127,6 +135,7 @@ CREATE TABLE `spareparts` (
 -- Table structure for table `spareparts_cat`
 --
 
+DROP TABLE IF EXISTS `spareparts_cat`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `spareparts_cat` (
@@ -142,6 +151,7 @@ CREATE TABLE `spareparts_cat` (
 -- Table structure for table `spareparts_orders`
 --
 
+DROP TABLE IF EXISTS `spareparts_orders`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `spareparts_orders` (
@@ -160,6 +170,7 @@ CREATE TABLE `spareparts_orders` (
 -- Table structure for table `spareparts_orders_items`
 --
 
+DROP TABLE IF EXISTS `spareparts_orders_items`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `spareparts_orders_items` (
@@ -177,6 +188,7 @@ CREATE TABLE `spareparts_orders_items` (
 -- Table structure for table `spareparts_orders_statuses`
 --
 
+DROP TABLE IF EXISTS `spareparts_orders_statuses`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `spareparts_orders_statuses` (
@@ -190,6 +202,7 @@ CREATE TABLE `spareparts_orders_statuses` (
 -- Table structure for table `spareparts_sn`
 --
 
+DROP TABLE IF EXISTS `spareparts_sn`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `spareparts_sn` (
@@ -209,6 +222,7 @@ CREATE TABLE `spareparts_sn` (
 -- Table structure for table `suppliers`
 --
 
+DROP TABLE IF EXISTS `suppliers`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `suppliers` (
@@ -222,6 +236,7 @@ CREATE TABLE `suppliers` (
 -- Table structure for table `tickets`
 --
 
+DROP TABLE IF EXISTS `tickets`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `tickets` (
@@ -233,7 +248,6 @@ CREATE TABLE `tickets` (
   `device_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   `device_producer` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   `type` int NOT NULL,
-  `device_accessories` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   `issue` varchar(250) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   `status` int NOT NULL,
   `created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -250,13 +264,14 @@ CREATE TABLE `tickets` (
   PRIMARY KEY (`ticket_id`),
   KEY `tickets_FK` (`damage_type`),
   CONSTRAINT `tickets_FK` FOREIGN KEY (`damage_type`) REFERENCES `tickets_damage_types` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=70 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_polish_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=76 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_polish_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
 -- Table structure for table `tickets_additionalAccessories`
 --
 
+DROP TABLE IF EXISTS `tickets_additionalAccessories`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `tickets_additionalAccessories` (
@@ -266,13 +281,14 @@ CREATE TABLE `tickets_additionalAccessories` (
   PRIMARY KEY (`id`),
   KEY `tickets_additionalAccesories_FK_1` (`type_id`),
   KEY `tickets_additionalAccesories_FK` (`ticket_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=175 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=184 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
 -- Table structure for table `tickets_aditionalAccessories_types`
 --
 
+DROP TABLE IF EXISTS `tickets_aditionalAccessories_types`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `tickets_aditionalAccessories_types` (
@@ -286,6 +302,7 @@ CREATE TABLE `tickets_aditionalAccessories_types` (
 -- Table structure for table `tickets_comments`
 --
 
+DROP TABLE IF EXISTS `tickets_comments`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `tickets_comments` (
@@ -303,6 +320,7 @@ CREATE TABLE `tickets_comments` (
 -- Table structure for table `tickets_damage_types`
 --
 
+DROP TABLE IF EXISTS `tickets_damage_types`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `tickets_damage_types` (
@@ -316,6 +334,7 @@ CREATE TABLE `tickets_damage_types` (
 -- Table structure for table `tickets_result_types`
 --
 
+DROP TABLE IF EXISTS `tickets_result_types`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `tickets_result_types` (
@@ -329,6 +348,7 @@ CREATE TABLE `tickets_result_types` (
 -- Table structure for table `tickets_spareparts`
 --
 
+DROP TABLE IF EXISTS `tickets_spareparts`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `tickets_spareparts` (
@@ -345,6 +365,7 @@ CREATE TABLE `tickets_spareparts` (
 -- Table structure for table `tickets_statuses_types`
 --
 
+DROP TABLE IF EXISTS `tickets_statuses_types`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `tickets_statuses_types` (
@@ -358,6 +379,7 @@ CREATE TABLE `tickets_statuses_types` (
 -- Table structure for table `user_roles`
 --
 
+DROP TABLE IF EXISTS `user_roles`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `user_roles` (
@@ -374,6 +396,7 @@ CREATE TABLE `user_roles` (
 -- Table structure for table `users`
 --
 
+DROP TABLE IF EXISTS `users`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `users` (
@@ -390,6 +413,8 @@ CREATE TABLE `users` (
 -- Temporary table structure for view `warehouse_canceled_from_bufor_shelve_items`
 --
 
+DROP TABLE IF EXISTS `warehouse_canceled_from_bufor_shelve_items`;
+/*!50001 DROP VIEW IF EXISTS `warehouse_canceled_from_bufor_shelve_items`*/;
 SET @saved_cs_client     = @@character_set_client;
 SET character_set_client = utf8;
 /*!50001 CREATE TABLE `warehouse_canceled_from_bufor_shelve_items` (
@@ -406,6 +431,8 @@ SET character_set_client = @saved_cs_client;
 -- Temporary table structure for view `warehouse_canceled_from_verification`
 --
 
+DROP TABLE IF EXISTS `warehouse_canceled_from_verification`;
+/*!50001 DROP VIEW IF EXISTS `warehouse_canceled_from_verification`*/;
 SET @saved_cs_client     = @@character_set_client;
 SET character_set_client = utf8;
 /*!50001 CREATE TABLE `warehouse_canceled_from_verification` (
@@ -422,6 +449,8 @@ SET character_set_client = @saved_cs_client;
 -- Temporary table structure for view `warehouse_entry_shelve_items`
 --
 
+DROP TABLE IF EXISTS `warehouse_entry_shelve_items`;
+/*!50001 DROP VIEW IF EXISTS `warehouse_entry_shelve_items`*/;
 SET @saved_cs_client     = @@character_set_client;
 SET character_set_client = utf8;
 /*!50001 CREATE TABLE `warehouse_entry_shelve_items` (
@@ -438,6 +467,8 @@ SET character_set_client = @saved_cs_client;
 -- Temporary table structure for view `warehouse_leave_diagnose`
 --
 
+DROP TABLE IF EXISTS `warehouse_leave_diagnose`;
+/*!50001 DROP VIEW IF EXISTS `warehouse_leave_diagnose`*/;
 SET @saved_cs_client     = @@character_set_client;
 SET character_set_client = utf8;
 /*!50001 CREATE TABLE `warehouse_leave_diagnose` (
@@ -456,6 +487,7 @@ SET character_set_client = @saved_cs_client;
 -- Table structure for table `warehouse_tasks_lists`
 --
 
+DROP TABLE IF EXISTS `warehouse_tasks_lists`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `warehouse_tasks_lists` (
@@ -473,6 +505,8 @@ CREATE TABLE `warehouse_tasks_lists` (
 -- Temporary table structure for view `warehouse_toBufor_shelve_items`
 --
 
+DROP TABLE IF EXISTS `warehouse_toBufor_shelve_items`;
+/*!50001 DROP VIEW IF EXISTS `warehouse_toBufor_shelve_items`*/;
 SET @saved_cs_client     = @@character_set_client;
 SET character_set_client = utf8;
 /*!50001 CREATE TABLE `warehouse_toBufor_shelve_items` (
@@ -489,6 +523,8 @@ SET character_set_client = @saved_cs_client;
 -- Temporary table structure for view `warehouse_toDiagnose_fromBufor_shelve_items`
 --
 
+DROP TABLE IF EXISTS `warehouse_toDiagnose_fromBufor_shelve_items`;
+/*!50001 DROP VIEW IF EXISTS `warehouse_toDiagnose_fromBufor_shelve_items`*/;
 SET @saved_cs_client     = @@character_set_client;
 SET character_set_client = utf8;
 /*!50001 CREATE TABLE `warehouse_toDiagnose_fromBufor_shelve_items` (
@@ -505,6 +541,8 @@ SET character_set_client = @saved_cs_client;
 -- Temporary table structure for view `warehouse_toDiagnose_shelve_items`
 --
 
+DROP TABLE IF EXISTS `warehouse_toDiagnose_shelve_items`;
+/*!50001 DROP VIEW IF EXISTS `warehouse_toDiagnose_shelve_items`*/;
 SET @saved_cs_client     = @@character_set_client;
 SET character_set_client = utf8;
 /*!50001 CREATE TABLE `warehouse_toDiagnose_shelve_items` (
@@ -523,6 +561,7 @@ SET character_set_client = @saved_cs_client;
 -- Table structure for table `waybills`
 --
 
+DROP TABLE IF EXISTS `waybills`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `waybills` (
@@ -535,7 +574,7 @@ CREATE TABLE `waybills` (
   `lastUpdate` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `waybills_FK` (`ticket_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=58 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=68 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -547,6 +586,7 @@ CREATE TABLE `waybills` (
 --
 
 /*!50001 DROP TABLE IF EXISTS `NewView`*/;
+/*!50001 DROP VIEW IF EXISTS `NewView`*/;
 /*!50001 SET @saved_cs_client          = @@character_set_client */;
 /*!50001 SET @saved_cs_results         = @@character_set_results */;
 /*!50001 SET @saved_col_connection     = @@collation_connection */;
@@ -565,6 +605,7 @@ CREATE TABLE `waybills` (
 --
 
 /*!50001 DROP TABLE IF EXISTS `warehouse_canceled_from_bufor_shelve_items`*/;
+/*!50001 DROP VIEW IF EXISTS `warehouse_canceled_from_bufor_shelve_items`*/;
 /*!50001 SET @saved_cs_client          = @@character_set_client */;
 /*!50001 SET @saved_cs_results         = @@character_set_results */;
 /*!50001 SET @saved_col_connection     = @@collation_connection */;
@@ -583,6 +624,7 @@ CREATE TABLE `waybills` (
 --
 
 /*!50001 DROP TABLE IF EXISTS `warehouse_canceled_from_verification`*/;
+/*!50001 DROP VIEW IF EXISTS `warehouse_canceled_from_verification`*/;
 /*!50001 SET @saved_cs_client          = @@character_set_client */;
 /*!50001 SET @saved_cs_results         = @@character_set_results */;
 /*!50001 SET @saved_col_connection     = @@collation_connection */;
@@ -601,6 +643,7 @@ CREATE TABLE `waybills` (
 --
 
 /*!50001 DROP TABLE IF EXISTS `warehouse_entry_shelve_items`*/;
+/*!50001 DROP VIEW IF EXISTS `warehouse_entry_shelve_items`*/;
 /*!50001 SET @saved_cs_client          = @@character_set_client */;
 /*!50001 SET @saved_cs_results         = @@character_set_results */;
 /*!50001 SET @saved_col_connection     = @@collation_connection */;
@@ -619,6 +662,7 @@ CREATE TABLE `waybills` (
 --
 
 /*!50001 DROP TABLE IF EXISTS `warehouse_leave_diagnose`*/;
+/*!50001 DROP VIEW IF EXISTS `warehouse_leave_diagnose`*/;
 /*!50001 SET @saved_cs_client          = @@character_set_client */;
 /*!50001 SET @saved_cs_results         = @@character_set_results */;
 /*!50001 SET @saved_col_connection     = @@collation_connection */;
@@ -637,6 +681,7 @@ CREATE TABLE `waybills` (
 --
 
 /*!50001 DROP TABLE IF EXISTS `warehouse_toBufor_shelve_items`*/;
+/*!50001 DROP VIEW IF EXISTS `warehouse_toBufor_shelve_items`*/;
 /*!50001 SET @saved_cs_client          = @@character_set_client */;
 /*!50001 SET @saved_cs_results         = @@character_set_results */;
 /*!50001 SET @saved_col_connection     = @@collation_connection */;
@@ -655,6 +700,7 @@ CREATE TABLE `waybills` (
 --
 
 /*!50001 DROP TABLE IF EXISTS `warehouse_toDiagnose_fromBufor_shelve_items`*/;
+/*!50001 DROP VIEW IF EXISTS `warehouse_toDiagnose_fromBufor_shelve_items`*/;
 /*!50001 SET @saved_cs_client          = @@character_set_client */;
 /*!50001 SET @saved_cs_results         = @@character_set_results */;
 /*!50001 SET @saved_col_connection     = @@collation_connection */;
@@ -673,6 +719,7 @@ CREATE TABLE `waybills` (
 --
 
 /*!50001 DROP TABLE IF EXISTS `warehouse_toDiagnose_shelve_items`*/;
+/*!50001 DROP VIEW IF EXISTS `warehouse_toDiagnose_shelve_items`*/;
 /*!50001 SET @saved_cs_client          = @@character_set_client */;
 /*!50001 SET @saved_cs_results         = @@character_set_results */;
 /*!50001 SET @saved_col_connection     = @@collation_connection */;
@@ -695,4 +742,4 @@ CREATE TABLE `waybills` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2023-11-12 17:31:20
+-- Dump completed on 2024-01-01 19:56:01

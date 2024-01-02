@@ -152,21 +152,22 @@ class CollectPackagesController {
 
         getWaybillsFromCollect(Number(req.params.id)).then((items) => {
           for (let {
-            id,
             waybill,
             ticket_id,
+            barcode,
             device_cat,
             device_producer,
             device_sn,
           } of items) {
             changeWaybillStatus(waybill, "odebrany").then(() => {
               changeTicketStaus(ticket_id, 3).then(() => {
-                registerNewItem(
+                registerNewItem({
                   ticket_id,
+                  barcode,
                   device_producer,
                   device_cat,
-                  device_sn
-                )
+                  device_sn,
+                })
               })
             })
           }

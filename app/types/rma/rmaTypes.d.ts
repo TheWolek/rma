@@ -78,6 +78,7 @@ export type TicketStatus = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12
 
 export interface DetailsRow {
   ticket_id: number
+  barcode: string
   email: string
   name: string
   phone: string
@@ -101,6 +102,15 @@ export interface DetailsRow {
   damage_type: number
   result_type: null | number
   result_description: null | string
+}
+
+export interface WarehouseDetailsRow {
+  ticket_id: number
+  barcode: string
+  device_sn: string
+  device_name: string
+  device_producer: string
+  device_cat: string
 }
 
 export interface AccessoriesRow {

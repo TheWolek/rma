@@ -9,13 +9,19 @@ import {
   Filters,
   PartRow,
   UpdateTicketReqBody,
+  WarehouseDetailsRow,
 } from "../../types/rma/rmaTypes"
 import { detailsFields, listFields } from "./constants"
+import formatDate from "../../helpers/formatDate"
 
 class RmaModel {
   create = (ticketData: CreateReqBody, result: Function) => {
-    const sqlTicket = `insert into tickets (email, name, phone, device_sn, device_name, device_cat, device_producer, type, issue, status, \`lines\`, postCode, city, damage_type, damage_description) VALUES \ 
-        (${db.escape(ticketData.email)}, 
+    const date = new Date()
+    const timestamp = `${formatDate(date).split("-").join("")}`
+    const randomNumber = Math.floor(1000 + Math.random() * 9000)
+    const sqlTicket = `insert into tickets (barcode, email, name, phone, device_sn, device_name, device_cat, device_producer, type, issue, status, \`lines\`, postCode, city, damage_type, damage_description) VALUES \ 
+        (${db.escape(`RMA/${timestamp}/${randomNumber}`)},
+        ${db.escape(ticketData.email)}, 
         ${db.escape(ticketData.name)}, 
         ${db.escape(ticketData.phone)}, 
         ${db.escape(ticketData.deviceSn)}, 
@@ -146,6 +152,20 @@ class RmaModel {
     })
   }
 
+  getOneForWarehouse = (barcode: string, result: Function) => {
+    const sql = `SELECT barcode, ticket_id, device_producer, device_cat, device_name, device_sn FROM tickets WHERE barcode = ${db.escape(
+      barcode
+    )}`
+
+    db.query(sql, (err: MysqlError, rows: WarehouseDetailsRow[]) => {
+      if (err) {
+        return result(err, null)
+      }
+
+      return result(null, rows[0])
+    })
+  }
+
   editTicket = (
     ticketId: number,
     ticketData: UpdateTicketReqBody,
@@ -259,6 +279,20 @@ class RmaModel {
 
   register = (ticketId: number, result: Function) => {
     const sql = `UPDATE tickets SET inWarehouse=1 WHERE ticket_id=${db.escape(
+      ticketId
+    )};`
+
+    db.query(sql, (err: MysqlError, dbResult: OkPacket) => {
+      if (err) {
+        return result(err, null)
+      }
+
+      return result(null, dbResult)
+    })
+  }
+
+  unregister = (ticketId: number, result: Function) => {
+    const sql = `UPDATE tickets SET inWarehouse=0 WHERE ticket_id=${db.escape(
       ticketId
     )};`
 

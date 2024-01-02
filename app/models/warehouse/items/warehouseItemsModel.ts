@@ -4,14 +4,15 @@ import { newItemData } from "../../../types/warehouse/items/itemsTypes"
 
 class warehouseItemsModel {
   createNewItem(item: newItemData, result: Function) {
-    let sql = `INSERT INTO items (name, category, ticket_id, shelve, sn) 
+    let sql = `INSERT INTO items (name, category, ticket_id, barcode, shelve, sn) 
     VALUES (
-    ?, ?, ?, 0, ?
+    ?, ?, ?, ?, 0, ?
     ); UPDATE tickets SET inWarehouse = 1 WHERE ticket_id = ?`
     let data = [
       item.producer,
       item.category,
       item.ticket_id,
+      item.barcode,
       item.sn,
       item.ticket_id,
     ]
@@ -27,28 +28,26 @@ class warehouseItemsModel {
     })
   }
 
-  checkIfItemExists(ticket_id: number, result: Function) {
-    let sql = `SELECT item_id FROM items WHERE ticket_id = ${db.escape(
-      ticket_id
-    )}`
+  checkIfItemExists(barcode: string, result: Function) {
+    let sql = `SELECT item_id FROM items WHERE barcode = ${db.escape(barcode)}`
     db.query(sql, (err, rows) => {
       if (err) return result(err.code, null)
       return result(null, rows)
     })
   }
 
-  findItems(result: Function, ticket_id?: number, shelve_id?: number) {
-    let sql = `SELECT i.item_id, i.name, i.shelve, i.category, i.ticket_id, i.sn, s.code as shelve_code FROM items i JOIN shelves s ON i.shelve = s.shelve_id`
+  findItems(result: Function, barcode?: string, shelve_id?: number) {
+    let sql = `SELECT i.item_id, i.name, i.shelve, i.category, i.ticket_id, i.barcode, i.sn, s.code as shelve_code FROM items i JOIN shelves s ON i.shelve = s.shelve_id`
 
-    if (ticket_id || shelve_id) {
+    if (barcode || shelve_id) {
       sql += ` WHERE `
     }
-    if (ticket_id) {
-      sql += `ticket_id = ${db.escape(ticket_id)}`
+    if (barcode) {
+      sql += `barcode = ${db.escape(barcode)}`
     }
 
     if (shelve_id) {
-      if (ticket_id) {
+      if (barcode) {
         sql += " AND "
       }
       sql += `shelve = ${db.escape(shelve_id)}`
@@ -72,13 +71,15 @@ class warehouseItemsModel {
   changeShelve(
     destination: number,
     current: number,
-    tickets_ids: number[],
+    barcodes: string[],
     result: Function
   ) {
-    let ticket_id_placeholder = tickets_ids.map((el) => "?")
+    let barcodes_placeholder = barcodes.map((el) => "?")
     let sql = `UPDATE items SET shelve = ? 
-    WHERE shelve = ? AND ticket_id in (${ticket_id_placeholder.join(",")})`
-    let data = [destination, current, ...tickets_ids]
+    WHERE shelve = ? AND barcode in (${barcodes_placeholder.join(",")})`
+    let data = [destination, current, ...barcodes]
+
+    console.log(sql, data)
 
     db.query(sql, data, (err, dbResult) => {
       if (err) return result(err.code, null)
@@ -86,9 +87,9 @@ class warehouseItemsModel {
     })
   }
 
-  deleteItem(ticket_id: number, shelve: number, result: Function) {
-    const sql = `DELETE FROM items WHERE ticket_id = ${db.escape(
-      ticket_id
+  deleteItem(barcode: string, shelve: number, result: Function) {
+    const sql = `DELETE FROM items WHERE barcode = ${db.escape(
+      barcode
     )} AND shelve = ${db.escape(shelve)}`
 
     db.query(sql, (err, dbResult) => {

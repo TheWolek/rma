@@ -4,6 +4,7 @@ import RegEx from "../../../helpers/regEx"
 export default {
   itemBarcode: Joi.object({
     barcode: Joi.string().required().regex(RegEx.barcode),
+    sn: Joi.string().required(),
   }).required(),
 
   shevlveId: Joi.object({
@@ -19,5 +20,6 @@ export default {
   deleteItem: Joi.object({
     barcode: Joi.string().required().regex(RegEx.barcode),
     shelve: Joi.number().required(),
+    ticket_id: Joi.number().required(),
   }).required(),
 }

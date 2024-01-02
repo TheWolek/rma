@@ -1,5 +1,6 @@
 export interface newItemData {
   ticket_id: number
+  barcode: string
   producer: string
   category: string
   sn: string
@@ -17,6 +18,7 @@ export interface changeShelveBody {
 }
 
 export interface deleteItemBody {
+  ticket_id: number
   barcode: string
   shelve: number
 }

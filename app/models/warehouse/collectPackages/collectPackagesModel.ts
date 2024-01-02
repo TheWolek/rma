@@ -57,8 +57,7 @@ class CollectPackagesModel {
   }
 
   findOne = (id: number, result: Function) => {
-    const sql = `SELECT pc.id, pc.ref_name, pc.created, pcs.name AS 'status', pci.waybill, pci.ticket_id, 
-        CONCAT(t.ticket_id, '-', t.device_producer, '-', t.device_cat) AS 'barcode'
+    const sql = `SELECT pc.id, pc.ref_name, pc.created, pcs.name AS 'status', pci.waybill, pci.ticket_id, t.barcode
       FROM packageCollect pc 
       JOIN packageCollect_statuses pcs ON pc.status = pcs.id
       LEFT JOIN packageCollect_items pci ON pc.id = pci.collect_id
@@ -75,7 +74,7 @@ class CollectPackagesModel {
   }
 
   addItem = (collectId: number, waybill: string, result: Function) => {
-    const sql_select = `SELECT t.ticket_id, concat(t.ticket_id, '-', t.device_producer, '-', t.device_cat) as 'barcode', w.waybill_number 
+    const sql_select = `SELECT t.ticket_id, t.barcode, w.waybill_number 
     from waybills w join tickets t on t.ticket_id = w.ticket_id where w.waybill_number = ${db.escape(
       waybill
     )} and w.type = 'przychodzący' and w.status = 'potwierdzony';`
@@ -89,9 +88,11 @@ class CollectPackagesModel {
         return result("Nie znaleziono zgłoszenia z podanym listem przewozoym")
       }
 
-      const sql_insert = `INSERT INTO packageCollect_items (collect_id, waybill, ticket_id) VALUES (${db.escape(
+      const sql_insert = `INSERT INTO packageCollect_items (collect_id, waybill, ticket_id, barcode) VALUES (${db.escape(
         collectId
-      )}, ${db.escape(waybill)}, ${db.escape(rows[0].ticket_id)})`
+      )}, ${db.escape(waybill)}, ${db.escape(rows[0].ticket_id)}, ${db.escape(
+        rows[0].barcode
+      )})`
 
       db.query(sql_insert, (err: MysqlError) => {
         if (err) {
@@ -111,7 +112,7 @@ class CollectPackagesModel {
     const sql_delete = `DELETE FROM packageCollect_items WHERE collect_id = ${db.escape(
       collectId
     )};`
-    const sql_insert = `INSERT INTO packageCollect_items (collect_id, waybill, ticket_id) VALUES `
+    const sql_insert = `INSERT INTO packageCollect_items (collect_id, waybill, ticket_id, barcode) VALUES `
     const sql_select = `SELECT waybill FROM packageCollect_items WHERE collect_id = ${db.escape(
       collectId
     )};`
@@ -121,10 +122,11 @@ class CollectPackagesModel {
 
     if (items.length > 0) {
       items.forEach((el, index) => {
-        placeholders.push("(?,?,?)")
+        placeholders.push("(?,?,?,?)")
         params.push(collectId)
         params.push(el.waybill)
         params.push(el.ticket_id)
+        params.push(el.barcode)
       })
 
       sql = sql_delete + sql_insert + ";"
