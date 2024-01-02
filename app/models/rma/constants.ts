@@ -28,6 +28,7 @@ export const detailsFields = [
 
 export const listFields = [
   "t.ticket_id",
+  "t.barcode",
   "t.device_cat",
   "t.device_name",
   "t.device_producer",

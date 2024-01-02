@@ -74,9 +74,9 @@ class RmaModel {
     const queryFilters: string[] = []
     const params = []
 
-    if (filters.ticketId) {
-      queryFilters.push("t.ticket_id = ?")
-      params.push(filters.ticketId)
+    if (filters.barcode) {
+      queryFilters.push("t.barcode = ?")
+      params.push(filters.barcode)
     }
 
     if (filters.status) {

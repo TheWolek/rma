@@ -33,7 +33,7 @@ export interface UpdateTicketReqBody {
 }
 
 export interface Filters {
-  ticketId: number
+  barcode: string
   status: number
   type: number
   deviceSn: string
