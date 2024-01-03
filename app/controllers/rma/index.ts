@@ -1,10 +1,15 @@
 import express, { Request, Response } from "express"
+import PDFDocument, { file } from "pdfkit"
+import fs from "node:fs/promises"
+import QRCode from "qrcode"
+import getBarcodeFilePath from "../../helpers/rma/getBarcodeFilePath"
 import throwGenericError from "../../helpers/throwGenericError"
 import { MysqlError, OkPacket } from "mysql"
 import validators from "./validators"
 import RmaModel from "../../models/rma/rmaModel"
 import auth, { Roles } from "../../middlewares/auth"
 import {
+  BarcodeTicketData,
   CreateReqBody,
   DetailsRow,
   FilteredRow,
@@ -70,7 +75,32 @@ class RmaController {
         return throwGenericError(res, 500, err, err)
       }
 
-      return res.status(200).json({ ticketId: dbResult.insertId })
+      this.Model.getBarcode(
+        dbResult.insertId,
+        async (err: MysqlError, row: BarcodeTicketData) => {
+          if (err) {
+            return throwGenericError(res, 500, err, err)
+          }
+
+          try {
+            const content = `${row.barcode}`
+            const qrcode = await QRCode.toDataURL(content)
+
+            const doc = new PDFDocument({ size: "A7" })
+            doc
+              .image(qrcode, 40, 25)
+              .text(`\n${row.barcode}`, 20, 150, { align: "center" })
+            doc.end()
+            await fs.writeFile(
+              getBarcodeFilePath(dbResult.insertId, "save"),
+              doc
+            )
+            return res.status(200).json({ ticketId: dbResult.insertId })
+          } catch (error) {
+            console.log(error)
+          }
+        }
+      )
     })
   }
 
@@ -95,6 +125,8 @@ class RmaController {
         if (err) {
           return throwGenericError(res, 500, err, err)
         }
+
+        row.barcodeURL = getBarcodeFilePath(Number(req.query.ticketId), "read")
 
         return res.status(200).json(row)
       }

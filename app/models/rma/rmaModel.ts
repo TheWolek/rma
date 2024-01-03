@@ -2,6 +2,7 @@ import db from "../db"
 import { MysqlError, OkPacket } from "mysql"
 import {
   AccessoriesRow,
+  BarcodeTicketData,
   CommentRow,
   CreateReqBody,
   DetailsRow,
@@ -315,6 +316,20 @@ class RmaModel {
       }
 
       return result(null, true)
+    })
+  }
+
+  getBarcode = (ticketId: number, result: Function) => {
+    const sql = `SELECT ticket_id, barcode FROM tickets WHERE ticket_id = ${db.escape(
+      ticketId
+    )}`
+
+    db.query(sql, (err: MysqlError, rows: BarcodeTicketData[]) => {
+      if (err) {
+        return result(err, null)
+      }
+
+      return result(null, rows[0])
     })
   }
 

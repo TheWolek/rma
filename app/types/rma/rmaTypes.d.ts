@@ -79,6 +79,7 @@ export type TicketStatus = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12
 export interface DetailsRow {
   ticket_id: number
   barcode: string
+  barcodeURL: string
   email: string
   name: string
   phone: string
@@ -157,4 +158,9 @@ export interface WaybillRow {
   type: WaybillType
   created: Date
   lastUpdate: Date
+}
+
+export interface BarcodeTicketData {
+  ticket_id: number
+  barcode: string
 }

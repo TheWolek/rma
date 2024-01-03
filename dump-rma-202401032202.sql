@@ -16,24 +16,6 @@
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 --
--- Temporary table structure for view `NewView`
---
-
-DROP TABLE IF EXISTS `NewView`;
-/*!50001 DROP VIEW IF EXISTS `NewView`*/;
-SET @saved_cs_client     = @@character_set_client;
-SET character_set_client = utf8;
-/*!50001 CREATE TABLE `NewView` (
-  `item_id` tinyint NOT NULL,
-  `category` tinyint NOT NULL,
-  `name` tinyint NOT NULL,
-  `ticket_id` tinyint NOT NULL,
-  `barcode` tinyint NOT NULL,
-  `sn` tinyint NOT NULL
-) ENGINE=MyISAM */;
-SET character_set_client = @saved_cs_client;
-
---
 -- Table structure for table `items`
 --
 
@@ -47,9 +29,10 @@ CREATE TABLE `items` (
   `category` varchar(100) NOT NULL,
   `ticket_id` int NOT NULL,
   `sn` varchar(100) NOT NULL,
+  `barcode` varchar(100) NOT NULL,
   PRIMARY KEY (`item_id`),
   UNIQUE KEY `items_un` (`ticket_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=121 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=126 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -67,7 +50,7 @@ CREATE TABLE `packageCollect` (
   PRIMARY KEY (`id`),
   KEY `packageCollect_FK` (`status`),
   CONSTRAINT `packageCollect_FK` FOREIGN KEY (`status`) REFERENCES `packageCollect_statuses` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=18 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -82,10 +65,11 @@ CREATE TABLE `packageCollect_items` (
   `collect_id` int NOT NULL,
   `waybill` varchar(100) NOT NULL,
   `ticket_id` int NOT NULL,
+  `barcode` varchar(100) NOT NULL,
   PRIMARY KEY (`id`),
   KEY `packageCollect_items_FK` (`collect_id`),
   CONSTRAINT `packageCollect_items_FK` FOREIGN KEY (`collect_id`) REFERENCES `packageCollect` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=44 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=47 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -261,10 +245,11 @@ CREATE TABLE `tickets` (
   `damage_type` int NOT NULL,
   `result_type` int DEFAULT NULL,
   `result_description` varchar(100) COLLATE utf8mb4_polish_ci DEFAULT NULL,
+  `barcode` varchar(100) COLLATE utf8mb4_polish_ci NOT NULL,
   PRIMARY KEY (`ticket_id`),
   KEY `tickets_FK` (`damage_type`),
   CONSTRAINT `tickets_FK` FOREIGN KEY (`damage_type`) REFERENCES `tickets_damage_types` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=76 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_polish_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=100 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_polish_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -281,7 +266,7 @@ CREATE TABLE `tickets_additionalAccessories` (
   PRIMARY KEY (`id`),
   KEY `tickets_additionalAccesories_FK_1` (`type_id`),
   KEY `tickets_additionalAccesories_FK` (`ticket_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=184 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=208 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -574,31 +559,12 @@ CREATE TABLE `waybills` (
   `lastUpdate` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `waybills_FK` (`ticket_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=68 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=73 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
 -- Dumping routines for database 'rma'
 --
-
---
--- Final view structure for view `NewView`
---
-
-/*!50001 DROP TABLE IF EXISTS `NewView`*/;
-/*!50001 DROP VIEW IF EXISTS `NewView`*/;
-/*!50001 SET @saved_cs_client          = @@character_set_client */;
-/*!50001 SET @saved_cs_results         = @@character_set_results */;
-/*!50001 SET @saved_col_connection     = @@collation_connection */;
-/*!50001 SET character_set_client      = utf8mb4 */;
-/*!50001 SET character_set_results     = utf8mb4 */;
-/*!50001 SET collation_connection      = utf8mb4_0900_ai_ci */;
-/*!50001 CREATE ALGORITHM=UNDEFINED */
-/*!50013 DEFINER=`dpp`@`%` SQL SECURITY DEFINER */
-/*!50001 VIEW `NewView` AS select `i`.`item_id` AS `item_id`,`i`.`category` AS `category`,`i`.`name` AS `name`,`i`.`ticket_id` AS `ticket_id`,concat(`i`.`ticket_id`,'-',`i`.`name`,'-',`i`.`category`) AS `barcode`,`i`.`sn` AS `sn` from ((`items` `i` join `tickets` `t` on((`i`.`ticket_id` = `t`.`ticket_id`))) join `shelves` `s` on((`i`.`shelve` = `s`.`shelve_id`))) where ((`t`.`status` = 11) and (`s`.`shelve_id` = 5)) */;
-/*!50001 SET character_set_client      = @saved_cs_client */;
-/*!50001 SET character_set_results     = @saved_cs_results */;
-/*!50001 SET collation_connection      = @saved_col_connection */;
 
 --
 -- Final view structure for view `warehouse_canceled_from_bufor_shelve_items`
@@ -614,7 +580,7 @@ CREATE TABLE `waybills` (
 /*!50001 SET collation_connection      = utf8mb4_0900_ai_ci */;
 /*!50001 CREATE ALGORITHM=UNDEFINED */
 /*!50013 DEFINER=`dpp`@`%` SQL SECURITY DEFINER */
-/*!50001 VIEW `warehouse_canceled_from_bufor_shelve_items` AS select `i`.`item_id` AS `item_id`,`i`.`category` AS `category`,`i`.`name` AS `name`,`i`.`ticket_id` AS `ticket_id`,concat(`i`.`ticket_id`,'-',`i`.`name`,'-',`i`.`category`) AS `barcode`,`i`.`sn` AS `sn` from ((`items` `i` join `tickets` `t` on((`i`.`ticket_id` = `t`.`ticket_id`))) join `shelves` `s` on((`i`.`shelve` = `s`.`shelve_id`))) where ((`t`.`status` = 11) and (`s`.`shelve_id` = 5)) */;
+/*!50001 VIEW `warehouse_canceled_from_bufor_shelve_items` AS select `i`.`item_id` AS `item_id`,`i`.`category` AS `category`,`i`.`name` AS `name`,`i`.`ticket_id` AS `ticket_id`,`i`.`barcode` AS `barcode`,`i`.`sn` AS `sn` from ((`items` `i` join `tickets` `t` on((`i`.`ticket_id` = `t`.`ticket_id`))) join `shelves` `s` on((`i`.`shelve` = `s`.`shelve_id`))) where ((`t`.`status` = 11) and (`s`.`shelve_id` = 5)) */;
 /*!50001 SET character_set_client      = @saved_cs_client */;
 /*!50001 SET character_set_results     = @saved_cs_results */;
 /*!50001 SET collation_connection      = @saved_col_connection */;
@@ -633,7 +599,7 @@ CREATE TABLE `waybills` (
 /*!50001 SET collation_connection      = utf8mb4_0900_ai_ci */;
 /*!50001 CREATE ALGORITHM=UNDEFINED */
 /*!50013 DEFINER=`dpp`@`%` SQL SECURITY DEFINER */
-/*!50001 VIEW `warehouse_canceled_from_verification` AS select `i`.`item_id` AS `item_id`,`i`.`category` AS `category`,`i`.`name` AS `name`,`i`.`ticket_id` AS `ticket_id`,concat(`i`.`ticket_id`,'-',`i`.`name`,'-',`i`.`category`) AS `barcode`,`i`.`sn` AS `sn` from ((`items` `i` join `tickets` `t` on((`t`.`ticket_id` = `i`.`ticket_id`))) join `shelves` `s` on((`i`.`shelve` = `s`.`shelve_id`))) where ((`t`.`status` = 11) and (`s`.`shelve_id` = 2)) */;
+/*!50001 VIEW `warehouse_canceled_from_verification` AS select `i`.`item_id` AS `item_id`,`i`.`category` AS `category`,`i`.`name` AS `name`,`i`.`ticket_id` AS `ticket_id`,`i`.`barcode` AS `barcode`,`i`.`sn` AS `sn` from ((`items` `i` join `tickets` `t` on((`t`.`ticket_id` = `i`.`ticket_id`))) join `shelves` `s` on((`i`.`shelve` = `s`.`shelve_id`))) where ((`t`.`status` = 11) and (`s`.`shelve_id` = 2)) */;
 /*!50001 SET character_set_client      = @saved_cs_client */;
 /*!50001 SET character_set_results     = @saved_cs_results */;
 /*!50001 SET collation_connection      = @saved_col_connection */;
@@ -652,7 +618,7 @@ CREATE TABLE `waybills` (
 /*!50001 SET collation_connection      = utf8mb4_0900_ai_ci */;
 /*!50001 CREATE ALGORITHM=UNDEFINED */
 /*!50013 DEFINER=`dpp`@`%` SQL SECURITY DEFINER */
-/*!50001 VIEW `warehouse_entry_shelve_items` AS select `i`.`item_id` AS `item_id`,`i`.`category` AS `category`,`i`.`name` AS `name`,`i`.`ticket_id` AS `ticket_id`,concat(`i`.`ticket_id`,'-',`i`.`name`,'-',`i`.`category`) AS `barcode`,`i`.`sn` AS `sn` from `items` `i` where (`i`.`shelve` = 0) */;
+/*!50001 VIEW `warehouse_entry_shelve_items` AS select `i`.`item_id` AS `item_id`,`i`.`category` AS `category`,`i`.`name` AS `name`,`i`.`ticket_id` AS `ticket_id`,`i`.`barcode` AS `barcode`,`i`.`sn` AS `sn` from `items` `i` where (`i`.`shelve` = 0) */;
 /*!50001 SET character_set_client      = @saved_cs_client */;
 /*!50001 SET character_set_results     = @saved_cs_results */;
 /*!50001 SET collation_connection      = @saved_col_connection */;
@@ -671,7 +637,7 @@ CREATE TABLE `waybills` (
 /*!50001 SET collation_connection      = utf8mb4_0900_ai_ci */;
 /*!50001 CREATE ALGORITHM=UNDEFINED */
 /*!50013 DEFINER=`dpp`@`%` SQL SECURITY DEFINER */
-/*!50001 VIEW `warehouse_leave_diagnose` AS select `i`.`item_id` AS `item_id`,`i`.`category` AS `category`,`i`.`name` AS `name`,`i`.`ticket_id` AS `ticket_id`,concat(`i`.`ticket_id`,'-',`i`.`name`,'-',`i`.`category`) AS `barcode`,`i`.`sn` AS `sn`,`s`.`shelve_id` AS `shelve_id`,`s`.`code` AS `code` from ((`items` `i` join `shelves` `s` on((`i`.`shelve` = `s`.`shelve_id`))) join `tickets` `t` on((`t`.`ticket_id` = `i`.`ticket_id`))) where (`s`.`shelve_id` = 4) */;
+/*!50001 VIEW `warehouse_leave_diagnose` AS select `i`.`item_id` AS `item_id`,`i`.`category` AS `category`,`i`.`name` AS `name`,`i`.`ticket_id` AS `ticket_id`,`i`.`barcode` AS `barcode`,`i`.`sn` AS `sn`,`s`.`shelve_id` AS `shelve_id`,`s`.`code` AS `code` from ((`items` `i` join `shelves` `s` on((`i`.`shelve` = `s`.`shelve_id`))) join `tickets` `t` on((`t`.`ticket_id` = `i`.`ticket_id`))) where (`s`.`shelve_id` = 4) */;
 /*!50001 SET character_set_client      = @saved_cs_client */;
 /*!50001 SET character_set_results     = @saved_cs_results */;
 /*!50001 SET collation_connection      = @saved_col_connection */;
@@ -690,7 +656,7 @@ CREATE TABLE `waybills` (
 /*!50001 SET collation_connection      = utf8mb4_0900_ai_ci */;
 /*!50001 CREATE ALGORITHM=UNDEFINED */
 /*!50013 DEFINER=`dpp`@`%` SQL SECURITY DEFINER */
-/*!50001 VIEW `warehouse_toBufor_shelve_items` AS select `i`.`item_id` AS `item_id`,`i`.`category` AS `category`,`i`.`name` AS `name`,`i`.`ticket_id` AS `ticket_id`,concat(`i`.`ticket_id`,'-',`i`.`name`,'-',`i`.`category`) AS `barcode`,`i`.`sn` AS `sn` from (`items` `i` join `tickets` `t` on((`t`.`ticket_id` = `i`.`ticket_id`))) where (`t`.`status` in (6,7)) */;
+/*!50001 VIEW `warehouse_toBufor_shelve_items` AS select `i`.`item_id` AS `item_id`,`i`.`category` AS `category`,`i`.`name` AS `name`,`i`.`ticket_id` AS `ticket_id`,`i`.`barcode` AS `barcode`,`i`.`sn` AS `sn` from (`items` `i` join `tickets` `t` on((`t`.`ticket_id` = `i`.`ticket_id`))) where (`t`.`status` in (6,7)) */;
 /*!50001 SET character_set_client      = @saved_cs_client */;
 /*!50001 SET character_set_results     = @saved_cs_results */;
 /*!50001 SET collation_connection      = @saved_col_connection */;
@@ -709,7 +675,7 @@ CREATE TABLE `waybills` (
 /*!50001 SET collation_connection      = utf8mb4_0900_ai_ci */;
 /*!50001 CREATE ALGORITHM=UNDEFINED */
 /*!50013 DEFINER=`dpp`@`%` SQL SECURITY DEFINER */
-/*!50001 VIEW `warehouse_toDiagnose_fromBufor_shelve_items` AS select `i`.`item_id` AS `item_id`,`i`.`category` AS `category`,`i`.`name` AS `name`,`i`.`ticket_id` AS `ticket_id`,concat(`i`.`ticket_id`,'-',`i`.`name`,'-',`i`.`category`) AS `barcode`,`i`.`sn` AS `sn` from (`items` `i` join `tickets` `t` on((`t`.`ticket_id` = `i`.`ticket_id`))) where (`t`.`status` = 6) */;
+/*!50001 VIEW `warehouse_toDiagnose_fromBufor_shelve_items` AS select `i`.`item_id` AS `item_id`,`i`.`category` AS `category`,`i`.`name` AS `name`,`i`.`ticket_id` AS `ticket_id`,`i`.`barcode` AS `barcode`,`i`.`sn` AS `sn` from (`items` `i` join `tickets` `t` on((`t`.`ticket_id` = `i`.`ticket_id`))) where (`t`.`status` = 6) */;
 /*!50001 SET character_set_client      = @saved_cs_client */;
 /*!50001 SET character_set_results     = @saved_cs_results */;
 /*!50001 SET collation_connection      = @saved_col_connection */;
@@ -728,7 +694,7 @@ CREATE TABLE `waybills` (
 /*!50001 SET collation_connection      = utf8mb4_0900_ai_ci */;
 /*!50001 CREATE ALGORITHM=UNDEFINED */
 /*!50013 DEFINER=`dpp`@`%` SQL SECURITY DEFINER */
-/*!50001 VIEW `warehouse_toDiagnose_shelve_items` AS select `i`.`item_id` AS `item_id`,`i`.`category` AS `category`,`i`.`name` AS `name`,`i`.`ticket_id` AS `ticket_id`,concat(`i`.`ticket_id`,'-',`i`.`name`,'-',`i`.`category`) AS `barcode`,`i`.`sn` AS `sn`,`s`.`shelve_id` AS `shelve_id`,`s`.`code` AS `code` from ((`items` `i` join `shelves` `s` on((`i`.`shelve` = `s`.`shelve_id`))) join `tickets` `t` on((`t`.`ticket_id` = `i`.`ticket_id`))) where ((`t`.`status` = 4) and (`s`.`shelve_id` = 2)) */;
+/*!50001 VIEW `warehouse_toDiagnose_shelve_items` AS select `i`.`item_id` AS `item_id`,`i`.`category` AS `category`,`i`.`name` AS `name`,`i`.`ticket_id` AS `ticket_id`,`i`.`barcode` AS `barcode`,`i`.`sn` AS `sn`,`s`.`shelve_id` AS `shelve_id`,`s`.`code` AS `code` from ((`items` `i` join `shelves` `s` on((`i`.`shelve` = `s`.`shelve_id`))) join `tickets` `t` on((`t`.`ticket_id` = `i`.`ticket_id`))) where ((`t`.`status` = 4) and (`s`.`shelve_id` = 2)) */;
 /*!50001 SET character_set_client      = @saved_cs_client */;
 /*!50001 SET character_set_results     = @saved_cs_results */;
 /*!50001 SET collation_connection      = @saved_col_connection */;
@@ -742,4 +708,4 @@ CREATE TABLE `waybills` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-01-01 19:56:01
+-- Dump completed on 2024-01-03 22:02:43
