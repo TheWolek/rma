@@ -1,8 +1,5 @@
 import express, { Request, Response } from "express"
-import PDFDocument, { file } from "pdfkit"
-import fs from "node:fs/promises"
-import QRCode from "qrcode"
-import getBarcodeFilePath from "../../helpers/rma/getBarcodeFilePath"
+import getBarcodeFilePath from "../../helpers/rma/barcodeFiles/getBarcodeFilePath"
 import throwGenericError from "../../helpers/throwGenericError"
 import { MysqlError, OkPacket } from "mysql"
 import validators from "./validators"
@@ -17,6 +14,7 @@ import {
   UpdateTicketReqBody,
 } from "../../types/rma/rmaTypes"
 import checkIfTicketExists from "../../helpers/rma/checkIfTicketExists"
+import saveBarcodeFile from "../../helpers/rma/barcodeFiles/saveBarcodeFile"
 
 class RmaController {
   public path = "/rma"
@@ -59,6 +57,12 @@ class RmaController {
       auth(Roles["RmaCommon"]),
       this.changeState
     )
+
+    this.router.post(
+      `${this.path}/generateBarcode`,
+      auth(Roles["Admin"]),
+      this.generateBarcodeFile
+    )
   }
 
   private Model = new RmaModel()
@@ -82,26 +86,28 @@ class RmaController {
             return throwGenericError(res, 500, err, err)
           }
 
-          try {
-            const content = `${row.barcode}`
-            const qrcode = await QRCode.toDataURL(content)
+          await saveBarcodeFile({
+            barcode: row.barcode,
+            ticketId: dbResult.insertId,
+          })
 
-            const doc = new PDFDocument({ size: "A7" })
-            doc
-              .image(qrcode, 40, 25)
-              .text(`\n${row.barcode}`, 20, 150, { align: "center" })
-            doc.end()
-            await fs.writeFile(
-              getBarcodeFilePath(dbResult.insertId, "save"),
-              doc
-            )
-            return res.status(200).json({ ticketId: dbResult.insertId })
-          } catch (error) {
-            console.log(error)
-          }
+          return res.status(200).json({ ticketId: dbResult.insertId })
         }
       )
     })
+  }
+
+  generateBarcodeFile = async (
+    req: Request<{}, {}, { ticketId: number; barcode: string }>,
+    res: Response
+  ) => {
+    if (req.body.barcode === undefined || req.body.ticketId === undefined) {
+      return throwGenericError(res, 400, "Pola barcode i ticketId są wymagane")
+    }
+
+    const filePath = await saveBarcodeFile(req.body)
+
+    return res.status(200).json({ filePath })
   }
 
   find = (req: Request<{}, {}, {}, Filters>, res: Response) => {
@@ -126,7 +132,14 @@ class RmaController {
           return throwGenericError(res, 500, err, err)
         }
 
-        row.barcodeURL = getBarcodeFilePath(Number(req.query.ticketId), "read")
+        if (row.status >= 10) {
+          row.barcodeURL = null
+        } else {
+          row.barcodeURL = getBarcodeFilePath(
+            Number(req.query.ticketId),
+            "read"
+          )
+        }
 
         return res.status(200).json(row)
       }

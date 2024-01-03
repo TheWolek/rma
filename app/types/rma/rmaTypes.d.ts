@@ -79,7 +79,7 @@ export type TicketStatus = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12
 export interface DetailsRow {
   ticket_id: number
   barcode: string
-  barcodeURL: string
+  barcodeURL: string | null
   email: string
   name: string
   phone: string

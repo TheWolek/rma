@@ -2,7 +2,6 @@ import express, { Request, Response } from "express"
 
 import throwGenericError from "../../../helpers/throwGenericError"
 import warehouseItemsModel from "../../../models/warehouse/items/warehouseItemsModel"
-import checkBarcode from "../../../helpers/items/checkBarcode"
 import { MysqlError, OkPacket } from "mysql"
 import {
   changeShelveBody,
@@ -13,6 +12,7 @@ import validators from "./validators"
 import auth, { Roles } from "../../../middlewares/auth"
 import RmaModel from "../../../models/rma/rmaModel"
 import { WarehouseDetailsRow } from "../../../types/rma/rmaTypes"
+import removeBarcodeFile from "../../../helpers/rma/barcodeFiles/removeBarcodeFile"
 
 class warehouseItemController {
   public path = "/warehouse/items"
@@ -236,13 +236,17 @@ class warehouseItemController {
           )
         }
 
-        this.RmaModel.unregister(req.body.ticket_id, (err: MysqlError) => {
-          if (err) return throwGenericError(res, 500, err, err)
+        this.RmaModel.unregister(
+          req.body.ticket_id,
+          async (err: MysqlError) => {
+            if (err) return throwGenericError(res, 500, err, err)
 
-          return res
-            .status(200)
-            .json({ barcode: req.body.barcode, shelve: req.body.shelve })
-        })
+            await removeBarcodeFile(req.body.ticket_id)
+            return res
+              .status(200)
+              .json({ barcode: req.body.barcode, shelve: req.body.shelve })
+          }
+        )
       }
     )
   }
