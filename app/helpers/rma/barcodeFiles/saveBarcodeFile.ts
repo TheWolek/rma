@@ -1,6 +1,4 @@
-import PDFDocument from "pdfkit"
 import QRCode from "qrcode"
-import fs from "node:fs/promises"
 import getBarcodeFilePath from "./getBarcodeFilePath"
 
 export interface SaveBarcodeData {
@@ -10,13 +8,9 @@ export interface SaveBarcodeData {
 
 export default async ({ barcode, ticketId }: SaveBarcodeData) => {
   try {
-    const qrcode = await QRCode.toDataURL(barcode)
-    const doc = new PDFDocument({ size: "A7" })
-
-    doc.image(qrcode, 40, 25).text(`\n${barcode}`, 20, 150, { align: "center" })
-    doc.end()
-
-    await fs.writeFile(getBarcodeFilePath(ticketId, "save"), doc)
+    await QRCode.toFile(getBarcodeFilePath(ticketId, "save"), barcode, {
+      type: "png",
+    })
     return getBarcodeFilePath(ticketId, "read")
   } catch (error) {
     console.log(error)
