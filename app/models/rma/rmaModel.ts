@@ -147,7 +147,7 @@ class RmaModel {
         return result(err, null)
       }
 
-      rows[0].inWarehouse = rows[0].inWarehouse === 1 ? true : false
+      rows[0].inWarehouse = rows[0]?.inWarehouse === 1 ? true : false
 
       return result(null, rows[0])
     })

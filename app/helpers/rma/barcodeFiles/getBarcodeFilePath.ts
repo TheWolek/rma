@@ -4,8 +4,8 @@ export type BarcodeFilePathMode = "save" | "read"
 
 export default (ticketId: number, mode: BarcodeFilePathMode) => {
   if (mode === "save") {
-    return join(process.cwd(), "public", `${ticketId}.jpg`)
+    return join(process.cwd(), "public", `${ticketId}.pdf`)
   } else {
-    return `static/${ticketId}.jpg`
+    return `static/${ticketId}.pdf`
   }
 }
