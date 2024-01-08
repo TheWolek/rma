@@ -1,4 +1,3 @@
-import { MysqlError } from "mysql"
 import {
   CreateWaybillBody,
   EditWaybillBody,
@@ -6,9 +5,12 @@ import {
   WaybillRow,
 } from "../../types/rma/rmaTypes"
 import db from "../db"
+import query from "../dbProm"
+import { ResultSetHeader } from "mysql2"
+import mysql from "mysql2/promise"
 
 class WaybillsModel {
-  find = (params: FindWaybillReqQuery, result: Function) => {
+  find = async (conn: mysql.PoolConnection, params: FindWaybillReqQuery) => {
     let sql = `SELECT id, waybill_number, ticket_id, status, type, created, lastUpdate
          FROM waybills WHERE `
     if (params.ticketId) {
@@ -17,16 +19,15 @@ class WaybillsModel {
       sql += `waybill_number = ${db.escape(params.waybillNumber)}`
     }
 
-    db.query(sql, (err: MysqlError, rows: WaybillRow[]) => {
-      if (err) {
-        return result(err, null)
-      }
+    const rows = await query(conn, sql)
 
-      return result(null, rows)
-    })
+    return rows as WaybillRow[]
   }
 
-  create = (waybillData: CreateWaybillBody, result: Function) => {
+  create = async (
+    conn: mysql.PoolConnection,
+    waybillData: CreateWaybillBody
+  ) => {
     const sql = `INSERT INTO waybills (waybill_number, ticket_id, status, type) VALUES
      (?, ?, 'potwierdzony', ?)`
     const params = [
@@ -35,19 +36,15 @@ class WaybillsModel {
       waybillData.type,
     ]
 
-    db.query(sql, params, (err, dbResult) => {
-      if (err) {
-        return result(err, null)
-      }
+    const dbResult = await query(conn, sql, params)
 
-      return result(null, dbResult)
-    })
+    return dbResult as ResultSetHeader
   }
 
-  edit = (
+  edit = async (
+    conn: mysql.PoolConnection,
     waybillId: number,
-    waybillData: EditWaybillBody,
-    result: Function
+    waybillData: EditWaybillBody
   ) => {
     const sql = `UPDATE waybills SET waybill_number = ?, status = ?, type = ?, lastUpdate = NOW()
     WHERE id = ?`
@@ -58,13 +55,9 @@ class WaybillsModel {
       waybillId,
     ]
 
-    db.query(sql, params, (err, dbResult) => {
-      if (err) {
-        return result(err, null)
-      }
+    const dbResult = await query(conn, sql, params)
 
-      return result(null, dbResult)
-    })
+    return dbResult as ResultSetHeader
   }
 }
 

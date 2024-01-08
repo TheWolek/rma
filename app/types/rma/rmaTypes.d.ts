@@ -105,6 +105,11 @@ export interface DetailsRow {
   result_description: null | string
 }
 
+export interface BarcodeData {
+  ticket_id: number
+  barcode: string
+}
+
 export interface WarehouseDetailsRow {
   ticket_id: number
   barcode: string

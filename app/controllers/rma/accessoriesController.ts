@@ -1,10 +1,11 @@
 import express, { Request, Response } from "express"
 import throwGenericError from "../../helpers/throwGenericError"
 import RmaModel from "../../models/rma/rmaModel"
-import { MysqlError } from "mysql"
 import validators from "./validators"
 import auth, { Roles } from "../../middlewares/auth"
-import { AccessoriesRow } from "../../types/rma/rmaTypes"
+import { getUserId } from "../../helpers/jwt"
+import { connection } from "../../models/dbProm"
+import LogModel from "../../models/logs/logModel"
 
 class RmaAccessoriesController {
   public path = "/rma/accessories"
@@ -30,25 +31,37 @@ class RmaAccessoriesController {
   }
 
   private Model = new RmaModel()
+  private logModel = new LogModel()
 
-  getAccessories = (req: Request<{ ticketId: string }>, res: Response) => {
+  getAccessories = async (
+    req: Request<{ ticketId: string }>,
+    res: Response
+  ) => {
     if (isNaN(parseInt(req.params.ticketId))) {
       return throwGenericError(res, 400, "Nieprawidłowy format pola ticketId")
     }
 
-    this.Model.getAccessories(
-      Number(req.params.ticketId),
-      (err: MysqlError, rows: AccessoriesRow[]) => {
-        if (err) {
-          return throwGenericError(res, 500, err, err)
-        }
+    const conn = await connection.getConnection()
+    await conn.beginTransaction()
 
-        return res.status(200).json(rows)
-      }
-    )
+    try {
+      const rows = await this.Model.getAccessories(
+        conn,
+        Number(req.params.ticketId)
+      )
+
+      await conn.commit()
+
+      return res.status(200).json(rows)
+    } catch (error) {
+      conn.rollback()
+      return throwGenericError(res, 500, String(error), error)
+    } finally {
+      conn.release()
+    }
   }
 
-  editAccessories = (
+  editAccessories = async (
     req: Request<{ ticketId: string }, {}, { deviceAccessories: number[] }>,
     res: Response
   ) => {
@@ -62,17 +75,36 @@ class RmaAccessoriesController {
       return throwGenericError(res, 400, error?.details[0].message)
     }
 
-    this.Model.editAccessories(
-      Number(req.params.ticketId),
-      req.body.deviceAccessories,
-      (err: MysqlError, dbResult: boolean) => {
-        if (err) {
-          return throwGenericError(res, 500, err, err)
-        }
+    const conn = await connection.getConnection()
+    await conn.beginTransaction()
 
-        return res.status(200).json({})
-      }
-    )
+    try {
+      const userId = getUserId(String(req.headers.authorization?.split(" ")[1]))
+
+      await this.Model.editAccessories(
+        conn,
+        Number(req.params.ticketId),
+        req.body.deviceAccessories
+      )
+
+      await this.logModel.log(conn, {
+        action: "editAccessories",
+        log: `Edytowano akcesoria: ${JSON.stringify(
+          req.body.deviceAccessories
+        )}`,
+        ticketId: Number(req.params.ticketId),
+        user_id: userId,
+      })
+
+      await conn.commit()
+
+      return res.status(200).json({})
+    } catch (error) {
+      conn.rollback()
+      return throwGenericError(res, 500, String(error), error)
+    } finally {
+      conn.release()
+    }
   }
 }
 

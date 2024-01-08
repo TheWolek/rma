@@ -1,20 +1,20 @@
 import express, { Request, Response } from "express"
 import getBarcodeFilePath from "../../helpers/rma/barcodeFiles/getBarcodeFilePath"
 import throwGenericError from "../../helpers/throwGenericError"
-import { MysqlError, OkPacket } from "mysql"
 import validators from "./validators"
 import RmaModel from "../../models/rma/rmaModel"
 import auth, { Roles } from "../../middlewares/auth"
 import {
-  BarcodeTicketData,
   CreateReqBody,
-  DetailsRow,
-  FilteredRow,
   Filters,
   UpdateTicketReqBody,
 } from "../../types/rma/rmaTypes"
 import checkIfTicketExists from "../../helpers/rma/checkIfTicketExists"
 import saveBarcodeFile from "../../helpers/rma/barcodeFiles/saveBarcodeFile"
+import LogModel from "../../models/logs/logModel"
+import { getUserId } from "../../helpers/jwt"
+import { connection } from "../../models/dbProm"
+import { ResultSetHeader } from "mysql2"
 
 class RmaController {
   public path = "/rma"
@@ -66,35 +66,51 @@ class RmaController {
   }
 
   private Model = new RmaModel()
+  private logModel = new LogModel()
 
-  create = (req: Request<{}, {}, CreateReqBody>, res: Response) => {
+  create = async (req: Request<{}, {}, CreateReqBody>, res: Response) => {
     const { error } = validators.create.validate(req.body)
 
     if (error !== undefined) {
       return throwGenericError(res, 400, error?.details[0].message)
     }
 
-    this.Model.create(req.body, (err: MysqlError, dbResult: OkPacket) => {
-      if (err) {
-        return throwGenericError(res, 500, err, err)
-      }
+    const conn = await connection.getConnection()
+    await conn.beginTransaction()
 
-      this.Model.getBarcode(
-        dbResult.insertId,
-        async (err: MysqlError, row: BarcodeTicketData) => {
-          if (err) {
-            return throwGenericError(res, 500, err, err)
-          }
+    const userId = getUserId(String(req.headers.authorization?.split(" ")[1]))
 
-          await saveBarcodeFile({
-            barcode: row.barcode,
-            ticketId: dbResult.insertId,
-          })
+    try {
+      const ticketDbResult = await this.Model.create(conn, req.body)
 
-          return res.status(200).json({ ticketId: dbResult.insertId })
-        }
+      this.logModel.log(conn, {
+        action: "created",
+        log: "Utworzono zlecenie",
+        ticketId: (ticketDbResult as ResultSetHeader)?.insertId,
+        user_id: userId,
+      })
+
+      const barcodeData = await this.Model.getBarcode(
+        conn,
+        ticketDbResult.insertId
       )
-    })
+
+      await saveBarcodeFile({
+        barcode: barcodeData[0].barcode,
+        ticketId: ticketDbResult.insertId,
+      })
+
+      conn.commit()
+
+      return res.status(200).json({
+        ticketId: ticketDbResult.insertId,
+      })
+    } catch (error: unknown) {
+      conn.rollback()
+      return throwGenericError(res, 500, String(error), error)
+    } finally {
+      conn.release()
+    }
   }
 
   generateBarcodeFile = async (
@@ -110,43 +126,59 @@ class RmaController {
     return res.status(200).json({ filePath })
   }
 
-  find = (req: Request<{}, {}, {}, Filters>, res: Response) => {
-    this.Model.filter(req.query, (err: MysqlError, rows: FilteredRow[]) => {
-      if (err) {
-        return throwGenericError(res, 500, err, err)
-      }
+  find = async (req: Request<{}, {}, {}, Filters>, res: Response) => {
+    const conn = await connection.getConnection()
+    await conn.beginTransaction()
+
+    try {
+      const rows = await this.Model.filter(conn, req.query)
+
+      conn.commit()
 
       return res.status(200).json(rows)
-    })
+    } catch (error) {
+      conn.rollback()
+      return throwGenericError(res, 500, String(error), error)
+    } finally {
+      conn.release()
+    }
   }
 
-  findOne = (req: Request<{}, {}, {}, { ticketId: string }>, res: Response) => {
+  findOne = async (
+    req: Request<{}, {}, {}, { ticketId: string }>,
+    res: Response
+  ) => {
     if (isNaN(parseInt(req.query.ticketId))) {
       return throwGenericError(res, 400, "Nieprawidłowy format pola ticketId")
     }
 
-    this.Model.getOne(
-      Number(req.query.ticketId),
-      (err: MysqlError, row: DetailsRow) => {
-        if (err) {
-          return throwGenericError(res, 500, err, err)
-        }
+    const conn = await connection.getConnection()
+    await conn.beginTransaction()
 
-        if (row.status >= 10) {
-          row.barcodeURL = null
-        } else {
-          row.barcodeURL = getBarcodeFilePath(
-            Number(req.query.ticketId),
-            "read"
-          )
-        }
+    try {
+      const row = await this.Model.getOne(conn, Number(req.query.ticketId))
 
-        return res.status(200).json(row)
+      if (row[0].status >= 10) {
+        row[0].barcodeURL = null
+      } else {
+        row[0].barcodeURL = getBarcodeFilePath(
+          Number(req.query.ticketId),
+          "read"
+        )
       }
-    )
+
+      conn.commit()
+
+      return res.status(200).json(row[0])
+    } catch (error) {
+      conn.rollback()
+      return throwGenericError(res, 500, String(error), error)
+    } finally {
+      conn.release()
+    }
   }
 
-  editTicket = (
+  editTicket = async (
     req: Request<{ ticketId: string }, {}, UpdateTicketReqBody>,
     res: Response
   ) => {
@@ -160,45 +192,70 @@ class RmaController {
       return throwGenericError(res, 400, error?.details[0].message)
     }
 
-    this.Model.editTicket(
-      Number(req.params.ticketId),
-      req.body,
-      (err: MysqlError, dbResult: OkPacket) => {
-        if (err) {
-          return throwGenericError(res, 500, err, err)
-        }
+    const conn = await connection.getConnection()
+    await conn.beginTransaction()
 
-        return res.status(200).json({})
-      }
-    )
+    const userId = getUserId(String(req.headers.authorization?.split(" ")[1]))
+
+    try {
+      await this.Model.editTicket(conn, Number(req.params.ticketId), req.body)
+
+      this.logModel.log(conn, {
+        action: "editTicket",
+        log: `Edytowano zgłoszenie: ${JSON.stringify(req.body)}`,
+        ticketId: Number(req.params.ticketId),
+        user_id: userId,
+      })
+
+      conn.commit()
+
+      return res.status(200).json({})
+    } catch (error) {
+      conn.rollback()
+      return throwGenericError(res, 500, String(error), error)
+    } finally {
+      conn.release()
+    }
   }
 
-  register = (req: Request<{ ticketId: string }>, res: Response) => {
+  register = async (req: Request<{ ticketId: string }>, res: Response) => {
     if (isNaN(parseInt(req.params.ticketId))) {
       return throwGenericError(res, 400, "Nieprawidłowy format pola ticketId")
     }
 
-    checkIfTicketExists(Number(req.params.ticketId))
-      .then((rows) => {
-        if (rows.length === 0) {
-          return throwGenericError(res, 404, "Brak zlecenia o podanym ID")
-        }
+    const conn = await connection.getConnection()
+    await conn.beginTransaction()
 
-        this.Model.register(
-          Number(req.params.ticketId),
-          (err: MysqlError, dbResult: OkPacket) => {
-            if (err) {
-              return throwGenericError(res, 500, err, err)
-            }
+    try {
+      const ticket = await checkIfTicketExists(Number(req.params.ticketId))
 
-            return res.status(200).json({})
-          }
-        )
+      if (ticket.length === 0) {
+        return throwGenericError(res, 404, "Brak zlecenia o podanym ID")
+      }
+
+      const userId = getUserId(String(req.headers.authorization?.split(" ")[1]))
+
+      await this.Model.register(conn, Number(req.params.ticketId))
+
+      this.logModel.log(conn, {
+        action: "register",
+        log: "Zarejestrowano w magazynie",
+        ticketId: Number(req.params.ticketId),
+        user_id: userId,
       })
-      .catch((e) => throwGenericError(res, 500, e, e))
+
+      conn.commit()
+
+      return res.status(200).json({})
+    } catch (error) {
+      conn.rollback()
+      return throwGenericError(res, 500, String(error), error)
+    } finally {
+      conn.release()
+    }
   }
 
-  changeState = (
+  changeState = async (
     req: Request<{ ticketId: string }, {}, { status: number }>,
     res: Response
   ) => {
@@ -212,25 +269,40 @@ class RmaController {
       return throwGenericError(res, 400, error?.details[0].message)
     }
 
-    checkIfTicketExists(Number(req.params.ticketId))
-      .then((rows) => {
-        if (rows.length === 0) {
-          return throwGenericError(res, 404, "Brak zlecenia o podanym ID")
-        }
+    const conn = await connection.getConnection()
+    await conn.beginTransaction()
 
-        this.Model.changeState(
-          Number(req.params.ticketId),
-          req.body.status,
-          (err: MysqlError, dbResult: boolean) => {
-            if (err) {
-              return throwGenericError(res, 500, err, err)
-            }
+    try {
+      const userId = getUserId(String(req.headers.authorization?.split(" ")[1]))
 
-            return res.status(200).json({})
-          }
-        )
+      const ticket = await checkIfTicketExists(Number(req.params.ticketId))
+
+      if (ticket.length === 0) {
+        return throwGenericError(res, 404, "Brak zlecenia o podanym ID")
+      }
+
+      await this.Model.changeState(
+        conn,
+        Number(req.params.ticketId),
+        req.body.status
+      )
+
+      this.logModel.log(conn, {
+        action: "changeStatus",
+        log: `Zmieniono status na ${req.body.status}`,
+        ticketId: Number(req.params.ticketId),
+        user_id: userId,
       })
-      .catch((e) => throwGenericError(res, 500, e, e))
+
+      conn.commit()
+
+      return res.status(200).json({})
+    } catch (error) {
+      conn.rollback()
+      return throwGenericError(res, 500, String(error), error)
+    } finally {
+      conn.release()
+    }
   }
 }
 

@@ -1,16 +1,17 @@
 import express, { Request, Response } from "express"
 import throwGenericError from "../../helpers/throwGenericError"
-import { MysqlError, OkPacket } from "mysql"
 import WaybillsModel from "../../models/rma/waybillsModel"
 import auth, { Roles } from "../../middlewares/auth"
 import {
   CreateWaybillBody,
   FindWaybillReqQuery,
-  WaybillRow,
   EditWaybillBody,
 } from "../../types/rma/rmaTypes"
 import validators from "./validators"
 import { checkIfWaybillExists } from "../../helpers/waybills/checkIfWaybillExists"
+import { getUserId } from "../../helpers/jwt"
+import { connection } from "../../models/dbProm"
+import LogModel from "../../models/logs/logModel"
 
 class RmaWaybillsController {
   public path = "/rma/waybills"
@@ -28,8 +29,12 @@ class RmaWaybillsController {
   }
 
   private Model = new WaybillsModel()
+  private logModel = new LogModel()
 
-  find = (req: Request<{}, {}, {}, FindWaybillReqQuery>, res: Response) => {
+  find = async (
+    req: Request<{}, {}, {}, FindWaybillReqQuery>,
+    res: Response
+  ) => {
     const isWaybillNumber =
       req.query.waybillNumber !== undefined &&
       req.query.waybillNumber !== null &&
@@ -46,32 +51,62 @@ class RmaWaybillsController {
       return throwGenericError(res, 400, "Podaj przynajmniej jeden parametr")
     }
 
-    this.Model.find(req.query, (err: MysqlError, rows: WaybillRow[]) => {
-      if (err) {
-        return throwGenericError(res, 500, err, err)
-      }
+    const conn = await connection.getConnection()
+    await conn.beginTransaction()
+
+    try {
+      const rows = await this.Model.find(conn, req.query)
+
+      conn.commit()
 
       return res.status(200).json(rows)
-    })
+    } catch (error) {
+      conn.rollback()
+      return throwGenericError(res, 500, String(error), error)
+    } finally {
+      conn.release()
+    }
   }
 
-  create = (req: Request<{}, {}, CreateWaybillBody>, res: Response) => {
+  create = async (req: Request<{}, {}, CreateWaybillBody>, res: Response) => {
     const { error } = validators.createWaybill.validate(req.body)
 
     if (error !== undefined) {
       return throwGenericError(res, 400, error?.details[0].message)
     }
 
-    this.Model.create(req.body, (err: MysqlError, dbResult: OkPacket) => {
-      if (err) {
-        return throwGenericError(res, 500, err, err)
-      }
+    const conn = await connection.getConnection()
+    await conn.beginTransaction()
 
-      return res.status(200).json({ id: dbResult.insertId })
-    })
+    try {
+      const userId = getUserId(String(req.headers.authorization?.split(" ")[1]))
+
+      const dbResult = await this.Model.create(conn, req.body)
+
+      this.logModel.log(conn, {
+        action: "waybillCreated",
+        log: `Utworzono list przewozowy: ${req.body.waybillNumber}, ${req.body.type}`,
+        ticketId: req.body.ticketId,
+        user_id: userId,
+      })
+
+      conn.commit()
+
+      return res.status(200).json({
+        id: dbResult.insertId,
+      })
+    } catch (error) {
+      conn.rollback()
+      return throwGenericError(res, 500, String(error), error)
+    } finally {
+      conn.release()
+    }
   }
 
-  edit = (req: Request<{ id: string }, {}, EditWaybillBody>, res: Response) => {
+  edit = async (
+    req: Request<{ id: string }, {}, EditWaybillBody>,
+    res: Response
+  ) => {
     if (isNaN(parseInt(req.params.id))) {
       return throwGenericError(res, 400, "Nieprawidłowy format pola id")
     }
@@ -82,25 +117,36 @@ class RmaWaybillsController {
       return throwGenericError(res, 400, error?.details[0].message)
     }
 
-    checkIfWaybillExists(Number(req.params.id))
-      .then((waybillRows) => {
-        if (waybillRows.length === 0) {
-          return throwGenericError(res, 404, "Brak listu o podanym ID")
-        }
+    const conn = await connection.getConnection()
+    await conn.beginTransaction()
 
-        this.Model.edit(
-          Number(req.params.id),
-          req.body,
-          (err: MysqlError, dbResult: OkPacket) => {
-            if (err) {
-              return throwGenericError(res, 500, err, err)
-            }
+    try {
+      const userId = getUserId(String(req.headers.authorization?.split(" ")[1]))
 
-            return res.status(200).json({})
-          }
-        )
+      const waybill = await checkIfWaybillExists(Number(req.params.id))
+
+      if (waybill.length === 0) {
+        return throwGenericError(res, 404, "Brak listu o podanym ID")
+      }
+
+      await this.Model.edit(conn, Number(req.params.id), req.body)
+
+      await this.logModel.log(conn, {
+        action: "waybillEdit",
+        log: `Edytowano list przewozowy: ${req.body.waybillNumber}, ${req.body.type}, ${req.body.status}`,
+        ticketId: req.body.ticketId,
+        user_id: userId,
       })
-      .catch((e) => throwGenericError(res, 500, e, e))
+
+      conn.commit()
+
+      return res.status(200).json({})
+    } catch (error) {
+      conn.rollback()
+      return throwGenericError(res, 500, String(error), error)
+    } finally {
+      conn.release()
+    }
   }
 }
 

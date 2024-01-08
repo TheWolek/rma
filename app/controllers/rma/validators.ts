@@ -60,6 +60,7 @@ export default {
 
   editWaybill: Joi.object({
     waybillNumber: Joi.string().required(),
+    ticketId: Joi.number().required(),
     type: Joi.string().required().valid("przychodzący", "wychodzący"),
     status: Joi.string()
       .required()

@@ -30,6 +30,11 @@ function getUserRole(userId: number, result: Function) {
   })
 }
 
+export const getUserId = (token: string) => {
+  const { userId } = <jwt.UserIdJwtPayload>jwt.verify(token, secret)
+  return userId
+}
+
 export const generateToken = (userId: number, role: string): string => {
   const expTime = "1h"
 

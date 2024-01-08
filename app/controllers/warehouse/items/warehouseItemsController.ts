@@ -3,6 +3,7 @@ import express, { Request, Response } from "express"
 import throwGenericError from "../../../helpers/throwGenericError"
 import warehouseItemsModel from "../../../models/warehouse/items/warehouseItemsModel"
 import { MysqlError, OkPacket } from "mysql"
+import { connection } from "../../../models/dbProm"
 import {
   changeShelveBody,
   deleteItemBody,
@@ -13,6 +14,8 @@ import auth, { Roles } from "../../../middlewares/auth"
 import RmaModel from "../../../models/rma/rmaModel"
 import { WarehouseDetailsRow } from "../../../types/rma/rmaTypes"
 import removeBarcodeFile from "../../../helpers/rma/barcodeFiles/removeBarcodeFile"
+import { getUserId } from "../../../helpers/jwt"
+import LogModel from "../../../models/logs/logModel"
 
 class warehouseItemController {
   public path = "/warehouse/items"
@@ -46,6 +49,7 @@ class warehouseItemController {
 
   private ItemModel = new warehouseItemsModel()
   private RmaModel = new RmaModel()
+  private logModel = new LogModel()
 
   createNewItem = (req: Request<{}, {}, newItemReqBody>, res: Response) => {
     // recive barcode in format "RMA/YYYYMMDD/1234" and sn (String)
@@ -209,7 +213,7 @@ class warehouseItemController {
     )
   }
 
-  deleteItem = (req: Request<{}, {}, deleteItemBody>, res: Response) => {
+  deleteItem = async (req: Request<{}, {}, deleteItemBody>, res: Response) => {
     // recive barcode in format "RMA/YYYYMMDD/1234" and current shelve INT
     // return 400 if barcode OR shelve is empty
     // return 400 if barcode OR shelve does not match regEx
@@ -223,32 +227,48 @@ class warehouseItemController {
       return throwGenericError(res, 400, error?.details[0].message)
     }
 
-    this.ItemModel.deleteItem(
-      req.body.barcode,
-      req.body.shelve,
-      (err: MysqlError, dbResult: OkPacket) => {
-        if (err) return throwGenericError(res, 500, err, err)
-        if (dbResult.affectedRows === 0) {
-          return throwGenericError(
-            res,
-            404,
-            "nie można znaleźć wskazanego produktu na magazynie. Nic nie zostało usunięte"
-          )
-        }
+    const conn = await connection.getConnection()
+    await conn.beginTransaction()
 
-        this.RmaModel.unregister(
-          req.body.ticket_id,
-          async (err: MysqlError) => {
-            if (err) return throwGenericError(res, 500, err, err)
+    try {
+      const userId = getUserId(String(req.headers.authorization?.split(" ")[1]))
 
-            await removeBarcodeFile(req.body.ticket_id)
-            return res
-              .status(200)
-              .json({ barcode: req.body.barcode, shelve: req.body.shelve })
-          }
+      const deleteItemDbResult = await this.ItemModel.deleteItem(
+        conn,
+        req.body.barcode,
+        req.body.shelve
+      )
+
+      if (deleteItemDbResult.affectedRows === 0) {
+        return throwGenericError(
+          res,
+          404,
+          "nie można znaleźć wskazanego produktu na magazynie. Nic nie zostało usunięte"
         )
       }
-    )
+
+      await this.RmaModel.unregister(conn, req.body.ticket_id)
+
+      await removeBarcodeFile(req.body.ticket_id)
+
+      this.logModel.log(conn, {
+        action: "unregister",
+        log: "Usunięto z magazynu",
+        ticketId: req.body.ticket_id,
+        user_id: userId,
+      })
+
+      conn.commit()
+
+      return res
+        .status(200)
+        .json({ barcode: req.body.barcode, shelve: req.body.shelve })
+    } catch (error) {
+      conn.rollback()
+      return throwGenericError(res, 500, String(error), error)
+    } finally {
+      conn.release()
+    }
   }
 }
 

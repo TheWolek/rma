@@ -1,5 +1,6 @@
 import db from "../../db"
-import { MysqlError, OkPacket } from "mysql"
+import mysql, { ResultSetHeader } from "mysql2/promise"
+import query from "../../dbProm"
 import { newItemData } from "../../../types/warehouse/items/itemsTypes"
 
 class warehouseItemsModel {
@@ -87,15 +88,18 @@ class warehouseItemsModel {
     })
   }
 
-  deleteItem(barcode: string, shelve: number, result: Function) {
+  deleteItem = async (
+    conn: mysql.PoolConnection,
+    barcode: string,
+    shelve: number
+  ) => {
     const sql = `DELETE FROM items WHERE barcode = ${db.escape(
       barcode
     )} AND shelve = ${db.escape(shelve)}`
 
-    db.query(sql, (err, dbResult) => {
-      if (err) return result(err.code, null)
-      return result(null, dbResult)
-    })
+    const dbResult = await query(conn, sql)
+
+    return dbResult as ResultSetHeader
   }
 }
 
