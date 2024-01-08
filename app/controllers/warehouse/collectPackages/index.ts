@@ -1,14 +1,11 @@
 import express, { Request, Response } from "express"
 import throwGenericError from "../../../helpers/throwGenericError"
-import { MysqlError, OkPacket } from "mysql"
 import validators from "./validators"
 import CollectPackagesModel from "../../../models/warehouse/collectPackages/collectPackagesModel"
 import auth, { Roles } from "../../../middlewares/auth"
 import {
-  CollectDetailsRow,
   CollectFilters,
   CollectItemRow,
-  CollectRow,
   CollectTicketRow,
 } from "../../../types/warehouse/collectPackages/collectPackages"
 import checkIfCollectExists from "../../../helpers/collectPackages/checkIfCollectExists"
@@ -17,6 +14,7 @@ import changeWaybillStatus from "../../../helpers/waybills/changeStatus"
 import endCollect from "../../../helpers/collectPackages/endCollect"
 import changeTicketStaus from "../../../helpers/rma/changeTicketStatus"
 import registerNewItem from "../../../helpers/items/registerNewItem"
+import { connection } from "../../../models/dbProm"
 
 class CollectPackagesController {
   public path = "/warehouse/collect"
@@ -63,127 +61,142 @@ class CollectPackagesController {
 
   private Model = new CollectPackagesModel()
 
-  create = (req: Request<{}, {}, { refName: string }>, res: Response) => {
+  create = async (req: Request<{}, {}, { refName: string }>, res: Response) => {
     const { error } = validators.create.validate(req.body)
 
     if (error !== undefined) {
       return throwGenericError(res, 400, error?.details[0].message)
     }
 
-    this.Model.create(
-      req.body.refName,
-      (err: MysqlError, dbResult: OkPacket) => {
-        if (err) {
-          return throwGenericError(res, 500, err, err)
-        }
+    const conn = await connection.getConnection()
+    conn.beginTransaction()
 
-        return res.status(200).json({ collectId: dbResult.insertId })
-      }
-    )
+    try {
+      const dbResult = await this.Model.create(conn, req.body.refName)
+
+      return res.status(200).json({ collectId: dbResult.insertId })
+    } catch (error) {
+      conn.rollback()
+      return throwGenericError(res, 500, String(error), error)
+    } finally {
+      conn.release()
+    }
   }
 
-  find = (req: Request<{}, {}, {}, CollectFilters>, res: Response) => {
-    this.Model.find(req.query, (err: MysqlError, rows: CollectRow[]) => {
-      if (err) {
-        return throwGenericError(res, 500, err, err)
-      }
+  find = async (req: Request<{}, {}, {}, CollectFilters>, res: Response) => {
+    const conn = await connection.getConnection()
+    conn.beginTransaction()
+
+    try {
+      const rows = await this.Model.find(conn, req.query)
 
       return res.status(200).json(rows)
-    })
+    } catch (error) {
+      conn.rollback()
+      return throwGenericError(res, 500, String(error), error)
+    } finally {
+      conn.release()
+    }
   }
 
-  findOne = (req: Request<{ id: string }>, res: Response) => {
+  findOne = async (req: Request<{ id: string }>, res: Response) => {
     if (isNaN(parseInt(req.params.id))) {
       return throwGenericError(res, 400, "Nieprawidłowy format pola ID")
     }
 
-    this.Model.findOne(
-      Number(req.params.id),
-      (err: MysqlError, rows: CollectDetailsRow[]) => {
-        if (err) {
-          return throwGenericError(res, 500, err, err)
+    const conn = await connection.getConnection()
+    conn.beginTransaction()
+
+    try {
+      const rows = await this.Model.findOne(conn, Number(req.params.id))
+
+      if (rows.length === 0) {
+        return throwGenericError(res, 404, "Brak odbioru o podanym ID")
+      }
+
+      const collectData = {
+        id: rows[0].id,
+        ref_name: rows[0].ref_name,
+        created: rows[0].created,
+        status: rows[0].status,
+      }
+
+      let itemsData = rows.map((item) => {
+        return {
+          waybill: item.waybill,
+          ticket_id: item.ticket_id,
+          barcode: item.barcode,
         }
+      })
 
-        if (rows.length === 0) {
-          return throwGenericError(res, 404, "Brak odbioru o podanym ID")
-        }
+      if (itemsData[0].waybill === null) {
+        itemsData = []
+      }
 
-        const collectData = {
-          id: rows[0].id,
-          ref_name: rows[0].ref_name,
-          created: rows[0].created,
-          status: rows[0].status,
-        }
+      return res.status(200).json({
+        ...collectData,
+        items: itemsData,
+      })
+    } catch (error) {
+      conn.rollback()
+      return throwGenericError(res, 500, String(error), error)
+    } finally {
+      conn.release()
+    }
+  }
 
-        let itemsData = rows.map((item) => {
-          return {
-            waybill: item.waybill,
-            ticket_id: item.ticket_id,
-            barcode: item.barcode,
-          }
-        })
+  finalize = async (req: Request, res: Response) => {
+    if (isNaN(parseInt(req.params.id))) {
+      return throwGenericError(res, 400, "Nieprawidłowy format pola ID")
+    }
 
-        if (itemsData[0].waybill === null) {
-          itemsData = []
-        }
+    const conn = await connection.getConnection()
+    conn.beginTransaction()
 
-        return res.status(200).json({
-          ...collectData,
-          items: itemsData,
+    try {
+      const collect = await checkIfCollectExists(Number(req.params.id))
+
+      if (collect.length === 0) {
+        return throwGenericError(res, 404, "Brak odbioru o podanym ID")
+      }
+
+      if (collect[0].status === 2) {
+        return throwGenericError(res, 400, "Podny odbiór został już odebrany")
+      }
+
+      const waybills = await getWaybillsFromCollect(Number(req.params.id))
+
+      for (let {
+        waybill,
+        ticket_id,
+        barcode,
+        device_cat,
+        device_producer,
+        device_sn,
+      } of waybills) {
+        await changeWaybillStatus(waybill, "odebrany")
+        await changeTicketStaus(ticket_id, 3)
+        await registerNewItem({
+          ticket_id,
+          barcode,
+          device_producer,
+          device_cat,
+          device_sn,
         })
       }
-    )
-  }
 
-  finalize = (req: Request, res: Response) => {
-    if (isNaN(parseInt(req.params.id))) {
-      return throwGenericError(res, 400, "Nieprawidłowy format pola ID")
+      await endCollect(Number(req.params.id))
+
+      return res.status(200).json({})
+    } catch (error) {
+      conn.rollback()
+      return throwGenericError(res, 500, String(error), error)
+    } finally {
+      conn.release()
     }
-
-    checkIfCollectExists(Number(req.params.id))
-      .then((rows) => {
-        if (rows.length === 0) {
-          return throwGenericError(res, 404, "Brak odbioru o podanym ID")
-        }
-
-        if (rows[0].status === 2) {
-          return throwGenericError(res, 400, "Podny odbiór został już odebrany")
-        }
-
-        getWaybillsFromCollect(Number(req.params.id)).then((items) => {
-          for (let {
-            waybill,
-            ticket_id,
-            barcode,
-            device_cat,
-            device_producer,
-            device_sn,
-          } of items) {
-            changeWaybillStatus(waybill, "odebrany").then(() => {
-              changeTicketStaus(ticket_id, 3).then(() => {
-                registerNewItem({
-                  ticket_id,
-                  barcode,
-                  device_producer,
-                  device_cat,
-                  device_sn,
-                })
-              })
-            })
-          }
-        })
-      })
-      .then(() => {
-        endCollect(Number(req.params.id))
-          .then(() => res.status(200).json({}))
-          .catch((error) => {
-            throwGenericError(res, 500, error, error)
-          })
-      })
-      .catch((error) => throwGenericError(res, 500, error, error))
   }
 
-  addItem = (
+  addItem = async (
     req: Request<{ id: string }, {}, { waybill: string }>,
     res: Response
   ) => {
@@ -197,43 +210,43 @@ class CollectPackagesController {
       return throwGenericError(res, 400, error?.details[0].message)
     }
 
-    checkIfCollectExists(Number(req.params.id))
-      .then((collections) => {
-        if (collections.length === 0) {
-          return throwGenericError(res, 404, "Brak odbioru o podanym ID")
-        }
+    const conn = await connection.getConnection()
+    conn.beginTransaction()
 
-        if (collections[0].status === 2) {
-          return throwGenericError(
-            res,
-            400,
-            "Podany odbiór został już odebrany"
-          )
-        }
+    try {
+      const collect = await checkIfCollectExists(Number(req.params.id))
 
-        this.Model.addItem(
-          Number(req.params.id),
-          req.body.waybill,
-          (err: MysqlError | string, row: CollectTicketRow) => {
-            if (err) {
-              if (typeof err === "string") {
-                return throwGenericError(res, 400, err)
-              }
-              return throwGenericError(res, 500, err, err)
-            }
+      if (collect.length === 0) {
+        return throwGenericError(res, 404, "Brak odbioru o podanym ID")
+      }
 
-            return res.status(200).json({
-              ticket_id: row.ticket_id,
-              barcode: row.barcode,
-              waybill: req.body.waybill,
-            })
-          }
-        )
+      if (collect[0].status === 2) {
+        return throwGenericError(res, 400, "Podany odbiór został już odebrany")
+      }
+
+      const row = (await this.Model.addItem(
+        conn,
+        Number(req.params.id),
+        req.body.waybill
+      )) as CollectTicketRow
+
+      return res.status(200).json({
+        ticket_id: row.ticket_id,
+        barcode: row.barcode,
+        waybill: req.body.waybill,
       })
-      .catch((error) => throwGenericError(res, 500, error, error))
+    } catch (error) {
+      if (typeof error === "string") {
+        return throwGenericError(res, 400, error)
+      }
+      conn.rollback()
+      return throwGenericError(res, 500, String(error), error)
+    } finally {
+      conn.release()
+    }
   }
 
-  editItems = (
+  editItems = async (
     req: Request<{ id: string }, {}, CollectItemRow[]>,
     res: Response
   ) => {
@@ -247,33 +260,33 @@ class CollectPackagesController {
       return throwGenericError(res, 400, error?.details[0].message)
     }
 
-    checkIfCollectExists(Number(req.params.id))
-      .then((rows) => {
-        if (rows.length === 0) {
-          return throwGenericError(res, 404, "Brak odbioru o podanym ID")
-        }
+    const conn = await connection.getConnection()
+    conn.beginTransaction()
 
-        if (rows[0].status === 2) {
-          return throwGenericError(
-            res,
-            400,
-            "Podany odbiór został już odebrany"
-          )
-        }
+    try {
+      const collect = await checkIfCollectExists(Number(req.params.id))
 
-        this.Model.editItems(
-          Number(req.params.id),
-          req.body,
-          (err: MysqlError, items: string[]) => {
-            if (err) {
-              return throwGenericError(res, 500, err, err)
-            }
+      if (collect.length === 0) {
+        return throwGenericError(res, 404, "Brak odbioru o podanym ID")
+      }
 
-            return res.status(200).json(items)
-          }
-        )
-      })
-      .catch((error) => throwGenericError(res, 500, error, error))
+      if (collect[0].status === 2) {
+        return throwGenericError(res, 400, "Podany odbiór został już odebrany")
+      }
+
+      const items = await this.Model.editItems(
+        conn,
+        Number(req.params.id),
+        req.body
+      )
+
+      return res.status(200).json(items)
+    } catch (error) {
+      conn.rollback()
+      return throwGenericError(res, 500, String(error), error)
+    } finally {
+      conn.release()
+    }
   }
 }
 

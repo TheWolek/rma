@@ -1,8 +1,8 @@
 import express, { Request, Response } from "express"
 import throwGenericError from "../../../helpers/throwGenericError"
 import shelvesModel from "../../../models/warehouse/shelves/shelvesModel"
-import { MysqlError, OkPacket } from "mysql"
 import auth, { Roles } from "../../../middlewares/auth"
+import { connection } from "../../../models/dbProm"
 
 class shelvesController {
   public path = "/warehouse/shelve"
@@ -20,26 +20,37 @@ class shelvesController {
 
   private ShelveModel = new shelvesModel()
 
-  addShelve = (req: Request<{}, {}, { code: string }>, res: Response) => {
+  addShelve = async (req: Request<{}, {}, { code: string }>, res: Response) => {
     if (!req.body.code)
       return throwGenericError(res, 400, "Pole code jest wymagane")
 
-    this.ShelveModel.addNew(
-      req.body.code,
-      (err: MysqlError, dbResult: OkPacket) => {
-        if (err) return throwGenericError(res, 500, err, err)
-        return res
-          .status(200)
-          .json({ id: dbResult.insertId, code: req.body.code })
-      }
-    )
+    const conn = await connection.getConnection()
+    await conn.beginTransaction()
+
+    try {
+      const dbResult = await this.ShelveModel.addNew(conn, req.body.code)
+      return res
+        .status(200)
+        .json({ id: dbResult.insertId, code: req.body.code })
+    } catch (error) {
+      conn.rollback()
+      return throwGenericError(res, 500, String(error), error)
+    } finally {
+      conn.release()
+    }
   }
 
-  getAll = (req: Request, res: Response) => {
-    this.ShelveModel.getAll((err: MysqlError, rows: any) => {
-      if (err) return throwGenericError(res, 500, err, err)
+  getAll = async (req: Request, res: Response) => {
+    const conn = await connection.getConnection()
+
+    try {
+      const rows = await this.ShelveModel.getAll(conn)
       return res.status(200).json(rows)
-    })
+    } catch (error) {
+      return throwGenericError(res, 500, String(error), error)
+    } finally {
+      conn.release()
+    }
   }
 }
 

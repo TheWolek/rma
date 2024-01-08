@@ -22,3 +22,20 @@ export interface deleteItemBody {
   barcode: string
   shelve: number
 }
+
+export interface Item {
+  item_id: number
+  name: string
+  shelve: number
+  category: string
+  ticket_id: number
+  barcode: string
+  sn: string
+  shelve_code: string
+}
+
+export interface ChangeShelveData {
+  new_shelve: number
+  shelve: number
+  barcodes: string[]
+}

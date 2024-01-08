@@ -17,7 +17,6 @@ import {
 } from "../../types/rma/rmaTypes"
 import { detailsFields, listFields } from "./constants"
 import formatDate from "../../helpers/formatDate"
-import LogModel from "../logs/logModel"
 
 class RmaModel {
   create = async (conn: mysql.PoolConnection, ticketData: CreateReqBody) => {
@@ -42,27 +41,31 @@ class RmaModel {
         ${db.escape(ticketData.damageType)}, 
         ${db.escape(ticketData.damageDescription)})`
 
-    const ticketDbResult = await query(conn, sqlTicket)
+    try {
+      const ticketDbResult = await query(conn, sqlTicket)
 
-    if (ticketData.deviceAccessories.length > 0) {
-      const sqlAccessoriesPlaceholders = ticketData.deviceAccessories.map(
-        () => "(?,?)"
-      )
-      const sqlAccessories = `insert into tickets_additionalAccessories (ticket_id, type_id) VALUES ${sqlAccessoriesPlaceholders.join(
-        ","
-      )}`
+      if (ticketData.deviceAccessories.length > 0) {
+        const sqlAccessoriesPlaceholders = ticketData.deviceAccessories.map(
+          () => "(?,?)"
+        )
+        const sqlAccessories = `insert into tickets_additionalAccessories (ticket_id, type_id) VALUES ${sqlAccessoriesPlaceholders.join(
+          ","
+        )}`
 
-      let data: number[] = []
+        let data: number[] = []
 
-      ticketData.deviceAccessories.forEach((el) => {
-        data.push((ticketDbResult as ResultSetHeader)?.insertId)
-        data.push(el)
-      })
+        ticketData.deviceAccessories.forEach((el) => {
+          data.push((ticketDbResult as ResultSetHeader)?.insertId)
+          data.push(el)
+        })
 
-      await query(conn, sqlAccessories, data)
+        await query(conn, sqlAccessories, data)
+      }
+
+      return ticketDbResult as ResultSetHeader
+    } catch (error) {
+      throw error
     }
-
-    return ticketDbResult as ResultSetHeader
   }
 
   filter = async (conn: mysql.PoolConnection, filters: Filters) => {
@@ -122,9 +125,13 @@ class RmaModel {
       queryFilters.length > 0 ? "AND" : ""
     } ${queryFilters.join(" AND ")} ORDER BY t.created desc`
 
-    const rows = await query(conn, sql, params)
+    try {
+      const rows = await query(conn, sql, params)
 
-    return rows as FilteredRow[]
+      return rows as FilteredRow[]
+    } catch (error) {
+      throw error
+    }
   }
 
   getOne = async (conn: mysql.PoolConnection, ticketId: number) => {
@@ -132,25 +139,28 @@ class RmaModel {
     LEFT JOIN shelves s ON i.shelve = s.shelve_id LEFT JOIN waybills w ON t.ticket_id = w.ticket_id
     WHERE t.ticket_id = ${db.escape(ticketId)}`
 
-    const rows = (await query(conn, sql)) as DetailsRow[]
+    try {
+      const rows = (await query(conn, sql)) as DetailsRow[]
 
-    rows[0].inWarehouse = rows[0]?.inWarehouse === 1 ? true : false
+      rows[0].inWarehouse = rows[0]?.inWarehouse === 1 ? true : false
 
-    return rows as DetailsRow[]
+      return rows as DetailsRow[]
+    } catch (error) {
+      throw error
+    }
   }
 
-  getOneForWarehouse = (barcode: string, result: Function) => {
+  getOneForWarehouse = async (conn: mysql.PoolConnection, barcode: string) => {
     const sql = `SELECT barcode, ticket_id, device_producer, device_cat, device_name, device_sn FROM tickets WHERE barcode = ${db.escape(
       barcode
     )}`
 
-    db.query(sql, (err: MysqlError, rows: WarehouseDetailsRow[]) => {
-      if (err) {
-        return result(err, null)
-      }
-
-      return result(null, rows[0])
-    })
+    try {
+      const rows = await query(conn, sql)
+      return rows as WarehouseDetailsRow[]
+    } catch (error) {
+      throw error
+    }
   }
 
   editTicket = async (
@@ -176,18 +186,24 @@ class RmaModel {
       ticketId,
     ]
 
-    const dbResult = await query(conn, sql_tickets, params_tickets)
-
-    return dbResult as ResultSetHeader
+    try {
+      const dbResult = await query(conn, sql_tickets, params_tickets)
+      return dbResult as ResultSetHeader
+    } catch (error) {
+      throw error
+    }
   }
 
   getAccessories = async (conn: mysql.PoolConnection, ticketId: number) => {
     const sql = `SELECT taat.id, taat.name FROM tickets_additionalAccessories taa JOIN tickets_aditionalAccessories_types taat on taa.type_id = taat.id
     WHERE taa.ticket_id = ${db.escape(ticketId)};`
 
-    const rows = await query(conn, sql)
-
-    return rows as AccessoriesRow[]
+    try {
+      const rows = await query(conn, sql)
+      return rows as AccessoriesRow[]
+    } catch (error) {
+      throw error
+    }
   }
 
   editAccessories = async (
@@ -253,8 +269,13 @@ class RmaModel {
     const sql = `UPDATE tickets SET inWarehouse=1 WHERE ticket_id=${db.escape(
       ticketId
     )};`
-    const dbResult = await query(conn, sql)
-    return dbResult as ResultSetHeader
+
+    try {
+      const dbResult = await query(conn, sql)
+      return dbResult as ResultSetHeader
+    } catch (error) {
+      throw error
+    }
   }
 
   unregister = async (conn: mysql.PoolConnection, ticketId: number) => {
@@ -262,9 +283,12 @@ class RmaModel {
       ticketId
     )};`
 
-    const dbResult = await query(conn, sql)
-
-    return dbResult as ResultSetHeader
+    try {
+      const dbResult = await query(conn, sql)
+      return dbResult as ResultSetHeader
+    } catch (error) {
+      throw error
+    }
   }
 
   changeState = async (
@@ -275,8 +299,12 @@ class RmaModel {
     const sql = `UPDATE tickets SET status = ?, lastStatusUpdate = NOW() WHERE ticket_id = ?`
     const params = [status, ticketId]
 
-    const dbResult = await query(conn, sql, params)
-    return dbResult as ResultSetHeader
+    try {
+      const dbResult = await query(conn, sql, params)
+      return dbResult as ResultSetHeader
+    } catch (error) {
+      throw error
+    }
   }
 
   getBarcode = async (conn: mysql.PoolConnection, ticketId: Number) => {
@@ -284,8 +312,12 @@ class RmaModel {
       ticketId
     )}`
 
-    const rows = await query(conn, sql)
-    return rows as BarcodeData[]
+    try {
+      const rows = await query(conn, sql)
+      return rows as BarcodeData[]
+    } catch (error) {
+      throw error
+    }
   }
 
   usePart = (ticketId: number, code: string, result: Function) => {

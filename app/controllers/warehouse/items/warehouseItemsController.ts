@@ -1,8 +1,6 @@
 import express, { Request, Response } from "express"
-
 import throwGenericError from "../../../helpers/throwGenericError"
 import warehouseItemsModel from "../../../models/warehouse/items/warehouseItemsModel"
-import { MysqlError, OkPacket } from "mysql"
 import { connection } from "../../../models/dbProm"
 import {
   changeShelveBody,
@@ -12,7 +10,6 @@ import {
 import validators from "./validators"
 import auth, { Roles } from "../../../middlewares/auth"
 import RmaModel from "../../../models/rma/rmaModel"
-import { WarehouseDetailsRow } from "../../../types/rma/rmaTypes"
 import removeBarcodeFile from "../../../helpers/rma/barcodeFiles/removeBarcodeFile"
 import { getUserId } from "../../../helpers/jwt"
 import LogModel from "../../../models/logs/logModel"
@@ -51,7 +48,10 @@ class warehouseItemController {
   private RmaModel = new RmaModel()
   private logModel = new LogModel()
 
-  createNewItem = (req: Request<{}, {}, newItemReqBody>, res: Response) => {
+  createNewItem = async (
+    req: Request<{}, {}, newItemReqBody>,
+    res: Response
+  ) => {
     // recive barcode in format "RMA/YYYYMMDD/1234" and sn (String)
     // return 400 if barcode is empty OR barcode does not match regEx OR ticket_id already exists in items table
     // return 500 if there was DB error
@@ -63,44 +63,41 @@ class warehouseItemController {
       return throwGenericError(res, 400, error?.details[0].message)
     }
 
-    this.RmaModel.getOneForWarehouse(
-      req.body.barcode,
-      (err: MysqlError, row: WarehouseDetailsRow) => {
-        if (err) {
-          return throwGenericError(res, 500, err, err)
-        }
+    const conn = await connection.getConnection()
+    await conn.beginTransaction()
 
-        this.ItemModel.createNewItem(
-          {
-            ticket_id: row.ticket_id,
-            barcode: req.body.barcode,
-            producer: row.device_producer,
-            category: row.device_cat,
-            sn: req.body.sn,
-          },
-          (err: MysqlError | string, dbRes: OkPacket) => {
-            if (err) {
-              if (err === "ER_DUP_ENTRY")
-                return throwGenericError(
-                  res,
-                  400,
-                  "produkt z podanym ticket id został już zarejestrowany"
-                )
-              throwGenericError(res, 500, err, err)
-            }
+    try {
+      const ticket = await this.RmaModel.getOneForWarehouse(
+        conn,
+        req.body.barcode
+      )
 
-            return res.status(200).json({
-              id: dbRes.insertId,
-              barcode: req.body.barcode,
-              shelve: 0,
-            })
-          }
-        )
+      const item = {
+        ticket_id: ticket[0].ticket_id,
+        barcode: ticket[0].barcode,
+        producer: ticket[0].device_producer,
+        category: ticket[0].device_cat,
+        sn: ticket[0].device_sn,
       }
-    )
+
+      const dbResult = await this.ItemModel.createNewItem(conn, item)
+
+      conn.commit()
+
+      return res.status(200).json({
+        id: dbResult.insertId,
+        barcode: req.body.barcode,
+        shelve: 0,
+      })
+    } catch (error) {
+      conn.rollback()
+      return throwGenericError(res, 500, String(error), error)
+    } finally {
+      conn.release()
+    }
   }
 
-  checkIfItemExists = (
+  checkIfItemExists = async (
     req: Request<{}, {}, {}, { barcode: string }>,
     res: Response
   ) => {
@@ -116,17 +113,31 @@ class warehouseItemController {
       return throwGenericError(res, 400, error?.details[0].message)
     }
 
-    this.ItemModel.checkIfItemExists(
-      req.query.barcode,
-      (err: MysqlError, rows: any) => {
-        if (err) return throwGenericError(res, 500, err, err)
-        if (rows.length === 0) return res.status(404).json({ found: false })
-        return res.status(200).json({ found: true })
+    const conn = await connection.getConnection()
+    await conn.beginTransaction()
+
+    try {
+      const rows = await this.ItemModel.checkIfItemExists(
+        conn,
+        req.query.barcode
+      )
+
+      if (rows.length === 0) {
+        return res.status(404).json({ found: false })
       }
-    )
+
+      conn.commit()
+
+      res.status(200).json({ found: true })
+    } catch (error) {
+      conn.rollback()
+      return throwGenericError(res, 500, String(error), error)
+    } finally {
+      conn.release()
+    }
   }
 
-  findItem = (
+  findItem = async (
     req: Request<{}, {}, {}, { barcode: string; shelve: number }>,
     res: Response
   ) => {
@@ -136,35 +147,49 @@ class warehouseItemController {
     // return 500 if there was DB error
     // returns 200 with first row object {item_id: int, name: string, shelve: int, category: string, barcode: string}
 
-    this.ItemModel.findItems(
-      (err: MysqlError, rows: any) => {
-        if (err) {
-          return throwGenericError(res, 500, err, err)
-        }
+    const conn = await connection.getConnection()
+    await conn.beginTransaction()
 
-        return res.status(200).json(rows)
-      },
-      req.query.barcode,
-      req.query.shelve
-    )
+    try {
+      const rows = this.ItemModel.findItems(
+        conn,
+        req.query.barcode,
+        req.query.shelve
+      )
+
+      return res.status(200).json(rows)
+    } catch (error) {
+      conn.rollback()
+      return throwGenericError(res, 500, String(error), error)
+    } finally {
+      conn.release()
+    }
   }
 
-  countAllItems = (req: Request, res: Response) => {
+  countAllItems = async (req: Request, res: Response) => {
     // return 404 if there is no items
     // return 500 if there was DB error
     // return 200 with {"productCount": INT}
 
-    this.ItemModel.countAllItems((err: MysqlError, rows: any) => {
-      if (err) return throwGenericError(res, 500, err, err)
-      if (rows.length === 0)
-        return res
-          .status(404)
-          .json({ message: "Brak przedmiotów na magazynie" })
+    const conn = await connection.getConnection()
+    await conn.beginTransaction()
+
+    try {
+      const rows = await this.ItemModel.countAllItems(conn)
+
       return res.status(200).json({ productCount: rows[0].count })
-    })
+    } catch (error) {
+      conn.rollback()
+      return throwGenericError(res, 500, String(error), error)
+    } finally {
+      conn.release()
+    }
   }
 
-  changeShelve = (req: Request<{}, {}, changeShelveBody>, res: Response) => {
+  changeShelve = async (
+    req: Request<{}, {}, changeShelveBody>,
+    res: Response
+  ) => {
     // recive barcodes in format ["RMA/YYYYMMDD/1234",...], destination shelve id INT and current shelve id INT
     // return 400 if barcode OR new_shelve OR shelve is empty
     // return 400 if barcode OR new_shelve OR shelve does not match regEx
@@ -187,30 +212,45 @@ class warehouseItemController {
         "Wybrana półka docelowa jest identczna jak aktualna"
       )
 
-    this.ItemModel.changeShelve(
-      req.body.new_shelve,
-      req.body.shelve,
-      req.body.barcodes,
-      (err: MysqlError, dbResult: OkPacket) => {
-        if (err) return throwGenericError(res, 500, err, err)
-        if (dbResult.changedRows === 0)
-          return throwGenericError(
-            res,
-            404,
-            "Nie przesunięto żadnych przedmiotów. Sprawdź poprawność kodów kreskowych"
-          )
-        if (dbResult.changedRows != req.body.barcodes.length)
-          return throwGenericError(
-            res,
-            404,
-            "Ilość przesuniętych produktów różni się od zeskanowanych kodów kreskowych"
-          )
-        return res.status(200).json({
-          barcodes: req.body.barcodes,
-          new_shelve: req.body.new_shelve,
-        })
+    const data = {
+      new_shelve: req.body.new_shelve,
+      shelve: req.body.shelve,
+      barcodes: req.body.barcodes,
+    }
+
+    const conn = await connection.getConnection()
+    await conn.beginTransaction()
+
+    try {
+      const dbResult = await this.ItemModel.changeShelve(conn, data)
+
+      if (dbResult.affectedRows === 0) {
+        return throwGenericError(
+          res,
+          404,
+          "Nie przesunięto żadnych przedmiotów. Sprawdź poprawność kodów kreskowych"
+        )
       }
-    )
+
+      if (dbResult.affectedRows != req.body.barcodes.length) {
+        conn.rollback()
+        return throwGenericError(
+          res,
+          404,
+          "Ilość przesuniętych produktów różni się od zeskanowanych kodów kreskowych"
+        )
+      }
+
+      return res.status(200).json({
+        barcodes: req.body.barcodes,
+        new_shelve: req.body.new_shelve,
+      })
+    } catch (error) {
+      conn.rollback()
+      return throwGenericError(res, 500, String(error), error)
+    } finally {
+      conn.release()
+    }
   }
 
   deleteItem = async (req: Request<{}, {}, deleteItemBody>, res: Response) => {
