@@ -1,5 +1,4 @@
 import db from "../db"
-import { MysqlError, OkPacket } from "mysql"
 import {
   loginData,
   registerAccount,
@@ -7,77 +6,100 @@ import {
 } from "../../types/auth/authTypes"
 import bycrypt from "bcryptjs"
 import { generateToken } from "../../helpers/jwt"
+import mysql, { ResultSetHeader } from "mysql2/promise"
+import query from "../dbProm"
 
 class AuthModel {
-  createAccount(registerData: registerAccount, result: Function) {
-    this.checkIfUserExists(registerData.login)
-      .then(async () => {
-        const salt = await bycrypt.genSalt(10)
-        const hashedPassword = await bycrypt.hash(registerData.password, salt)
+  createAccount = async (
+    conn: mysql.PoolConnection,
+    registerData: registerAccount
+  ) => {
+    try {
+      const user = await this.checkIfUserExists(conn, registerData.login)
 
-        this.createUser(registerData.login, hashedPassword)
-          .then((createRes) => {
-            let role_sql = `INSERT INTO user_roles (user_id, role) values`
-            let values: any[] = []
+      const salt = await bycrypt.genSalt(10)
+      const hashedPassword = await bycrypt.hash(registerData.password, salt)
 
-            registerData.roles.forEach((el, index) => {
-              if (index > 0) {
-                role_sql += ","
-              }
-              role_sql += `(?,?)`
-              values.push(createRes.insertId, el)
-            })
+      const createRes = await this.createUser(
+        conn,
+        registerData.login,
+        hashedPassword
+      )
 
-            if (values.length === 0) {
-              return result("brak danych", null)
-            }
+      let role_sql = `INSERT INTO user_roles (user_id, role) values`
+      let values: any[] = []
 
-            db.query(role_sql, values, (err, dbResult) => {
-              if (err) {
-                return result(err, null)
-              }
-
-              return result(null, dbResult)
-            })
-          })
-          .catch((err) => result(err, null))
+      registerData.roles.forEach((el, index) => {
+        if (index > 0) {
+          role_sql += ","
+        }
+        role_sql += `(?,?)`
+        values.push(createRes.insertId, el)
       })
-      .catch((err) => result(err, null))
+
+      if (values.length === 0) {
+        return "Brak danych"
+      }
+
+      const dbResult = await query(conn, role_sql, values)
+
+      return dbResult as ResultSetHeader
+    } catch (error) {
+      throw error
+    }
   }
 
-  private checkIfUserExists = (login: string) => {
-    return new Promise((resolve, reject) => {
+  private checkIfUserExists = async (
+    conn: mysql.PoolConnection,
+    login: string
+  ): Promise<{ login: string }[]> => {
+    return new Promise(async (resolve, reject) => {
       const sql = `SELECT login FROM users WHERE login = ${db.escape(login)}`
 
-      db.query(sql, (err: MysqlError, rows: { login: string }[]) => {
-        if (err) return reject(err)
-        if (rows.length > 0) return reject("Podany login jest już zajęty")
+      try {
+        const rows = (await query(conn, sql)) as { login: string }[]
+
+        if (rows.length > 0) {
+          return reject("Podany login jest już zajęty")
+        }
+
         resolve(rows)
-      })
+      } catch (error) {
+        throw error
+      }
     })
   }
 
-  private createUser = (login: string, password: string): Promise<OkPacket> => {
-    return new Promise((resolve, reject) => {
+  private createUser = async (
+    conn: mysql.PoolConnection,
+    login: string,
+    password: string
+  ): Promise<ResultSetHeader> => {
+    return new Promise(async (resolve, reject) => {
       const sql = `INSERT INTO users (login, password) VALUES (${db.escape(
         login
       )}, ${db.escape(password)})`
 
-      db.query(sql, (err: MysqlError, dbResult: OkPacket) => {
-        if (err) return reject(err)
-        resolve(dbResult)
-      })
+      try {
+        const dbResult = (await query(conn, sql)) as ResultSetHeader
+        return resolve(dbResult)
+      } catch (error) {
+        throw error
+      }
     })
   }
 
-  login(loginData: loginData, result: Function) {
+  login = async (conn: mysql.PoolConnection, loginData: loginData) => {
     const sql = `SELECT u.user_id, u.login, u.password, ur.role FROM users u JOIN user_roles ur ON u.user_id = ur.user_id WHERE u.login = ${db.escape(
       loginData.login
     )}`
 
-    db.query(sql, async (err: MysqlError, rows: userLoginData[]) => {
-      if (err) return result(err, null)
-      if (rows.length === 0) return result("Błędne hasło lub login", null)
+    try {
+      const rows = (await query(conn, sql)) as userLoginData[]
+
+      if (rows.length === 0) {
+        return "Błędne hasło lub login"
+      }
 
       const isPasswordValid = await bycrypt.compare(
         loginData.password,
@@ -85,20 +107,27 @@ class AuthModel {
       )
 
       if (isPasswordValid) {
-        this.logLastLogin(rows[0].user_id)
-        return result(null, generateToken(rows[0].user_id, rows[0].role))
+        this.logLastLogin(conn, rows[0].user_id)
+        return generateToken(rows[0].user_id, rows[0].role)
       } else {
-        return result("Błędne hasło lub login", null)
+        return "Błędne hasło lub login"
       }
-    })
+    } catch (error) {
+      throw error
+    }
   }
 
-  private logLastLogin(userId: number) {
+  private logLastLogin = async (conn: mysql.PoolConnection, userId: number) => {
     const sql = `UPDATE users SET last_login_date = NOW() WHERE user_id = ${db.escape(
       userId
     )};`
 
-    db.query(sql, () => null)
+    try {
+      await query(conn, sql)
+      return
+    } catch (error) {
+      throw error
+    }
   }
 }
 

@@ -1,10 +1,11 @@
 import express, { Request, Response } from "express"
 import throwGenericError from "../../helpers/throwGenericError"
-import { MysqlError, OkPacket } from "mysql"
 import AuthModel from "../../models/auth/authModel"
 import { loginData, registerAccount } from "../../types/auth/authTypes"
 import validators from "./validators"
 import auth, { Roles } from "../../middlewares/auth"
+import { connection } from "../../models/dbProm"
+import { ResultSetHeader } from "mysql2"
 
 class AuthController {
   public path = "/auth"
@@ -26,50 +27,69 @@ class AuthController {
 
   private Model = new AuthModel()
 
-  createNewAccount = (req: Request<{}, {}, registerAccount>, res: Response) => {
+  createNewAccount = async (
+    req: Request<{}, {}, registerAccount>,
+    res: Response
+  ) => {
     const { error } = validators.createAccount.validate(req.body)
 
     if (error !== undefined) {
       return throwGenericError(res, 400, error?.details[0].message)
     }
 
-    this.Model.createAccount(
-      req.body,
-      (err: MysqlError, dbResult: OkPacket) => {
-        if (err) {
-          return throwGenericError(res, 500, err, err)
-        }
+    const conn = await connection.getConnection()
+    await conn.beginTransaction()
 
-        return res.status(200).json({
-          userId: dbResult.insertId,
-        })
+    try {
+      const dbResult = (await this.Model.createAccount(
+        conn,
+        req.body
+      )) as ResultSetHeader
+
+      return res.status(200).json({
+        userId: dbResult.insertId,
+      })
+    } catch (error) {
+      if (typeof error === "string") {
+        return throwGenericError(res, 400, error)
       }
-    )
+      conn.rollback()
+      return throwGenericError(res, 500, String(error), error)
+    } finally {
+      conn.release()
+    }
   }
 
-  login = (req: Request<{}, {}, loginData>, res: Response) => {
+  login = async (req: Request<{}, {}, loginData>, res: Response) => {
     const { error } = validators.login.validate(req.body)
 
     if (error !== undefined) {
       return throwGenericError(res, 400, error?.details[0].message)
     }
 
-    this.Model.login(req.body, (err: MysqlError | string, JWT: string) => {
-      if (err) {
-        if (String(err).includes("Błędne")) {
-          return throwGenericError(res, 400, err)
-        }
-        return throwGenericError(res, 500, err, err)
-      }
+    const conn = await connection.getConnection()
+    await conn.beginTransaction()
+
+    try {
+      const JWT = await this.Model.login(conn, req.body)
 
       if (!JWT) {
         return throwGenericError(res, 400, "Błędne hasło lub email")
       }
 
-      res.status(200).json({
+      return res.status(200).json({
         token: JWT,
       })
-    })
+    } catch (error) {
+      if (typeof error === "string") {
+        return throwGenericError(res, 400, error)
+      }
+
+      conn.rollback()
+      return throwGenericError(res, 500, String(error), error)
+    } finally {
+      conn.release()
+    }
   }
 }
 
