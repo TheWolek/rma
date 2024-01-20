@@ -26,4 +26,16 @@ export default {
       "string.empty": "Pole password jest wymagane",
     }),
   }),
+
+  changePassword: Joi.object({
+    login: Joi.string().required().messages({
+      "string.empty": "Pole login jest wymagane",
+    }),
+    password: Joi.string().required().messages({
+      "string.empty": "Pole password jest wymagane",
+    }),
+    newPassword: Joi.string().required().messages({
+      "string.empty": "Pole newPassword jest wymagane",
+    }),
+  }),
 }

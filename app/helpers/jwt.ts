@@ -35,11 +35,16 @@ export const getUserId = (token: string) => {
   return userId
 }
 
-export const generateToken = (userId: number, role: string): string => {
+export const generateToken = (
+  userId: number,
+  login: string,
+  role: string
+): string => {
   const expTime = "1h"
 
   const payload = {
     userId: userId,
+    userLogin: login,
     userRole: role,
   }
 

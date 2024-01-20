@@ -142,7 +142,7 @@ class RmaModel {
     try {
       const rows = (await query(conn, sql)) as DetailsRow[]
 
-      rows[0].inWarehouse = rows[0]?.inWarehouse === 1 ? true : false
+      rows[0].inWarehouse = rows[0]?.inWarehouse === 1
 
       return rows as DetailsRow[]
     } catch (error) {

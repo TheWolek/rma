@@ -15,6 +15,7 @@ import RmaWaybillsController from "./app/controllers/rma/waybillsController"
 import CollectPackagesController from "./app/controllers/warehouse/collectPackages"
 import TasksController from "./app/controllers/tasks"
 import LogsController from "./app/controllers/logs/logsController"
+import UsersController from "./app/controllers/users/usersController"
 
 dotenv.config()
 
@@ -36,6 +37,7 @@ const controllers = [
   new CollectPackagesController(),
   new TasksController(),
   new LogsController(),
+  new UsersController(),
 ]
 
 const app = new App(controllers, port)

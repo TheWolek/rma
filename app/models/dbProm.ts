@@ -21,7 +21,6 @@ const query = async (
       sql,
       params
     )
-    // await conn.commit()
     return result[0]
   } catch (error) {
     throw error

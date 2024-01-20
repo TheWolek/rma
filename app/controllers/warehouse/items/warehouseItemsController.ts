@@ -151,11 +151,13 @@ class warehouseItemController {
     await conn.beginTransaction()
 
     try {
-      const rows = this.ItemModel.findItems(
+      const rows = await this.ItemModel.findItems(
         conn,
         req.query.barcode,
         req.query.shelve
       )
+
+      conn.commit()
 
       return res.status(200).json(rows)
     } catch (error) {

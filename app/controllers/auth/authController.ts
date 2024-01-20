@@ -1,7 +1,11 @@
 import express, { Request, Response } from "express"
 import throwGenericError from "../../helpers/throwGenericError"
 import AuthModel from "../../models/auth/authModel"
-import { loginData, registerAccount } from "../../types/auth/authTypes"
+import {
+  ChangePasswordData,
+  LoginData,
+  RegisterAccount,
+} from "../../types/auth/authTypes"
 import validators from "./validators"
 import auth, { Roles } from "../../middlewares/auth"
 import { connection } from "../../models/dbProm"
@@ -23,12 +27,14 @@ class AuthController {
       this.createNewAccount
     )
     this.router.post(`${this.path}/login`, this.login)
+
+    this.router.put(`${this.path}/changePassword`, this.changePassword)
   }
 
   private Model = new AuthModel()
 
   createNewAccount = async (
-    req: Request<{}, {}, registerAccount>,
+    req: Request<{}, {}, RegisterAccount>,
     res: Response
   ) => {
     const { error } = validators.createAccount.validate(req.body)
@@ -46,6 +52,8 @@ class AuthController {
         req.body
       )) as ResultSetHeader
 
+      conn.commit()
+
       return res.status(200).json({
         userId: dbResult.insertId,
       })
@@ -60,7 +68,7 @@ class AuthController {
     }
   }
 
-  login = async (req: Request<{}, {}, loginData>, res: Response) => {
+  login = async (req: Request<{}, {}, LoginData>, res: Response) => {
     const { error } = validators.login.validate(req.body)
 
     if (error !== undefined) {
@@ -71,14 +79,61 @@ class AuthController {
     await conn.beginTransaction()
 
     try {
-      const JWT = await this.Model.login(conn, req.body)
+      const loginRes = await this.Model.login(conn, req.body)
 
-      if (!JWT) {
+      if (!loginRes) {
         return throwGenericError(res, 400, "Błędne hasło lub email")
       }
 
+      conn.commit()
+
       return res.status(200).json({
-        token: JWT,
+        token: loginRes,
+      })
+    } catch (error) {
+      if (typeof error === "string") {
+        if (error === "CHANGE_PASSWORD") {
+          return throwGenericError(res, 401, "Zmień pierwsze hasło")
+        }
+        return throwGenericError(res, 400, error)
+      }
+
+      conn.rollback()
+      return throwGenericError(res, 500, String(error), error)
+    } finally {
+      conn.release()
+    }
+  }
+
+  changePassword = async (
+    req: Request<{}, {}, ChangePasswordData>,
+    res: Response
+  ) => {
+    const { error } = validators.changePassword.validate(req.body)
+
+    if (error !== undefined) {
+      return throwGenericError(res, 400, error?.details[0].message)
+    }
+
+    const conn = await connection.getConnection()
+    await conn.beginTransaction()
+
+    try {
+      await this.Model.changePassword(conn, req.body)
+
+      const loginRes = await this.Model.login(conn, {
+        login: req.body.login,
+        password: req.body.newPassword,
+      })
+
+      if (!loginRes) {
+        return throwGenericError(res, 400, "Błędne hasło lub email")
+      }
+
+      conn.commit()
+
+      return res.status(200).json({
+        token: loginRes,
       })
     } catch (error) {
       if (typeof error === "string") {
