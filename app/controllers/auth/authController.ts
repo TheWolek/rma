@@ -93,7 +93,7 @@ class AuthController {
     } catch (error) {
       if (typeof error === "string") {
         if (error === "CHANGE_PASSWORD") {
-          return throwGenericError(res, 401, "Zmień pierwsze hasło")
+          return throwGenericError(res, 400, "Zmień pierwsze hasło")
         }
         return throwGenericError(res, 400, error)
       }
