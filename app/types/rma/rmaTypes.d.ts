@@ -33,6 +33,7 @@ export interface UpdateTicketReqBody {
 }
 
 export interface Filters {
+  pageNumber: number
   barcode: string
   status: number
   type: number

@@ -17,6 +17,7 @@ import {
 } from "../../types/rma/rmaTypes"
 import { detailsFields, listFields } from "./constants"
 import formatDate from "../../helpers/formatDate"
+import calculatePages from "../../helpers/calculatePages"
 
 class RmaModel {
   create = async (conn: mysql.PoolConnection, ticketData: CreateReqBody) => {
@@ -121,14 +122,41 @@ class RmaModel {
       sql += ` JOIN waybills w ON t.ticket_id = w.ticket_id `
     }
 
-    sql += ` WHERE 1=1 ${
-      queryFilters.length > 0 ? "AND" : ""
-    } ${queryFilters.join(" AND ")} ORDER BY t.created desc`
+    const condition = `${queryFilters.join(" AND ")}`
+    const pageSize = 4
+    let pageNumber = filters?.pageNumber || 1
 
     try {
-      const rows = await query(conn, sql, params)
+      const pageCount = await calculatePages(
+        conn,
+        `tickets t ${
+          filters.waybill ? "JOIN waybills w ON t.ticket_id = w.ticket_id" : ""
+        }`,
+        `${condition.length > 0 ? "1=1 AND " : "1=1"} ${condition}`,
+        params
+      )
 
-      return rows as FilteredRow[]
+      if (filters.pageNumber < 1) {
+        pageNumber = 1
+      }
+
+      if (filters.pageNumber > pageCount) {
+        pageNumber = pageCount
+      }
+
+      const offset = pageNumber > 0 ? (pageNumber - 1) * pageSize : 0
+
+      sql += ` WHERE 1=1 ${
+        queryFilters.length > 0 ? "AND" : ""
+      } ${condition} ORDER BY t.created desc LIMIT ${pageSize} OFFSET ${offset}`
+
+      const rows = (await query(conn, sql, params)) as FilteredRow[]
+
+      return {
+        items: rows,
+        pageCount: pageCount,
+        currentPage: Number(pageNumber),
+      }
     } catch (error) {
       throw error
     }

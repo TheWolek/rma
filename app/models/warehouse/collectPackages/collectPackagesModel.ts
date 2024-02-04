@@ -9,6 +9,7 @@ import db from "../../db"
 import mysql from "mysql2/promise"
 import { ResultSetHeader } from "mysql2/promise"
 import query from "../../dbProm"
+import calculatePages from "../../../helpers/calculatePages"
 
 class CollectPackagesModel {
   create = async (conn: mysql.PoolConnection, refName: string) => {
@@ -43,15 +44,40 @@ class CollectPackagesModel {
       params.push(filters.status)
     }
 
-    const sql = `SELECT pc.id, pc.ref_name, pc.created, pcs.name AS 'status' 
-    FROM packageCollect pc JOIN packageCollect_statuses pcs ON pc.status = pcs.id
-    WHERE 1=1 ${queryFilters.length > 0 ? "AND" : ""} ${queryFilters.join(
-      " AND "
-    )} ORDER BY created DESC`
+    const condition = `${queryFilters.join(" AND ")}`
+    const pageSize = 4
+    let pageNumber = filters?.pageNumber || 1
 
     try {
-      const rows = await query(conn, sql, params)
-      return rows as CollectRow[]
+      const pageCount = await calculatePages(
+        conn,
+        "packageCollect pc JOIN packageCollect_statuses pcs ON pc.status = pcs.id",
+        `${condition.length > 0 ? "1=1 AND " : "1=1"} ${condition}`,
+        params
+      )
+
+      if (filters.pageNumber < 1) {
+        pageNumber = 1
+      }
+
+      if (filters.pageNumber > pageCount) {
+        pageNumber = pageCount
+      }
+
+      const offset = pageNumber > 0 ? (pageNumber - 1) * pageSize : 0
+
+      const sql = `SELECT pc.id, pc.ref_name, pc.created, pcs.name AS 'status' 
+      FROM packageCollect pc JOIN packageCollect_statuses pcs ON pc.status = pcs.id
+      WHERE 1=1 ${
+        queryFilters.length > 0 ? "AND" : ""
+      } ${condition} ORDER BY created DESC LIMIT ${pageSize} OFFSET ${offset}`
+
+      const rows = (await query(conn, sql, params)) as CollectRow[]
+      return {
+        items: rows,
+        pageCount: pageCount,
+        currentPage: pageNumber,
+      }
     } catch (error) {
       throw error
     }

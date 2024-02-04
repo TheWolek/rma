@@ -3,6 +3,7 @@ import throwGenericError from "../../../helpers/throwGenericError"
 import warehouseItemsModel from "../../../models/warehouse/items/warehouseItemsModel"
 import { connection } from "../../../models/dbProm"
 import {
+  ItemListFilters,
   changeShelveBody,
   deleteItemBody,
   newItemReqBody,
@@ -138,7 +139,7 @@ class warehouseItemController {
   }
 
   findItem = async (
-    req: Request<{}, {}, {}, { barcode: string; shelve: number }>,
+    req: Request<{}, {}, {}, ItemListFilters>,
     res: Response
   ) => {
     // recive barcode in format "RMA/YYYYMMDD/1234"
@@ -151,11 +152,7 @@ class warehouseItemController {
     await conn.beginTransaction()
 
     try {
-      const rows = await this.ItemModel.findItems(
-        conn,
-        req.query.barcode,
-        req.query.shelve
-      )
+      const rows = await this.ItemModel.findItems(conn, req.query)
 
       conn.commit()
 

@@ -1,6 +1,7 @@
 export type CollectStatus = "W trakcie" | "Odebrany"
 
 export interface CollectFilters {
+  pageNumber: number
   refName: string
   created: string
   status: CollectStatus

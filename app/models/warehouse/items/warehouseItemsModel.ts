@@ -4,8 +4,10 @@ import query from "../../dbProm"
 import {
   ChangeShelveData,
   Item,
+  ItemListFilters,
   newItemData,
 } from "../../../types/warehouse/items/itemsTypes"
+import calculatePages from "../../../helpers/calculatePages"
 
 class warehouseItemsModel {
   createNewItem = async (conn: mysql.PoolConnection, item: newItemData) => {
@@ -41,30 +43,53 @@ class warehouseItemsModel {
     }
   }
 
-  findItems = async (
-    conn: mysql.PoolConnection,
-    barcode?: string,
-    shelve_id?: number
-  ) => {
+  findItems = async (conn: mysql.PoolConnection, filters: ItemListFilters) => {
+    const queryFilters: string[] = []
+    const params = []
+
+    if (filters.barcode) {
+      queryFilters.push("barcode = ?")
+      params.push(filters.barcode)
+    }
+
+    if (filters.shelve_id) {
+      queryFilters.push("shelve = ?")
+      params.push(filters.shelve_id)
+    }
+
     let sql = `SELECT i.item_id, i.name, i.shelve, i.category, i.ticket_id, i.barcode, i.sn, s.code as shelve_code FROM items i JOIN shelves s ON i.shelve = s.shelve_id`
-
-    if (barcode || shelve_id) {
-      sql += ` WHERE `
-    }
-    if (barcode) {
-      sql += `barcode = ${db.escape(barcode)}`
-    }
-
-    if (shelve_id) {
-      if (barcode) {
-        sql += " AND "
-      }
-      sql += `shelve = ${db.escape(shelve_id)}`
-    }
+    const condition = `${queryFilters.join(" AND ")}`
+    const pageSize = 4
+    let pageNumber = filters?.pageNumber || 1
 
     try {
-      const rows = await query(conn, sql)
-      return rows as Item[]
+      const pageCount = await calculatePages(
+        conn,
+        "items i JOIN shelves s ON i.shelve = s.shelve_id",
+        `${condition.length > 0 ? "1=1 AND " : "1=1"} ${condition}`,
+        params
+      )
+
+      if (filters.pageNumber < 1) {
+        pageNumber = 1
+      }
+
+      if (filters.pageNumber > pageCount) {
+        pageNumber = pageCount
+      }
+
+      const offset = pageNumber > 0 ? (pageNumber - 1) * pageSize : 0
+
+      sql += ` WHERE 1=1 ${
+        queryFilters.length > 0 ? "AND" : ""
+      } ${condition} ORDER BY i.item_id DESC LIMIT ${pageSize} OFFSET ${offset}`
+
+      const rows = (await query(conn, sql, params)) as Item[]
+      return {
+        items: rows,
+        pageCount: pageCount,
+        currentPage: Number(pageNumber),
+      }
     } catch (error) {
       throw error
     }
