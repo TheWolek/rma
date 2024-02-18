@@ -27,6 +27,7 @@ export default {
     phone: Joi.string().required().length(9),
     deviceSn: Joi.string().required(),
     issue: Joi.string().required(),
+    diagnose: Joi.string().allow(null),
     lines: Joi.string().required().regex(RegEx.lines),
     postCode: Joi.string().required().regex(RegEx.postCode),
     city: Joi.string().required(),

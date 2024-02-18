@@ -24,6 +24,7 @@ export const detailsFields = [
   "t.damage_type",
   "t.result_type",
   "t.result_description",
+  "t.diagnose",
 ]
 
 export const listFields = [

@@ -215,7 +215,7 @@ class RmaModel {
     ticketId: number,
     ticketData: UpdateTicketReqBody
   ) => {
-    const sql_tickets = `UPDATE tickets SET type = ?, email = ?, name = ?, phone = ?, device_sn = ?, issue = ?, \`lines\` = ?, postCode = ?, city = ?, damage_type = ?, damage_description = ?, result_type = ?, result_description = ? WHERE ticket_id = ?`
+    const sql_tickets = `UPDATE tickets SET type = ?, email = ?, name = ?, phone = ?, device_sn = ?, issue = ?, diagnose = ?, \`lines\` = ?, postCode = ?, city = ?, damage_type = ?, damage_description = ?, result_type = ?, result_description = ? WHERE ticket_id = ?`
     const params_tickets = [
       ticketData.type,
       ticketData.email,
@@ -223,6 +223,7 @@ class RmaModel {
       ticketData.phone,
       ticketData.deviceSn,
       ticketData.issue,
+      ticketData.diagnose,
       ticketData.lines,
       ticketData.postCode,
       ticketData.city,

@@ -23,6 +23,7 @@ export interface UpdateTicketReqBody {
   type: string
   deviceSn: string
   issue: string
+  diagnose: string
   lines: string
   postCode: string
   city: string
