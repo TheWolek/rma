@@ -68,9 +68,9 @@ export default {
   }),
 
   addEditAction: Joi.object({
-    ticket_id: Joi.number().required(),
-    action_name: Joi.string().required(),
-    action_price: Joi.number().required().allow(0),
+    ticketId: Joi.number().required(),
+    actionName: Joi.string().required(),
+    actionPrice: Joi.number().required().allow(0),
   }),
 
   // editAction: Joi.object({

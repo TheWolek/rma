@@ -16,6 +16,7 @@ import {
   BarcodeData,
   ActionRow,
   ActionData,
+  EditActionDataID,
 } from "../../types/rma/rmaTypes"
 import { detailsFields, listFields } from "./constants"
 import formatDate from "../../helpers/formatDate"
@@ -241,8 +242,9 @@ class RmaModel {
   }
 
   addAction = async (conn: mysql.PoolConnection, data: ActionData) => {
+    console.log(data.actionPrice)
     const sql = `INSERT INTO tickets_actions (action_name, action_price, ticket_id) VALUES (?,?,?)`
-    const params = [data.action_name, data.action_price, data.ticket_id]
+    const params = [data.actionName, data.actionPrice, data.ticketId]
 
     try {
       const dbResult = (await query(conn, sql, params)) as ResultSetHeader
@@ -276,9 +278,9 @@ class RmaModel {
     }
   }
 
-  editAction = async (conn: mysql.PoolConnection, data: ActionRow) => {
+  editAction = async (conn: mysql.PoolConnection, data: EditActionDataID) => {
     const sql = `UPDATE tickets_actions SET action_name = ?, action_price = ? WHERE action_id = ?`
-    const params = [data.action_name, data.action_price, data.action_id]
+    const params = [data.actionName, data.actionPrice, data.actionId]
 
     try {
       await query(conn, sql, params)
@@ -296,7 +298,7 @@ class RmaModel {
     try {
       const rows = (await query(conn, sql)) as ActionRow[]
       rows.forEach((row) => {
-        row.action_price = parseInt(String(row.action_price))
+        row.action_price = parseFloat(String(row.action_price))
       })
       const totalPrice = rows.reduce(
         (sum, row) => sum + Number(row.action_price),

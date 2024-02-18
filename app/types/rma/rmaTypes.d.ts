@@ -126,13 +126,26 @@ export interface AccessoriesRow {
 }
 
 export interface ActionData {
-  action_name: string
-  action_price: number
-  ticket_id: number
+  actionName: string
+  actionPrice: number
+  ticketId: number
 }
 
-export interface ActionRow extends ActionData {
+export interface EditActionData {
+  actionName: string
+  actionPrice: number
+  ticketId: number
+}
+
+export interface EditActionDataID extends EditActionData {
+  actionId: number
+}
+
+export interface ActionRow {
+  action_name: string
+  action_price: number
   action_id: number
+  ticket_id: number
 }
 
 export interface CommentRow {

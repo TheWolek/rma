@@ -5,7 +5,7 @@ import throwGenericError from "../../helpers/throwGenericError"
 import auth, { Roles } from "../../middlewares/auth"
 import { getUserId } from "../../helpers/jwt"
 import { connection } from "../../models/dbProm"
-import { ActionData } from "../../types/rma/rmaTypes"
+import { ActionData, EditActionData } from "../../types/rma/rmaTypes"
 import validators from "./validators"
 
 class RmaActionsController {
@@ -80,7 +80,7 @@ class RmaActionsController {
     try {
       const ticketStatus = await this.Model.getTicketStatus(
         conn,
-        req.body.ticket_id
+        req.body.ticketId
       )
 
       if (![5, 6].includes(ticketStatus.status)) {
@@ -98,7 +98,7 @@ class RmaActionsController {
       await this.logModel.log(conn, {
         action: "addAction",
         log: `Dodano czynność: ${JSON.stringify(req.body)}`,
-        ticketId: req.body.ticket_id,
+        ticketId: req.body.ticketId,
         user_id: userId,
       })
 
@@ -114,7 +114,7 @@ class RmaActionsController {
   }
 
   editAction = async (
-    req: Request<{ id: number }, {}, ActionData>,
+    req: Request<{ id: number }, {}, EditActionData>,
     res: Response
   ) => {
     const { error } = validators.addEditAction.validate(req.body)
@@ -129,7 +129,7 @@ class RmaActionsController {
     try {
       const ticketStatus = await this.Model.getTicketStatus(
         conn,
-        req.body.ticket_id
+        req.body.ticketId
       )
 
       if (![5, 6].includes(ticketStatus.status)) {
@@ -153,7 +153,7 @@ class RmaActionsController {
       }
 
       await this.Model.editAction(conn, {
-        action_id: req.params.id,
+        actionId: req.params.id,
         ...req.body,
       })
 
