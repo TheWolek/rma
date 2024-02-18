@@ -66,4 +66,15 @@ export default {
       .required()
       .valid("potwierdzony", "odebrany", "anulowany"),
   }),
+
+  addEditAction: Joi.object({
+    ticket_id: Joi.number().required(),
+    action_name: Joi.string().required(),
+    action_price: Joi.number().required().allow(0),
+  }),
+
+  // editAction: Joi.object({
+  //   action_name: Joi.string().required(),
+  //   action_price: Joi.number().required().allow(0),
+  // }),
 }

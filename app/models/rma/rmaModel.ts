@@ -14,6 +14,8 @@ import {
   UpdateTicketReqBody,
   WarehouseDetailsRow,
   BarcodeData,
+  ActionRow,
+  ActionData,
 } from "../../types/rma/rmaTypes"
 import { detailsFields, listFields } from "./constants"
 import formatDate from "../../helpers/formatDate"
@@ -191,6 +193,22 @@ class RmaModel {
     }
   }
 
+  getTicketStatus = async (conn: mysql.PoolConnection, ticketId: number) => {
+    const sql = `SELECT ticket_id, status FROM tickets WHERE ticket_id = ${db.escape(
+      ticketId
+    )}`
+
+    try {
+      const rows = (await query(conn, sql)) as {
+        ticket_id: number
+        status: number
+      }[]
+      return rows[0]
+    } catch (error) {
+      throw error
+    }
+  }
+
   editTicket = async (
     conn: mysql.PoolConnection,
     ticketId: number,
@@ -217,6 +235,78 @@ class RmaModel {
     try {
       const dbResult = await query(conn, sql_tickets, params_tickets)
       return dbResult as ResultSetHeader
+    } catch (error) {
+      throw error
+    }
+  }
+
+  addAction = async (conn: mysql.PoolConnection, data: ActionData) => {
+    const sql = `INSERT INTO tickets_actions (action_name, action_price, ticket_id) VALUES (?,?,?)`
+    const params = [data.action_name, data.action_price, data.ticket_id]
+
+    try {
+      const dbResult = (await query(conn, sql, params)) as ResultSetHeader
+      return { id: dbResult.insertId }
+    } catch (error) {
+      throw error
+    }
+  }
+
+  getOneAction = async (conn: mysql.PoolConnection, id: number) => {
+    const sql = `SELECT action_id, action_name, action_price, ticket_id FROM tickets_actions WHERE action_id = ${db.escape(
+      id
+    )}`
+
+    try {
+      const row = (await query(conn, sql)) as ActionRow[]
+      return row
+    } catch (error) {
+      throw error
+    }
+  }
+
+  removeAction = async (conn: mysql.PoolConnection, id: number) => {
+    const sql = `DELETE FROM tickets_actions WHERE action_id = ${db.escape(id)}`
+
+    try {
+      await query(conn, sql)
+      return true
+    } catch (error) {
+      throw error
+    }
+  }
+
+  editAction = async (conn: mysql.PoolConnection, data: ActionRow) => {
+    const sql = `UPDATE tickets_actions SET action_name = ?, action_price = ? WHERE action_id = ?`
+    const params = [data.action_name, data.action_price, data.action_id]
+
+    try {
+      await query(conn, sql, params)
+      return true
+    } catch (error) {
+      throw error
+    }
+  }
+
+  getActions = async (conn: mysql.PoolConnection, ticketId: number) => {
+    const sql = `SELECT action_id, action_name, action_price FROM tickets_actions WHERE ticket_id = ${db.escape(
+      ticketId
+    )}`
+
+    try {
+      const rows = (await query(conn, sql)) as ActionRow[]
+      rows.forEach((row) => {
+        row.action_price = parseInt(String(row.action_price))
+      })
+      const totalPrice = rows.reduce(
+        (sum, row) => sum + Number(row.action_price),
+        0
+      )
+
+      return {
+        actions: rows,
+        totalPrice: totalPrice,
+      }
     } catch (error) {
       throw error
     }
