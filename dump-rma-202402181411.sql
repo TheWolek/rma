@@ -249,7 +249,25 @@ CREATE TABLE `tickets` (
   PRIMARY KEY (`ticket_id`),
   KEY `tickets_FK` (`damage_type`),
   CONSTRAINT `tickets_FK` FOREIGN KEY (`damage_type`) REFERENCES `tickets_damage_types` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=104 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_polish_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=105 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_polish_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `tickets_actions`
+--
+
+DROP TABLE IF EXISTS `tickets_actions`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `tickets_actions` (
+  `action_id` int NOT NULL AUTO_INCREMENT,
+  `action_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+  `action_price` decimal(10,2) NOT NULL,
+  `ticket_id` int NOT NULL,
+  PRIMARY KEY (`action_id`),
+  KEY `tickets_actions_FK` (`ticket_id`),
+  CONSTRAINT `tickets_actions_FK` FOREIGN KEY (`ticket_id`) REFERENCES `tickets` (`ticket_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -266,7 +284,7 @@ CREATE TABLE `tickets_additionalAccessories` (
   PRIMARY KEY (`id`),
   KEY `tickets_additionalAccesories_FK_1` (`type_id`),
   KEY `tickets_additionalAccesories_FK` (`ticket_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=216 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=217 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -332,7 +350,7 @@ CREATE TABLE `tickets_logs` (
   PRIMARY KEY (`log_id`),
   KEY `tickets_logs_FK` (`user_id`),
   CONSTRAINT `tickets_logs_FK` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=29 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=69 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -394,7 +412,7 @@ CREATE TABLE `user_roles` (
   PRIMARY KEY (`user_role_id`),
   KEY `user_roles_FK` (`user_id`),
   CONSTRAINT `user_roles_FK` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -415,7 +433,7 @@ CREATE TABLE `users` (
   `deleted_at` timestamp NULL DEFAULT NULL,
   `deleted_by` int DEFAULT NULL,
   PRIMARY KEY (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -583,7 +601,7 @@ CREATE TABLE `waybills` (
   `lastUpdate` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `waybills_FK` (`ticket_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=78 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=79 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -732,4 +750,4 @@ CREATE TABLE `waybills` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-01-20 14:14:19
+-- Dump completed on 2024-02-18 14:11:16
