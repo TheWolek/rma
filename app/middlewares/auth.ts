@@ -7,8 +7,8 @@ export const Roles = {
   SparepartsCatalog: ["Admin", "LS", "TECH"],
   SparepartsOrders: ["Admin", "LS"],
   ItemsCommon: ["Admin", "LS", "TECH"],
-  ItemsLs: ["Admin", "LS"],
-  RmaCommon: ["Admin", "TECH", "CC"],
+  ItemsLs: ["Admin", "LS", "TECH"],
+  RmaCommon: ["Admin", "TECH", "LS", "CC"],
   CollectPackages: ["Admin", "LS"],
   TasksCommon: ["Admin", "LS"],
 }

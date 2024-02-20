@@ -52,37 +52,44 @@ class warehouseItemsModel {
       params.push(filters.barcode)
     }
 
-    if (filters.shelve_id) {
+    if (filters.shelve) {
       queryFilters.push("shelve = ?")
-      params.push(filters.shelve_id)
+      params.push(filters.shelve)
     }
 
     let sql = `SELECT i.item_id, i.name, i.shelve, i.category, i.ticket_id, i.barcode, i.sn, s.code as shelve_code FROM items i JOIN shelves s ON i.shelve = s.shelve_id`
     const condition = `${queryFilters.join(" AND ")}`
     const pageSize = 4
     let pageNumber = filters?.pageNumber || 1
+    let pageCount = 1
 
     try {
-      const pageCount = await calculatePages(
-        conn,
-        "items i JOIN shelves s ON i.shelve = s.shelve_id",
-        `${condition.length > 0 ? "1=1 AND " : "1=1"} ${condition}`,
-        params
-      )
+      if (filters.showAll) {
+        sql += ` WHERE 1=1 ${
+          queryFilters.length > 0 ? "AND" : ""
+        } ${condition} ORDER BY i.item_id DESC`
+      } else {
+        pageCount = await calculatePages(
+          conn,
+          "items i JOIN shelves s ON i.shelve = s.shelve_id",
+          `${condition.length > 0 ? "1=1 AND " : "1=1"} ${condition}`,
+          params
+        )
 
-      if (filters.pageNumber < 1) {
-        pageNumber = 1
+        if (filters.pageNumber < 1) {
+          pageNumber = 1
+        }
+
+        if (filters.pageNumber > pageCount) {
+          pageNumber = pageCount
+        }
+
+        const offset = pageNumber > 0 ? (pageNumber - 1) * pageSize : 0
+
+        sql += ` WHERE 1=1 ${
+          queryFilters.length > 0 ? "AND" : ""
+        } ${condition} ORDER BY i.item_id DESC LIMIT ${pageSize} OFFSET ${offset}`
       }
-
-      if (filters.pageNumber > pageCount) {
-        pageNumber = pageCount
-      }
-
-      const offset = pageNumber > 0 ? (pageNumber - 1) * pageSize : 0
-
-      sql += ` WHERE 1=1 ${
-        queryFilters.length > 0 ? "AND" : ""
-      } ${condition} ORDER BY i.item_id DESC LIMIT ${pageSize} OFFSET ${offset}`
 
       const rows = (await query(conn, sql, params)) as Item[]
       return {

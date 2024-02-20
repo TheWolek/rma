@@ -26,7 +26,8 @@ export interface deleteItemBody {
 export interface ItemListFilters {
   pageNumber: number
   barcode?: string
-  shelve_id?: number
+  shelve?: number
+  showAll?: boolean
 }
 
 export interface Item {
